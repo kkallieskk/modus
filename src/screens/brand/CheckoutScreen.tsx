@@ -26,7 +26,7 @@ export const CheckoutScreen = () => {
       setLoading(true);
       
       // Simulate escrow securing delay
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Authentication required');
@@ -39,11 +39,16 @@ export const CheckoutScreen = () => {
 
       if (error) throw error;
 
-      Alert.alert(
-        'Escrow Secured', 
-        '₹' + budget + ' has been locked in the Pixkkel Vault. Your selected creators have been notified to begin production.',
-        [{ text: 'Go to Workspace', onPress: () => navigation.navigate('WorkspaceTab') }]
-      );
+      if (Platform.OS === 'web') {
+        // High fidelity web transition - navigate directly to Workspace Tab
+        navigation.navigate('WorkspaceTab');
+      } else {
+        Alert.alert(
+          'Escrow Secured', 
+          '₹' + budget + ' has been locked in the Pixkkel Vault. Your selected creators have been notified to begin production.',
+          [{ text: 'Go to Workspace', onPress: () => navigation.navigate('WorkspaceTab') }]
+        );
+      }
     } catch (err: any) {
       console.error('Escrow Error:', err);
       Alert.alert('Funding Failed', err.message || 'Could not secure escrow. Please try again.');
