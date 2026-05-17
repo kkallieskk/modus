@@ -23,7 +23,8 @@ import {
   LogOut,
   ChevronRight,
   Wallet,
-  Instagram
+  Instagram,
+  Trash2
 } from 'lucide-react-native';
 
 export const SettingsScreen = () => {
@@ -89,6 +90,46 @@ export const SettingsScreen = () => {
       { text: 'Cancel', style: 'cancel' },
       { text: 'Log Out', style: 'destructive', onPress: () => supabase.auth.signOut() }
     ]);
+  };
+
+  const handleDeleteAccount = () => {
+    const performDelete = async () => {
+      try {
+        setSaving(true);
+        const { error } = await supabase.rpc('delete_user_account');
+        if (error) throw error;
+        await supabase.auth.signOut();
+      } catch (err: any) {
+        setSaving(false);
+        if (Platform.OS === 'web') {
+          window.alert(err.message || 'Could not delete account.');
+        } else {
+          Alert.alert('Error', err.message || 'Could not delete account.');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.'
+      );
+      if (confirmed) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Account',
+        'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: performDelete,
+          },
+        ]
+      );
+    }
   };
 
   if (loading) {
@@ -221,6 +262,11 @@ export const SettingsScreen = () => {
             <LogOut size={20} color="#DC2626" />
             <Text style={styles.logoutText}>Log Out</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity onPress={handleDeleteAccount} style={styles.deleteBtn}>
+            <Trash2 size={20} color="#DC2626" />
+            <Text style={styles.deleteText}>Delete Account</Text>
+          </TouchableOpacity>
           
           <View style={{ height: 100 }} />
         </ScrollView>
@@ -301,5 +347,18 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#FEE2E2'
   },
-  logoutText: { color: '#DC2626', fontSize: 16, fontWeight: '800' }
+  logoutText: { color: '#DC2626', fontSize: 16, fontWeight: '800' },
+  deleteBtn: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    gap: 10, 
+    backgroundColor: '#FFF5F5', 
+    height: 64, 
+    borderRadius: 20,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#FEE2E2'
+  },
+  deleteText: { color: '#DC2626', fontSize: 16, fontWeight: '800' }
 });
