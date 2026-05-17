@@ -95,3 +95,90 @@ Ensure the output is a valid JSON object. Do not include any text outside of the
     throw error;
   }
 }
+
+export async function parseCampaignSummary(prompt: string) {
+  const apiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
+
+  if (!apiKey) {
+    throw new Error('AI Configuration Error: API key is missing. Please check your .env file.');
+  }
+
+  const systemPrompt = `You are a professional campaign coordinator.
+Your task is to parse a campaign summary into a structured JSON configuration to pre-fill a campaign creator wizard.
+
+Expected JSON Output Schema:
+{
+  "title": "A crisp, catchy, premium campaign title",
+  "goal": "One of: Brand Awareness, User Acquisition, Engagement, Sales Conversion",
+  "audience": "A concise description of target audience demographics based on the summary",
+  "platforms": ["Instagram", "TikTok"], // Array that can include: Instagram, TikTok, YouTube
+  "format": "One of: Reel, Short, Video, Story",
+  "quantity": 1, // An integer number of content deliverables
+  "hooks": "A creative hook idea appropriate for this campaign", 
+  "talkingPoints": "Key talking points about the product", 
+  "dos": "Do focus on the primary value proposition, do show the product clearly", 
+  "donts": "Don't use low quality lighting, don't mention competing brands", 
+  "usageRights": "One of: Organic, Paid Ads",
+  "ftcCompliance": true, // Boolean (default true)
+  "draftDeadline": "7 Days", // String draft deadline
+  "goLiveDeadline": "14 Days" // String go-live deadline
+}
+
+Ensure the output is a valid JSON object. Do not include any text outside of the JSON object.`;
+
+  try {
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.5,
+        max_tokens: 2048,
+        response_format: { type: "json_object" }
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error?.message || 'Groq service is currently unavailable');
+    }
+
+    const data = await response.json();
+    let content = data.choices[0].message.content;
+
+    try {
+      if (!content || content.trim().length === 0) {
+        throw new Error('AI returned an empty response.');
+      }
+
+      let jsonString = content.trim();
+
+      // Extract JSON Block if Markdown format
+      const jsonMatch = jsonString.match(/```(?:json)?\n?([\s\S]*?)```/);
+      if (jsonMatch) {
+        return JSON.parse(jsonMatch[1].trim());
+      }
+
+      const start = jsonString.indexOf('{');
+      const end = jsonString.lastIndexOf('}');
+      if (start !== -1 && end !== -1) {
+        return JSON.parse(jsonString.substring(start, end + 1).trim());
+      }
+
+      return JSON.parse(jsonString);
+    } catch (parseError: any) {
+      throw new Error(`AI produced an invalid response format (${parseError.message}). Please try again.`);
+    }
+  } catch (error: any) {
+    console.error('AI Service Error:', error);
+    throw error;
+  }
+}
+
