@@ -14,6 +14,7 @@ import {
   Animated,
   Platform,
   Image,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -162,6 +163,8 @@ type BrandProfile = {
 export const BrandDashboard = () => {
   const navigation = useNavigation<any>();
   const { profile: brandProfile, loading: profileLoading } = useProfile();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width > 768;
   
   const [influencers, setInfluencers] = useState<Influencer[]>([]);
   const [filtered, setFiltered] = useState<Influencer[]>([]);
@@ -347,7 +350,7 @@ export const BrandDashboard = () => {
   const renderCreatorCard = ({ item, index }: { item: Influencer, index: number }) => {
     const thumb = item.portfolio_thumbnail_url || item.avatar_url || getThumbnail(item.niche_industry || '');
     return (
-      <View key={item.id ? item.id.toString() : `creator-${index}`} style={{ width: '50%' }}>
+      <View key={item.id ? item.id.toString() : `creator-${index}`} style={{ width: isDesktop ? '25%' : '50%' }}>
         <TouchableOpacity
           onPress={() => navigation.navigate('CreatorProfile', { creator_id: item.id })}
           style={{
@@ -405,7 +408,12 @@ export const BrandDashboard = () => {
       <ScrollView
         style={{ flex: 1, backgroundColor: 'transparent' }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ 
+          paddingBottom: insets.bottom + 100,
+          maxWidth: isDesktop ? 1200 : undefined,
+          width: isDesktop ? '100%' : undefined,
+          alignSelf: isDesktop ? 'center' : undefined,
+        }}
       >
         {/* Bespoke Roster Header */}
         <View style={{ 

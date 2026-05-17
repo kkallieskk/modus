@@ -12,6 +12,7 @@ import {
   TextInput,
   Alert,
   KeyboardAvoidingView,
+  useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
@@ -47,6 +48,8 @@ type Opportunity = {
 
 export const OpportunitiesScreen = () => {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width > 768;
   const [opportunities, setOpportunities] = useState<Opportunity[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -327,7 +330,15 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
-      <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+      <View style={[
+        styles.header, 
+        { 
+          paddingTop: insets.top + 20,
+          maxWidth: isDesktop ? 1200 : undefined,
+          width: isDesktop ? '100%' : undefined,
+          alignSelf: isDesktop ? 'center' : undefined,
+        }
+      ]}>
         <View className="flex-row justify-between items-end">
           <View>
             <Text style={styles.headerTitle}>Casting Board</Text>
@@ -370,7 +381,13 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
 
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ padding: 20, paddingBottom: 100 }}
+        contentContainerStyle={{ 
+          padding: 20, 
+          paddingBottom: 100,
+          maxWidth: isDesktop ? 1200 : undefined,
+          width: isDesktop ? '100%' : undefined,
+          alignSelf: isDesktop ? 'center' : undefined,
+        }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { fetchOpportunities(); fetchInvites(); }} tintColor="#000" />}
       >
         {loading && !refreshing ? (

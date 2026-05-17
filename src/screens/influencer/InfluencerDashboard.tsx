@@ -10,7 +10,8 @@ import {
   TextInput,
   KeyboardAvoidingView,
   Platform,
-  Image
+  Image,
+  useWindowDimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
@@ -37,6 +38,8 @@ type Campaign = {
 
 export const InfluencerDashboard = () => {
   const navigation = useNavigation<any>();
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width > 768;
   const [activeTab, setActiveTab] = useState<'new' | 'active'>('new');
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [loading, setLoading] = useState(true);
@@ -256,7 +259,15 @@ export const InfluencerDashboard = () => {
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: 'white', paddingHorizontal: 20, paddingTop: 60 }}>
+    <View style={{ 
+      flex: 1, 
+      backgroundColor: 'white', 
+      paddingHorizontal: 20, 
+      paddingTop: 60,
+      maxWidth: isDesktop ? 1200 : undefined,
+      width: isDesktop ? '100%' : undefined,
+      alignSelf: isDesktop ? 'center' : undefined,
+    }}>
       <View className="mb-6">
         <Text style={{ fontSize: 28, fontWeight: '900', color: '#000', letterSpacing: -0.5 }}>Collaboration Hub</Text>
         <Text className="text-gray-500 mt-1">Manage your active campaigns and brand deals</Text>
