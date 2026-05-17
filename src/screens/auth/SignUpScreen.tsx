@@ -12,14 +12,14 @@ import {
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { signInWithGoogle } from '@/lib/socialAuth';
-import { Mail, Lock } from 'lucide-react-native';
+import { Mail, Lock, User, Briefcase } from 'lucide-react-native';
 
 export const SignUpScreen = ({ route, navigation }: any) => {
   const initialRole = route.params?.role || 'influencer';
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role] = useState<'brand' | 'influencer'>(initialRole);
+  const [role, setRole] = useState<'brand' | 'influencer'>(initialRole);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -77,6 +77,65 @@ export const SignUpScreen = ({ route, navigation }: any) => {
           <Text className="text-gray-500 text-lg">
             {role === 'brand' ? 'Set up your brand account.' : 'Join as a creator.'}
           </Text>
+        </View>
+
+        {/* Role Selector Segmented Control */}
+        <View style={{ 
+          flexDirection: 'row', 
+          backgroundColor: '#F3F4F6', 
+          borderRadius: 16, 
+          padding: 4, 
+          marginBottom: 24 
+        }}>
+          <TouchableOpacity 
+            onPress={() => setRole('influencer')}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 12,
+              borderRadius: 12,
+              backgroundColor: role === 'influencer' ? '#FFF' : 'transparent',
+              shadowColor: role === 'influencer' ? '#000' : 'transparent',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: role === 'influencer' ? 0.05 : 0,
+              shadowRadius: 4,
+              elevation: role === 'influencer' ? 2 : 0,
+            }}
+          >
+            <User size={16} color={role === 'influencer' ? '#000' : '#6B7280'} style={{ marginRight: 8 }} />
+            <Text style={{ 
+              fontSize: 14, 
+              fontWeight: '700', 
+              color: role === 'influencer' ? '#000' : '#6B7280' 
+            }}>Creator Account</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity 
+            onPress={() => setRole('brand')}
+            style={{
+              flex: 1,
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              paddingVertical: 12,
+              borderRadius: 12,
+              backgroundColor: role === 'brand' ? '#FFF' : 'transparent',
+              shadowColor: role === 'brand' ? '#000' : 'transparent',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: role === 'brand' ? 0.05 : 0,
+              shadowRadius: 4,
+              elevation: role === 'brand' ? 2 : 0,
+            }}
+          >
+            <Briefcase size={16} color={role === 'brand' ? '#000' : '#6B7280'} style={{ marginRight: 8 }} />
+            <Text style={{ 
+              fontSize: 14, 
+              fontWeight: '700', 
+              color: role === 'brand' ? '#000' : '#6B7280' 
+            }}>Brand Account</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Google Sign-In Button */}
