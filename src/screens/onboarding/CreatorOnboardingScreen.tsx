@@ -70,6 +70,7 @@ export const CreatorOnboardingScreen = () => {
         .update({
           onboarding_completed: true,
           niche_industry: selectedNiches.join(', '),
+          industry: selectedNiches.join(', '),
           // For now we just mock the rest
         })
         .eq('id', user.id);

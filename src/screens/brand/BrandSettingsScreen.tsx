@@ -56,13 +56,13 @@ export const BrandSettingsScreen = () => {
   // ─── FETCH ────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (profile) {
-      setUserEmail(profile.id); // Or fetch email separately if needed, but profile context should ideally have it
+      setUserEmail(profile.id);
       const ind = profile.industry || '';
       const isStandard = INDUSTRIES_LIST.filter(i => i !== 'Other').includes(ind);
       setLocalProfile({
         company_name: profile.display_name || '',
         bio: profile.bio || '',
-        website_url: profile.avatar_url || '', // website_url was missing in my Profile type? Wait.
+        website_url: profile.website_url || '',
         avatar_url: profile.avatar_url || '',
         industry: isStandard ? ind : (ind ? 'Other' : ''),
       });
@@ -72,14 +72,16 @@ export const BrandSettingsScreen = () => {
     }
   }, [profile]);
 
-  // Actually, I should probably update the Profile type in ProfileContext to include website_url.
-
 
   // ─── AVATAR UPLOAD ────────────────────────────────────────────────────────
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Required', 'Please allow access to your photo library.');
+      if (Platform.OS === 'web') {
+        window.alert('Please allow access to your photo library.');
+      } else {
+        Alert.alert('Permission Required', 'Please allow access to your photo library.');
+      }
       return;
     }
 
@@ -101,12 +103,10 @@ export const BrandSettingsScreen = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('No user');
 
-      // Determine file extension and mime type
       const fileExt = uri.split('.').pop()?.toLowerCase() || 'jpg';
       const mimeType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
       const filePath = `avatars/${user.id}/${Date.now()}.${fileExt}`;
 
-      // Use FormData — the only reliable method for local file:// URIs in React Native
       const formData = new FormData();
       formData.append('file', {
         uri,
@@ -130,10 +130,18 @@ export const BrandSettingsScreen = () => {
       await supabase.from('profiles').update({ avatar_url: publicUrl }).eq('id', user.id);
       refreshProfile(); // Sync global state
 
-      Alert.alert('✅ Logo Updated', 'Your brand logo has been saved.');
+      if (Platform.OS === 'web') {
+        window.alert('Your brand logo has been saved.');
+      } else {
+        Alert.alert('✅ Logo Updated', 'Your brand logo has been saved.');
+      }
     } catch (err: any) {
       console.error('Upload error:', err);
-      Alert.alert('Upload Failed', err.message || 'Could not upload image. Check that the modus-assets storage bucket exists in Supabase.');
+      if (Platform.OS === 'web') {
+        window.alert(err.message || 'Could not upload image.');
+      } else {
+        Alert.alert('Upload Failed', err.message || 'Could not upload image. Check that the modus-assets storage bucket exists in Supabase.');
+      }
     } finally {
       setUploading(false);
     }
@@ -143,7 +151,11 @@ export const BrandSettingsScreen = () => {
   // ─── SAVE CHANGES ─────────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!localProfile.company_name.trim()) {
-      Alert.alert('Required', 'Company name cannot be empty.');
+      if (Platform.OS === 'web') {
+        window.alert('Company name cannot be empty.');
+      } else {
+        Alert.alert('Required', 'Company name cannot be empty.');
+      }
       return;
     }
     try {
@@ -151,21 +163,34 @@ export const BrandSettingsScreen = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
+      const newIndustry = localProfile.industry === 'Other' ? customIndustry.trim() : localProfile.industry.trim();
+
       const { error } = await supabase
         .from('profiles')
         .update({
           company_name: localProfile.company_name.trim(),
+          display_name: localProfile.company_name.trim(),
           bio: localProfile.bio.trim(),
           website_url: localProfile.website_url.trim(),
-          industry: localProfile.industry === 'Other' ? customIndustry.trim() : localProfile.industry.trim(),
+          social_link: localProfile.website_url.trim(),
+          industry: newIndustry,
+          niche_industry: newIndustry,
         })
         .eq('id', user.id);
 
       if (error) throw error;
       refreshProfile(); // Sync global state
-      Alert.alert('✅ Saved', 'Your account settings have been updated.');
+      if (Platform.OS === 'web') {
+        window.alert('Your account settings have been updated.');
+      } else {
+        Alert.alert('✅ Saved', 'Your account settings have been updated.');
+      }
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Could not save changes.');
+      if (Platform.OS === 'web') {
+        window.alert(err.message || 'Could not save changes.');
+      } else {
+        Alert.alert('Error', err.message || 'Could not save changes.');
+      }
     } finally {
       setSaving(false);
     }

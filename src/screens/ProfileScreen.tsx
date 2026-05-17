@@ -153,7 +153,11 @@ export const ProfileScreen = () => {
 
   const handleSave = async () => {
     if (!profile.display_name.trim()) {
-      Alert.alert('Required Field', 'Please enter a display name.');
+      if (Platform.OS === 'web') {
+        window.alert('Please enter a display name.');
+      } else {
+        Alert.alert('Required Field', 'Please enter a display name.');
+      }
       return;
     }
 
@@ -166,17 +170,26 @@ export const ProfileScreen = () => {
         .from('profiles')
         .update({
           display_name: profile.display_name,
+          company_name: profile.display_name,
           bio: profile.bio,
           social_link: profile.social_link,
+          website_url: profile.social_link,
           avatar_url: profile.avatar_url,
         })
         .eq('id', user.id);
 
       if (error) throw error;
-      Alert.alert('Success', 'Profile updated successfully!');
-    } catch (err) {
-      console.error('Error updating profile:', err);
-      Alert.alert('Error', 'Failed to save changes.');
+      if (Platform.OS === 'web') {
+        window.alert('Profile saved successfully!');
+      } else {
+        Alert.alert('Success', 'Profile saved successfully!');
+      }
+    } catch (err: any) {
+      if (Platform.OS === 'web') {
+        window.alert(err.message || 'Could not save profile.');
+      } else {
+        Alert.alert('Error', err.message || 'Could not save profile.');
+      }
     } finally {
       setSaving(false);
     }

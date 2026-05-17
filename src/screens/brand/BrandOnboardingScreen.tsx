@@ -61,7 +61,11 @@ export const BrandOnboardingScreen = () => {
 
   const nextStep = () => {
     if (step === 1 && (!company.trim() || !industry)) {
-      Alert.alert('Hold on', 'Company name and industry are required.');
+      if (Platform.OS === 'web') {
+        window.alert('Company name and industry are required.');
+      } else {
+        Alert.alert('Hold on', 'Company name and industry are required.');
+      }
       return;
     }
     setStep((s) => Math.min(s + 1, 4));
@@ -72,7 +76,11 @@ export const BrandOnboardingScreen = () => {
   const pickImage = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Required', 'We need access to your photo library.');
+      if (Platform.OS === 'web') {
+        window.alert('We need access to your photo library.');
+      } else {
+        Alert.alert('Permission Required', 'We need access to your photo library.');
+      }
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -107,7 +115,11 @@ export const BrandOnboardingScreen = () => {
         .getPublicUrl(filePath);
       setAvatarUrl(publicUrl);
     } catch (err: any) {
-      Alert.alert('Upload Failed', err.message || 'Could not upload image.');
+      if (Platform.OS === 'web') {
+        window.alert(err.message || 'Could not upload image.');
+      } else {
+        Alert.alert('Upload Failed', err.message || 'Could not upload image.');
+      }
     } finally {
       setUploading(false);
     }
@@ -123,8 +135,11 @@ export const BrandOnboardingScreen = () => {
         .from('profiles')
         .update({
           display_name: company.trim(),
+          company_name: company.trim(),
           niche_industry: industry,
+          industry: industry,
           social_link: website.trim(),
+          website_url: website.trim(),
           avatar_url: avatarUrl,
           brand_color: selectedColor,
           bio: bio.trim(),
@@ -135,7 +150,11 @@ export const BrandOnboardingScreen = () => {
 
       await refreshProfile();
     } catch (err: any) {
-      Alert.alert('Setup Failed', err.message || 'Something went wrong.');
+      if (Platform.OS === 'web') {
+        window.alert(err.message || 'Something went wrong.');
+      } else {
+        Alert.alert('Setup Failed', err.message || 'Something went wrong.');
+      }
     } finally {
       setLoading(false);
     }

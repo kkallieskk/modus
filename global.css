@@ -1,3 +1,54 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* ─── PREMIUM WEB STYLING OVERRIDES ───────────────────────────────────────── */
+@media (min-width: 768px) {
+  body {
+    background-color: #0b0d19 !important;
+    background-image: 
+      radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+      radial-gradient(at 50% 0%, hsla(225,39%,30%,0.25) 0, transparent 50%),
+      radial-gradient(at 100% 0%, hsla(339,49%,30%,0.15) 0, transparent 50%),
+      radial-gradient(at 50% 100%, hsla(263,40%,25%,0.2) 0, transparent 50%) !important;
+    background-attachment: fixed !important;
+    background-size: cover !important;
+    overflow-x: hidden !important;
+  }
+}
+
+/* Custom Scrollbar for modern premium browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.05);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+/* Dynamic Glassmorphism Card styling */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.03) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Keyframe animations for background mesh */
+@keyframes floatUp {
+  0% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-15px) rotate(5deg); }
+  100% { transform: translateY(0px) rotate(0deg); }
+}
+
+.animate-float {
+  animation: floatUp 8s ease-in-out infinite;
+}
+
