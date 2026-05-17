@@ -14,7 +14,7 @@ import {
   StyleSheet,
   Switch,
 } from 'react-native';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   X, 
@@ -31,7 +31,10 @@ import {
   Clock,
   Instagram,
   Youtube,
-  Link2
+  Link2,
+  Users,
+  Camera,
+  Tv
 } from 'lucide-react-native';
 import { parseCampaignSummary } from '@/services/aiService';
 import { useProfile } from '@/lib/ProfileContext';
@@ -79,7 +82,10 @@ export const CampaignBuilderScreen = () => {
   const { profile } = useProfile();
   const brandColor = profile?.brand_color || '#8B5CF6';
 
-  const [step, setStep] = useState(1);
+  // Wizard state: step 0 (Fork selection) to step 4
+  const [step, setStep] = useState(0);
+  const [campaignType, setCampaignType] = useState<'ugc' | 'influencer' | null>(null);
+  
   const [showAiInput, setShowAiInput] = useState(false);
   const [aiPrompt, setAiPrompt] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -90,27 +96,48 @@ export const CampaignBuilderScreen = () => {
   const [goal, setGoal] = useState('Brand Awareness');
   const [audience, setAudience] = useState('');
 
-  // STEP 2 State: Deliverables
+  // STEP 2 State A: UGC (Content Only) dynamic fields
+  const [ugcQuantity, setUgcQuantity] = useState(2);
+  const [ugcAspectRatio, setUgcAspectRatio] = useState('9:16 Vertical');
+  const [includeRawFootage, setIncludeRawFootage] = useState(true);
+  const [hookVariations, setHookVariations] = useState(true);
+  const [usageRights, setUsageRights] = useState('Digital Ads for 30 Days');
+
+  // STEP 2 State B: Influencer Collab (Post to Feed) dynamic fields
   const [platforms, setPlatforms] = useState<string[]>(['Instagram']);
   const [format, setFormat] = useState('Reel');
-  const [quantity, setQuantity] = useState(1);
+  const [influencerTier, setInfluencerTier] = useState('Micro');
+  const [linkInBioRequired, setLinkInBioRequired] = useState(false);
+  const [linkInBioDuration, setLinkInBioDuration] = useState('24 Hours');
+  const [discountCode, setDiscountCode] = useState('');
 
-  // STEP 3 State: Creative Guardrails
+  // STEP 3 State: Creative Guardrails (Shared)
   const [hooks, setHooks] = useState('');
   const [talkingPoints, setTalkingPoints] = useState('');
   const [dos, setDos] = useState('');
   const [donts, setDonts] = useState('');
 
-  // STEP 4 State: Legal & Logistics
-  const [usageRights, setUsageRights] = useState('Organic');
-  const [ftcCompliance, setFtcCompliance] = useState(true);
+  // STEP 4 State: Legal, Logistics, Visibility & Escrow Budget (Shared)
+  const [productLogistics, setProductLogistics] = useState('Shipping product directly');
   const [draftDeadline, setDraftDeadline] = useState('7 Days');
   const [goLiveDeadline, setGoLiveDeadline] = useState('14 Days');
-
-  // Budget and visibility
-  const [budget, setBudget] = useState('5000');
+  const [budget, setBudget] = useState('15000');
   const [visibility, setVisibility] = useState<'public' | 'private'>('public');
   const [isSaving, setIsSaving] = useState(false);
+
+  // Suggested budget ranges calculation
+  useEffect(() => {
+    if (campaignType === 'ugc') {
+      // Suggest flat rate per video asset (suggesting ₹7,500 per video standard)
+      const baseSuggest = ugcQuantity * 7500;
+      setBudget(String(baseSuggest));
+    } else if (campaignType === 'influencer') {
+      // Minimum suggested budget based on influencer creator tiers
+      if (influencerTier === 'Nano') setBudget('5000');
+      else if (influencerTier === 'Micro') setBudget('15000');
+      else if (influencerTier === 'Mid-Tier') setBudget('50000');
+    }
+  }, [campaignType, ugcQuantity, influencerTier]);
 
   const togglePlatform = (p: string) => {
     if (platforms.includes(p)) {
@@ -123,23 +150,33 @@ export const CampaignBuilderScreen = () => {
   };
 
   const nextStep = () => {
-    // Basic validation
+    if (step === 0) {
+      if (!campaignType) {
+        Alert.alert('Required', 'Please select a campaign type to continue.');
+        return;
+      }
+      setStep(1);
+      return;
+    }
+
     if (step === 1) {
       if (!title.trim()) {
-        Alert.alert('Required', 'Please enter a campaign title.');
+        Alert.alert('Required', 'Please enter a campaign name.');
         return;
       }
       if (!audience.trim()) {
-        Alert.alert('Required', 'Please specify the target audience demographics.');
+        Alert.alert('Required', 'Please target demographics for the creators.');
         return;
       }
-    } else if (step === 3) {
+    }
+
+    if (step === 3) {
       if (!hooks.trim()) {
-        Alert.alert('Required', 'Hook instruction is mandatory for creative guardrails.');
+        Alert.alert('Required', 'Hook direction is mandatory for creative guardrails.');
         return;
       }
       if (!talkingPoints.trim()) {
-        Alert.alert('Required', 'Key talking points are mandatory for creative guardrails.');
+        Alert.alert('Required', 'Talking points are mandatory for creative guardrails.');
         return;
       }
     }
@@ -148,7 +185,7 @@ export const CampaignBuilderScreen = () => {
   };
 
   const prevStep = () => {
-    if (step > 1) setStep(step - 1);
+    if (step > 0) setStep(step - 1);
   };
 
   const handleAiFastTrack = async () => {
@@ -159,27 +196,46 @@ export const CampaignBuilderScreen = () => {
     try {
       const result = await parseCampaignSummary(aiPrompt);
       
-      // Auto-fill all 4 steps using extracted structured parameters
+      // Auto-determine campaign type fork
+      if (result.campaignType === 'ugc' || result.campaignType === 'influencer') {
+        setCampaignType(result.campaignType);
+      } else {
+        setCampaignType('influencer'); // fallback default
+      }
+
+      // Shared fields prefill
       if (result.title) setTitle(result.title);
       if (result.goal) setGoal(result.goal);
       if (result.audience) setAudience(result.audience);
-      if (result.platforms && Array.isArray(result.platforms)) setPlatforms(result.platforms);
-      if (result.format) setFormat(result.format);
-      if (result.quantity) setQuantity(result.quantity);
       if (result.hooks) setHooks(result.hooks);
       if (result.talkingPoints) setTalkingPoints(result.talkingPoints);
       if (result.dos) setDos(result.dos);
       if (result.donts) setDonts(result.donts);
-      if (result.usageRights) setUsageRights(result.usageRights);
-      if (typeof result.ftcCompliance === 'boolean') setFtcCompliance(result.ftcCompliance);
       if (result.draftDeadline) setDraftDeadline(result.draftDeadline);
       if (result.goLiveDeadline) setGoLiveDeadline(result.goLiveDeadline);
 
+      // UGC prefill
+      if (result.ugcQuantity) setUgcQuantity(result.ugcQuantity);
+      if (result.ugcAspectRatio) setUgcAspectRatio(result.ugcAspectRatio);
+      if (typeof result.includeRawFootage === 'boolean') setIncludeRawFootage(result.includeRawFootage);
+      if (typeof result.hookVariations === 'boolean') setHookVariations(result.hookVariations);
+      if (result.usageRights) setUsageRights(result.usageRights);
+
+      // Influencer prefill
+      if (result.platforms && Array.isArray(result.platforms)) setPlatforms(result.platforms);
+      if (result.format) setFormat(result.format);
+      if (result.influencerTier) setInfluencerTier(result.influencerTier);
+      if (typeof result.linkInBioRequired === 'boolean') setLinkInBioRequired(result.linkInBioRequired);
+      if (result.linkInBioDuration) setLinkInBioDuration(result.linkInBioDuration);
+      if (result.discountCode) setDiscountCode(result.discountCode);
+
+      if (result.budget) setBudget(String(result.budget));
+
       setShowAiInput(false);
-      Alert.alert('AI Prefill Success', 'We populated all steps of the wizard from your summary. Review and adjust below!');
+      Alert.alert('AI Prefill Success', `Identified as a premium ${result.campaignType === 'ugc' ? 'UGC Video' : 'Influencer Collab'} campaign. We populated the entire wizard!`);
     } catch (err: any) {
-      console.error('AI Fast-Track error:', err);
-      setAiError(err.message || "AI parsing failed. Please try a simpler sentence.");
+      console.error('AI Fast-Track parsing error:', err);
+      setAiError(err.message || "AI parsing failed. Try clarifying the goal or platforms.");
     } finally {
       setIsAiLoading(false);
     }
@@ -187,31 +243,45 @@ export const CampaignBuilderScreen = () => {
 
   const handleFinish = async () => {
     if (!budget) {
-      Alert.alert('Required', 'Please enter a campaign budget.');
+      Alert.alert('Required', 'Please enter your campaign budget.');
       return;
     }
 
     try {
       setIsSaving(true);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error('User not found');
+      if (!user) throw new Error('Authentication session closed');
 
-      // Compile detailed structured parameters into brand_guidelines for perfect layout representation
+      // Save complete parameters into metadata brand_guidelines text object
       const structuredGuidelines = JSON.stringify({
+        campaignType,
         goal,
         audience,
-        platforms,
-        format,
-        quantity,
         hooks,
         talkingPoints,
         dos,
         donts,
-        usageRights,
-        ftcCompliance,
+        productLogistics,
         draftDeadline,
-        goLiveDeadline
+        goLiveDeadline,
+        // UGC parameters
+        ugcQuantity,
+        ugcAspectRatio,
+        includeRawFootage,
+        hookVariations,
+        usageRights,
+        // Influencer parameters
+        platforms,
+        format,
+        influencerTier,
+        linkInBioRequired,
+        linkInBioDuration,
+        discountCode
       });
+
+      const deliverable_type = campaignType === 'ugc'
+        ? `${ugcQuantity}x UGC Video Assets (${ugcAspectRatio})`
+        : `${format} on ${platforms.join(', ')} (${influencerTier} tier)`;
 
       const { data: campaign, error: campaignError } = await supabase
         .from('campaigns')
@@ -220,10 +290,10 @@ export const CampaignBuilderScreen = () => {
           title: title,
           brand_guidelines: structuredGuidelines,
           budget: parseInt(budget),
-          deliverable_type: `${quantity}x ${format} on ${platforms.join(', ')}`,
+          deliverable_type,
           guardrails: [hooks, talkingPoints],
           status: 'draft',
-          visibility: visibility,
+          visibility,
           vibe: goal
         })
         .select()
@@ -233,61 +303,84 @@ export const CampaignBuilderScreen = () => {
 
       navigation.navigate('CreatorSelection', { 
         campaign_id: campaign.id, 
+        campaign_title: campaign.title,
         budget: campaign.budget 
       });
 
     } catch (err: any) {
       console.error('Error saving campaign:', err);
-      Alert.alert('Save Failed', err.message || 'Could not save your campaign. Please try again.');
+      Alert.alert('Save Failed', err.message || 'Could not compile campaign. Please try again.');
     } finally {
       setIsSaving(false);
     }
   };
 
-  const renderAiFastTrack = () => (
-    <View style={styles.aiCard}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <Brain size={22} color={brandColor} />
-          <Text style={{ fontWeight: '900', marginLeft: 10, fontSize: 15, textTransform: 'uppercase', letterSpacing: 1, color: brandColor }}>AI Fast-Track Drafter</Text>
-        </View>
-        <TouchableOpacity onPress={() => setShowAiInput(false)}>
-          <X size={20} color="#9CA3AF" />
+  // Step 0: The Initial Campaign Fork
+  const renderStep0 = () => (
+    <View>
+      <View style={styles.stepHeader}>
+        <Text style={styles.stepTitle}>Choose Campaign Pathway</Text>
+        <Text style={styles.stepSubtitle}>Hit this fork in the road to adapt your dynamic fields.</Text>
+      </View>
+
+      <View style={{ gap: 20 }}>
+        {/* Card A: UGC (Content Only) */}
+        <TouchableOpacity
+          onPress={() => {
+            setCampaignType('ugc');
+            setStep(1);
+          }}
+          style={[
+            styles.forkCard,
+            campaignType === 'ugc' && { borderColor: brandColor, backgroundColor: brandColor + '08' }
+          ]}
+        >
+          <View style={[styles.forkIconContainer, { backgroundColor: '#EEF2F6' }]}>
+            <Camera size={26} color="#000" />
+          </View>
+          <View style={{ flex: 1, marginLeft: 16 }}>
+            <Text style={styles.forkTitle}>UGC (Content Only)</Text>
+            <Text style={styles.forkSubtitle}>"I need videos to use on my own ads and website."</Text>
+            <View style={styles.forkTag}>
+              <Sparkles size={12} color="#4F46E5" />
+              <Text style={styles.forkTagText}>Follower count doesn't matter. Buying the video asset.</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Card B: Influencer Collab (Post to Feed) */}
+        <TouchableOpacity
+          onPress={() => {
+            setCampaignType('influencer');
+            setStep(1);
+          }}
+          style={[
+            styles.forkCard,
+            campaignType === 'influencer' && { borderColor: brandColor, backgroundColor: brandColor + '08' }
+          ]}
+        >
+          <View style={[styles.forkIconContainer, { backgroundColor: '#EEF2F6' }]}>
+            <Tv size={26} color="#000" />
+          </View>
+          <View style={{ flex: 1, marginLeft: 16 }}>
+            <Text style={styles.forkTitle}>Influencer Collab (Post to Feed)</Text>
+            <Text style={styles.forkSubtitle}>"I want creators to post on their own social media."</Text>
+            <View style={styles.forkTag}>
+              <Users size={12} color="#059669" />
+              <Text style={[styles.forkTagText, { color: '#047857' }]}>Reach new audiences. Buying access to followers.</Text>
+            </View>
+          </View>
         </TouchableOpacity>
       </View>
-      
-      <TextInput
-        style={styles.aiTextarea}
-        placeholder="Type 2 sentences, e.g., 'We want to promote our skincare mist on Instagram with soothing GRWM Reels. Target audience is busy moms.'"
-        placeholderTextColor="#9CA3AF"
-        value={aiPrompt}
-        onChangeText={(val) => {
-          setAiPrompt(val);
-          if (aiError) setAiError(null);
-        }}
-        multiline
-      />
-
-      {aiError && (
-        <Text style={styles.errorText}>{aiError}</Text>
-      )}
-      
-      <TouchableOpacity 
-        onPress={handleAiFastTrack}
-        disabled={isAiLoading}
-        style={[styles.aiSubmitBtn, { opacity: isAiLoading ? 0.7 : 1 }]}
-      >
-        <Sparkles size={18} color="#FFF" />
-        <Text style={{ color: '#FFF', fontWeight: '900', marginLeft: 10, fontSize: 16 }}>AI Fast-Track Prefill</Text>
-      </TouchableOpacity>
     </View>
   );
 
+  // Step 1: Objectives & Audience
   const renderStep1 = () => (
     <View>
       <View style={styles.stepHeader}>
         <Text style={styles.stepTitle}>Objectives &amp; Audience</Text>
-        <Text style={styles.stepSubtitle}>Define your strategy and targets for this campaign.</Text>
+        <Text style={styles.stepSubtitle}>Identify what objectives and target demographics this strategy tackles.</Text>
       </View>
 
       {!showAiInput ? (
@@ -299,12 +392,49 @@ export const CampaignBuilderScreen = () => {
             <Sparkles size={18} color="white" />
           </View>
           <View style={{ marginLeft: 16, flex: 1 }}>
-            <Text style={{ color: '#000', fontWeight: '900', fontSize: 15 }}>AI Fast-Track Entry</Text>
-            <Text style={{ color: '#6B7280', fontSize: 13, marginTop: 2 }}>Describe in 2 sentences to prefill all steps.</Text>
+            <Text style={{ color: '#000', fontWeight: '900', fontSize: 15 }}>AI Fast-Track Drafter</Text>
+            <Text style={{ color: '#6B7280', fontSize: 13, marginTop: 2 }}>Describe in 2 sentences to prefill both pathway fields.</Text>
           </View>
           <ChevronRight size={20} color={brandColor} />
         </TouchableOpacity>
-      ) : renderAiFastTrack()}
+      ) : (
+        <View style={styles.aiCard}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Brain size={22} color={brandColor} />
+              <Text style={{ fontWeight: '900', marginLeft: 10, fontSize: 15, textTransform: 'uppercase', letterSpacing: 1, color: brandColor }}>AI Fast-Track Drafter</Text>
+            </View>
+            <TouchableOpacity onPress={() => setShowAiInput(false)}>
+              <X size={20} color="#9CA3AF" />
+            </TouchableOpacity>
+          </View>
+          
+          <TextInput
+            style={styles.aiTextarea}
+            placeholder="Type 2 sentences, e.g., 'We want to promote our sleep mist on TikTok with raw routine Reels. Target audience is busy professionals who struggle to sleep.'"
+            placeholderTextColor="#9CA3AF"
+            value={aiPrompt}
+            onChangeText={(val) => {
+              setAiPrompt(val);
+              if (aiError) setAiError(null);
+            }}
+            multiline
+          />
+
+          {aiError && (
+            <Text style={styles.errorText}>{aiError}</Text>
+          )}
+          
+          <TouchableOpacity 
+            onPress={handleAiFastTrack}
+            disabled={isAiLoading}
+            style={[styles.aiSubmitBtn, { opacity: isAiLoading ? 0.7 : 1 }]}
+          >
+            <Sparkles size={18} color="#FFF" />
+            <Text style={{ color: '#FFF', fontWeight: '900', marginLeft: 10, fontSize: 16 }}>AI Fast-Track Prefill</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {isAiLoading && (
         <View style={styles.loadingBox}>
@@ -355,13 +485,141 @@ export const CampaignBuilderScreen = () => {
     </View>
   );
 
-  const renderStep2 = () => (
+  // Step 2 A: UGC Dynamic Fields Setup
+  const renderUgcStep2 = () => (
     <View>
       <View style={styles.stepHeader}>
-        <Text style={styles.stepTitle}>Content Deliverables</Text>
-        <Text style={styles.stepSubtitle}>Identify what content you expect from creators.</Text>
+        <Text style={styles.stepTitle}>UGC Asset Requirements</Text>
+        <Text style={styles.stepSubtitle}>Identify what content assets you are purchasing from the creator.</Text>
       </View>
 
+      {/* Asset Quantity */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Asset Quantity</Text>
+        <View style={styles.stepperContainer}>
+          <TouchableOpacity 
+            onPress={() => setUgcQuantity(Math.max(1, ugcQuantity - 1))}
+            style={styles.stepperBtn}
+          >
+            <Text style={styles.stepperBtnText}>-</Text>
+          </TouchableOpacity>
+          <Text style={styles.stepperValue}>{ugcQuantity}</Text>
+          <TouchableOpacity 
+            onPress={() => setUgcQuantity(ugcQuantity + 1)}
+            style={styles.stepperBtn}
+          >
+            <Text style={styles.stepperBtnText}>+</Text>
+          </TouchableOpacity>
+          <Text style={{ fontSize: 14, color: '#6B7280', fontWeight: '600', marginLeft: 8 }}>
+            Videos Purchased
+          </Text>
+        </View>
+      </View>
+
+      {/* Aspect Ratio */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Aspect Ratio</Text>
+        <View style={styles.dropdownContainer}>
+          {['9:16 Vertical', '16:9 Horizontal', '1:1 Square'].map((ratio) => (
+            <TouchableOpacity
+              key={ratio}
+              onPress={() => setUgcAspectRatio(ratio)}
+              style={[
+                styles.dropdownItem,
+                ugcAspectRatio === ratio && { backgroundColor: brandColor + '10', borderColor: brandColor }
+              ]}
+            >
+              <Layers size={16} color={ugcAspectRatio === ratio ? brandColor : '#6B7280'} />
+              <Text style={[styles.dropdownItemText, ugcAspectRatio === ratio && { color: brandColor, fontWeight: '800' }]}>
+                {ratio}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* UGC Add-ons Checklist */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>UGC Specific Add-Ons</Text>
+        
+        {/* Raw Footage */}
+        <View style={styles.switchContainer}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.switchLabel}>Include Raw B-Roll / Footage</Text>
+            <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>So your team editors can chop it up later for ad variants.</Text>
+          </View>
+          <Switch
+            value={includeRawFootage}
+            onValueChange={setIncludeRawFootage}
+            trackColor={{ false: '#D1D5DB', true: brandColor }}
+            thumbColor="#FFF"
+          />
+        </View>
+
+        {/* Hook Variations */}
+        <View style={styles.switchContainer}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.switchLabel}>Hook Variations (A/B Test intros)</Text>
+            <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>Shoot 1 main video, but film 3 different 5-second intros.</Text>
+          </View>
+          <Switch
+            value={hookVariations}
+            onValueChange={setHookVariations}
+            trackColor={{ false: '#D1D5DB', true: brandColor }}
+            thumbColor="#FFF"
+          />
+        </View>
+      </View>
+
+      {/* Usage Rights */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Usage Rights License</Text>
+        <View style={{ gap: 12 }}>
+          {['Digital Ads for 30 Days', 'Digital Ads for 90 Days', 'Perpetual / Full Buyout'].map((right) => (
+            <TouchableOpacity
+              key={right}
+              onPress={() => setUsageRights(right)}
+              style={[
+                styles.visibilityCard,
+                usageRights === right && { borderColor: '#000', backgroundColor: '#F9FAFB' }
+              ]}
+            >
+              <View style={[
+                styles.radioDot,
+                usageRights === right && { borderColor: brandColor, backgroundColor: brandColor }
+              ]}>
+                {usageRights === right && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: 'white' }} />}
+              </View>
+              <View style={{ marginLeft: 16, flex: 1 }}>
+                <Text style={styles.visibilityLabel}>{right}</Text>
+                <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>
+                  {right === 'Perpetual / Full Buyout' ? 'Brand owns the creative asset completely forever.' : 'Rights to distribute on social ad accounts for specified duration.'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Suggested Flat-Rate budget ranges */}
+      <View style={styles.suggestionBanner}>
+        <Text style={styles.suggestionTitle}>💰 Suggested UGC Flat-Rate Escrow</Text>
+        <Text style={styles.suggestionSubtitle}>
+          UGC asset values are flat rates. We suggest ₹7,500 - ₹15,000 per asset. Recommended: ₹{(ugcQuantity * 7500).toLocaleString()} - ₹{(ugcQuantity * 15000).toLocaleString()}.
+        </Text>
+      </View>
+    </View>
+  );
+
+  // Step 2 B: Influencer Collab Dynamic Fields Setup
+  const renderInfluencerStep2 = () => (
+    <View>
+      <View style={styles.stepHeader}>
+        <Text style={styles.stepTitle}>Influencer Reach &amp; Platform</Text>
+        <Text style={styles.stepSubtitle}>Identify where the campaign goes live to build direct audiences.</Text>
+      </View>
+
+      {/* Platforms */}
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Target Platforms</Text>
         <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -388,10 +646,11 @@ export const CampaignBuilderScreen = () => {
         </View>
       </View>
 
+      {/* Format */}
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Format</Text>
         <View style={styles.dropdownContainer}>
-          {['Reel', 'Short', 'Video', 'Story'].map((f) => (
+          {['Reel', 'Short', 'Video', 'Story', 'Static Post'].map((f) => (
             <TouchableOpacity
               key={f}
               onPress={() => setFormat(f)}
@@ -407,32 +666,107 @@ export const CampaignBuilderScreen = () => {
         </View>
       </View>
 
+      {/* Creator Reach Tier */}
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Exact Quantity</Text>
-        <View style={styles.stepperContainer}>
-          <TouchableOpacity 
-            onPress={() => setQuantity(Math.max(1, quantity - 1))}
-            style={styles.stepperBtn}
-          >
-            <Text style={styles.stepperBtnText}>-</Text>
-          </TouchableOpacity>
-          <Text style={styles.stepperValue}>{quantity}</Text>
-          <TouchableOpacity 
-            onPress={() => setQuantity(quantity + 1)}
-            style={styles.stepperBtn}
-          >
-            <Text style={styles.stepperBtnText}>+</Text>
-          </TouchableOpacity>
+        <Text style={styles.inputLabel}>Target Creator Tier</Text>
+        <View style={{ gap: 12 }}>
+          {[
+            { type: 'Nano', label: 'Nano Tier (1k-10k followers)', desc: 'Extremely high niche engagement & micro-trust conversions.' },
+            { type: 'Micro', label: 'Micro Tier (10k-50k followers)', desc: 'Perfect balance of reach, affordability, and high trust.' },
+            { type: 'Mid-Tier', label: 'Mid-Tier (50k+ followers)', desc: 'High visual velocity, huge audience expansion, and visual scale.' }
+          ].map((tier) => (
+            <TouchableOpacity
+              key={tier.type}
+              onPress={() => setInfluencerTier(tier.type)}
+              style={[
+                styles.visibilityCard,
+                influencerTier === tier.type && { borderColor: '#000', backgroundColor: '#F9FAFB' }
+              ]}
+            >
+              <View style={[
+                styles.radioDot,
+                influencerTier === tier.type && { borderColor: brandColor, backgroundColor: brandColor }
+              ]}>
+                {influencerTier === tier.type && <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: 'white' }} />}
+              </View>
+              <View style={{ marginLeft: 16, flex: 1 }}>
+                <Text style={styles.visibilityLabel}>{tier.label}</Text>
+                <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>{tier.desc}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
+      </View>
+
+      {/* Link & Bio logistics */}
+      <View style={styles.inputContainer}>
+        <Text style={styles.inputLabel}>Link &amp; Bio Logistics</Text>
+        
+        {/* Link in bio Switch */}
+        <View style={styles.switchContainer}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.switchLabel}>Required Tracking Link in Bio</Text>
+            <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>Does creator need to host your discount referral link in bio?</Text>
+          </View>
+          <Switch
+            value={linkInBioRequired}
+            onValueChange={setLinkInBioRequired}
+            trackColor={{ false: '#D1D5DB', true: brandColor }}
+            thumbColor="#FFF"
+          />
+        </View>
+
+        {linkInBioRequired && (
+          <View style={{ paddingLeft: 12, paddingBottom: 16 }}>
+            <Text style={styles.inputLabel}>Link Duration</Text>
+            <View style={styles.dropdownContainer}>
+              {['24 Hours', '7 Days', '30 Days'].map((dur) => (
+                <TouchableOpacity
+                  key={dur}
+                  onPress={() => setLinkInBioDuration(dur)}
+                  style={[
+                    styles.dropdownItem,
+                    linkInBioDuration === dur && { backgroundColor: brandColor + '10', borderColor: brandColor }
+                  ]}
+                >
+                  <Clock size={14} color={linkInBioDuration === dur ? brandColor : '#6B7280'} />
+                  <Text style={[styles.dropdownItemText, linkInBioDuration === dur && { color: brandColor, fontWeight: '800' }]}>{dur}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Promo code input */}
+        <View style={styles.inputContainer}>
+          <Text style={styles.inputLabel}>Dedicated Promo Code</Text>
+          <TextInput
+            style={styles.textInput}
+            placeholder="e.g. LAVENDER15 (Assigned to creators to say in videos)"
+            value={discountCode}
+            onChangeText={setDiscountCode}
+          />
+        </View>
+      </View>
+
+      {/* Suggested minimum budgeting based on creator tiers */}
+      <View style={[styles.suggestionBanner, { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' }]}>
+        <Text style={[styles.suggestionTitle, { color: '#1D4ED8' }]}>💰 Suggested Influencer Escrow Minimum</Text>
+        <Text style={[styles.suggestionSubtitle, { color: '#1E40AF' }]}>
+          {influencerTier === 'Nano' && "Nano tier suggested minimum: ₹5,000 - ₹15,000 per post."}
+          {influencerTier === 'Micro' && "Micro tier suggested minimum: ₹15,000 - ₹45,000 per post."}
+          {influencerTier === 'Mid-Tier' && "Mid-Tier suggested minimum: ₹50,000+ per post."}
+        </Text>
       </View>
     </View>
   );
 
+  // Step 3: Creative Guardrails
   const renderStep3 = () => (
     <View>
       <View style={styles.stepHeader}>
         <Text style={styles.stepTitle}>Creative Guardrails</Text>
-        <Text style={styles.stepSubtitle}>Provide creative focus areas (mandatory fields).</Text>
+        <Text style={styles.stepSubtitle}>Establish rules and directions (mandatory fields).</Text>
       </View>
 
       <View style={styles.inputContainer}>
@@ -478,46 +812,38 @@ export const CampaignBuilderScreen = () => {
     </View>
   );
 
+  // Step 4: Product Logistics & Deadlines
   const renderStep4 = () => (
     <View>
       <View style={styles.stepHeader}>
-        <Text style={styles.stepTitle}>Legal &amp; Logistics</Text>
-        <Text style={styles.stepSubtitle}>Establish rules and calendar goals.</Text>
+        <Text style={styles.stepTitle}>Logistics &amp; Deadlines</Text>
+        <Text style={styles.stepSubtitle}>Identify product logistics and due dates.</Text>
       </View>
 
+      {/* Product Delivery logistics */}
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Usage Rights</Text>
-        <View style={{ flexDirection: 'row', gap: 12 }}>
-          {['Organic', 'Paid Ads'].map((u) => (
+        <Text style={styles.inputLabel}>Product Handshake</Text>
+        <View style={{ gap: 12 }}>
+          {[
+            'Shipping product directly',
+            'Providing free pickup promo code',
+            'No physical product needed'
+          ].map((way) => (
             <TouchableOpacity
-              key={u}
-              onPress={() => setUsageRights(u)}
+              key={way}
+              onPress={() => setProductLogistics(way)}
               style={[
                 styles.dropdownItem,
-                { flex: 1 },
-                usageRights === u && { backgroundColor: brandColor + '10', borderColor: brandColor }
+                productLogistics === way && { backgroundColor: brandColor + '10', borderColor: brandColor }
               ]}
             >
-              <Shield size={16} color={usageRights === u ? brandColor : '#6B7280'} />
-              <Text style={[styles.dropdownItemText, usageRights === u && { color: brandColor, fontWeight: '800' }]}>{u}</Text>
+              <Text style={[styles.dropdownItemText, productLogistics === way && { color: brandColor, fontWeight: '800' }]}>{way}</Text>
             </TouchableOpacity>
           ))}
         </View>
       </View>
 
-      <View style={styles.switchContainer}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.switchLabel}>FTC Compliance Badge Required</Text>
-          <Text style={{ fontSize: 13, color: '#6B7280', marginTop: 2 }}>Auto-attaches #ad disclosure tag inside workspace.</Text>
-        </View>
-        <Switch
-          value={ftcCompliance}
-          onValueChange={setFtcCompliance}
-          trackColor={{ false: '#D1D5DB', true: brandColor }}
-          thumbColor="#FFF"
-        />
-      </View>
-
+      {/* Draft Review Deadline */}
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Draft Review Deadline</Text>
         <View style={styles.dropdownContainer}>
@@ -537,6 +863,7 @@ export const CampaignBuilderScreen = () => {
         </View>
       </View>
 
+      {/* Go Live Deadline */}
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Campaign Go-Live Deadline</Text>
         <View style={styles.dropdownContainer}>
@@ -563,6 +890,7 @@ export const CampaignBuilderScreen = () => {
         <Text style={styles.stepSubtitle}>Determine how creators find and charge your brief.</Text>
       </View>
 
+      {/* Visibility */}
       <View style={styles.inputContainer}>
         <Text style={styles.inputLabel}>Campaign Visibility</Text>
         <View style={{ gap: 12 }}>
@@ -596,13 +924,14 @@ export const CampaignBuilderScreen = () => {
         </View>
       </View>
 
+      {/* ESCROW BUDGET INPUT */}
       <View style={styles.inputContainer}>
-        <Text style={styles.inputLabel}>Total Budget (₹)</Text>
+        <Text style={styles.inputLabel}>Escrow Budget Allocation (₹)</Text>
         <View style={styles.budgetInputContainer}>
           <Text style={styles.budgetCurrencySymbol}>₹</Text>
           <TextInput
             style={styles.budgetInput}
-            placeholder="5000"
+            placeholder="15000"
             placeholderTextColor="#D1D5DB"
             keyboardType="numeric"
             value={budget}
@@ -617,20 +946,27 @@ export const CampaignBuilderScreen = () => {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 10 }]}>
         <TouchableOpacity 
-          onPress={() => navigation.goBack()}
+          onPress={() => {
+            if (step === 0) navigation.goBack();
+            else prevStep();
+          }}
           style={styles.backBtn}
         >
           <ArrowLeft size={22} color="#000" />
         </TouchableOpacity>
         <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={styles.headerTitle}>Campaign Builder</Text>
+          <Text style={styles.headerTitle}>
+            {campaignType === 'ugc' && 'UGC Brief Creator'}
+            {campaignType === 'influencer' && 'Influencer Brief Creator'}
+            {!campaignType && 'Create New Campaign'}
+          </Text>
         </View>
         <View style={{ width: 40 }} />
       </View>
 
       {/* Modern Horizontal Progress bar */}
       <View style={styles.progressBarBg}>
-        <View style={[styles.progressBarFill, { backgroundColor: brandColor, width: `${(step/4)*100}%` }]} />
+        <View style={[styles.progressBarFill, { backgroundColor: brandColor, width: `${((step + 1)/5)*100}%` }]} />
       </View>
 
       <KeyboardAvoidingView 
@@ -640,10 +976,17 @@ export const CampaignBuilderScreen = () => {
         <ScrollView 
           showsVerticalScrollIndicator={false} 
           style={{ flex: 1 }}
-          contentContainerStyle={{ padding: 24, paddingBottom: 120, maxWidth: SCREEN_WIDTH > 768 ? 800 : undefined, alignSelf: SCREEN_WIDTH > 768 ? 'center' : undefined, width: '100%' }}
+          contentContainerStyle={{ 
+            padding: 24, 
+            paddingBottom: 120, 
+            maxWidth: SCREEN_WIDTH > 768 ? 800 : undefined, 
+            alignSelf: SCREEN_WIDTH > 768 ? 'center' : undefined, 
+            width: '100%' 
+          }}
         >
+          {step === 0 && renderStep0()}
           {step === 1 && renderStep1()}
-          {step === 2 && renderStep2()}
+          {step === 2 && (campaignType === 'ugc' ? renderUgcStep2() : renderInfluencerStep2())}
           {step === 3 && renderStep3()}
           {step === 4 && renderStep4()}
         </ScrollView>
@@ -651,7 +994,7 @@ export const CampaignBuilderScreen = () => {
 
       {/* Navigation Buttons */}
       <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        {step > 1 && (
+        {step > 0 && (
           <TouchableOpacity 
             onPress={prevStep}
             disabled={isSaving}
@@ -672,7 +1015,7 @@ export const CampaignBuilderScreen = () => {
           ) : (
             <>
               <Text style={{ color: '#FFF', fontWeight: '900', marginRight: 6 }}>
-                {step === 4 ? 'Find Creators' : 'Next Step'}
+                {step === 0 ? 'Select & Continue' : step === 4 ? 'Find Creators' : 'Next Step'}
               </Text>
               <ChevronRight size={20} color="#FFF" />
             </>
@@ -854,5 +1197,75 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center'
+  },
+  forkCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFF',
+    borderWidth: 2,
+    borderColor: '#F3F4F6',
+    borderRadius: 28,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 3
+  },
+  forkIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  forkTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#000'
+  },
+  forkSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    fontWeight: '600',
+    marginTop: 4
+  },
+  forkTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#EEF2F6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 10,
+    marginTop: 12,
+    alignSelf: 'flex-start'
+  },
+  forkTagText: {
+    fontSize: 12,
+    color: '#4F46E5',
+    fontWeight: '800'
+  },
+  suggestionBanner: {
+    backgroundColor: '#F0FDF4',
+    borderWidth: 1.5,
+    borderColor: '#BBF7D0',
+    padding: 16,
+    borderRadius: 20,
+    marginTop: 12
+  },
+  suggestionTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    color: '#15803D',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5
+  },
+  suggestionSubtitle: {
+    fontSize: 13,
+    color: '#166534',
+    fontWeight: '700',
+    marginTop: 4,
+    lineHeight: 18
   }
 });

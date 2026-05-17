@@ -103,25 +103,46 @@ export async function parseCampaignSummary(prompt: string) {
     throw new Error('AI Configuration Error: API key is missing. Please check your .env file.');
   }
 
-  const systemPrompt = `You are a professional campaign coordinator.
-Your task is to parse a campaign summary into a structured JSON configuration to pre-fill a campaign creator wizard.
+  const systemPrompt = `You are an elite campaign architect.
+Your task is to parse a campaign summary into a unified, high-fidelity JSON structure to pre-fill a campaign builder wizard.
 
-Expected JSON Output Schema:
+Determine the Campaign Type ("ugc" or "influencer"):
+- "ugc": If the brand needs content only for their own website, social feeds, or ads. Follower count doesn't matter.
+- "influencer": If the brand wants creators to post directly to their own feeds to reach their audiences.
+
+Unified JSON Output Schema:
 {
+  "campaignType": "ugc" or "influencer",
   "title": "A crisp, catchy, premium campaign title",
   "goal": "One of: Brand Awareness, User Acquisition, Engagement, Sales Conversion",
   "audience": "A concise description of target audience demographics based on the summary",
-  "platforms": ["Instagram", "TikTok"], // Array that can include: Instagram, TikTok, YouTube
-  "format": "One of: Reel, Short, Video, Story",
-  "quantity": 1, // An integer number of content deliverables
-  "hooks": "A creative hook idea appropriate for this campaign", 
-  "talkingPoints": "Key talking points about the product", 
-  "dos": "Do focus on the primary value proposition, do show the product clearly", 
-  "donts": "Don't use low quality lighting, don't mention competing brands", 
-  "usageRights": "One of: Organic, Paid Ads",
-  "ftcCompliance": true, // Boolean (default true)
-  "draftDeadline": "7 Days", // String draft deadline
-  "goLiveDeadline": "14 Days" // String go-live deadline
+  
+  // UGC-specific dynamic fields (prefill only if campaignType is "ugc")
+  "ugcQuantity": 2, // integer (default 2)
+  "ugcAspectRatio": "9:16 Vertical" or "16:9 Horizontal" or "1:1 Square",
+  "includeRawFootage": true, // boolean (default true)
+  "hookVariations": true, // boolean (default true)
+  "usageRights": "Digital Ads for 30 Days" or "Digital Ads for 90 Days" or "Perpetual / Full Buyout",
+  
+  // Influencer Collab-specific dynamic fields (prefill only if campaignType is "influencer")
+  "platforms": ["TikTok", "Instagram"], // Array containing: TikTok, Instagram, YouTube
+  "format": "Reel" or "Short" or "Video" or "Story",
+  "influencerTier": "Nano" or "Micro" or "Mid-Tier",
+  "linkInBioRequired": true, // boolean
+  "linkInBioDuration": "24 Hours" or "7 Days" or "30 Days",
+  "discountCode": "PROMOCODE" or empty string,
+
+  // Shared Foundation
+  "hooks": "A mandatory engaging hook concept", 
+  "talkingPoints": "Key product benefits or features to present", 
+  "dos": "Specific instructions on visual showcase (e.g. 'Do show product up close')", 
+  "donts": "Specific restrictions (e.g. 'Don't mention competitors')", 
+  
+  // Logistics
+  "productLogistics": "Shipping product directly" or "Providing free pickup code" or "No physical product",
+  "draftDeadline": "7 Days" or "14 Days", 
+  "goLiveDeadline": "14 Days" or "30 Days",
+  "budget": 5000 // A suggested budget integer based on inputs (e.g. flat rates 10000-25000 for UGC, or minimum tier pricing for influencer: Nano 5000, Micro 15000, Mid-Tier 50000)
 }
 
 Ensure the output is a valid JSON object. Do not include any text outside of the JSON object.`;
