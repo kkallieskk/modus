@@ -173,46 +173,68 @@ export const BrandSettingsScreen = () => {
 
   // ─── LOGOUT ───────────────────────────────────────────────────────────────
   const handleLogout = () => {
-    Alert.alert(
-      'Log Out',
-      'Are you sure you want to log out of your brand account?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Log Out',
-          style: 'destructive',
-          onPress: async () => {
-            await supabase.auth.signOut();
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to log out of your brand account?');
+      if (confirmed) {
+        supabase.auth.signOut();
+      }
+    } else {
+      Alert.alert(
+        'Log Out',
+        'Are you sure you want to log out of your brand account?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Log Out',
+            style: 'destructive',
+            onPress: async () => {
+              await supabase.auth.signOut();
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   // ─── DELETE ACCOUNT ───────────────────────────────────────────────────────
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setSaving(true);
-              const { error } = await supabase.rpc('delete_user_account');
-              if (error) throw error;
-              await supabase.auth.signOut();
-            } catch (err: any) {
-              setSaving(false);
-              Alert.alert('Error', err.message || 'Could not delete account.');
-            }
+    const performDelete = async () => {
+      try {
+        setSaving(true);
+        const { error } = await supabase.rpc('delete_user_account');
+        if (error) throw error;
+        await supabase.auth.signOut();
+      } catch (err: any) {
+        setSaving(false);
+        if (Platform.OS === 'web') {
+          window.alert(err.message || 'Could not delete account.');
+        } else {
+          Alert.alert('Error', err.message || 'Could not delete account.');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.'
+      );
+      if (confirmed) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Account',
+        'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: performDelete,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   // ─── DEV TOOLS ────────────────────────────────────────────────────────────

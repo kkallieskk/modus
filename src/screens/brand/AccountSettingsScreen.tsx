@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert, ActivityIndicator, Platform } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { Bell, Shield, HelpCircle, LogOut, AlertTriangle, Sparkles, ChevronRight } from 'lucide-react-native';
 
@@ -11,42 +11,72 @@ export const AccountSettingsScreen = () => {
     try {
       const { data, error } = await supabase.functions.invoke('backfill-embeddings');
       if (error) throw new Error(error.message || 'Failed to execute Edge Function');
-      Alert.alert('Success', data.message || 'Backfill complete.');
+      if (Platform.OS === 'web') {
+        window.alert(data.message || 'Backfill complete.');
+      } else {
+        Alert.alert('Success', data.message || 'Backfill complete.');
+      }
     } catch (err: any) {
-      Alert.alert('Error', err.message);
+      if (Platform.OS === 'web') {
+        window.alert(err.message);
+      } else {
+        Alert.alert('Error', err.message);
+      }
     } finally {
       setIsBackfilling(false);
     }
   };
 
   const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Log Out', style: 'destructive', onPress: async () => await supabase.auth.signOut() },
-    ]);
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to log out?');
+      if (confirmed) {
+        supabase.auth.signOut();
+      }
+    } else {
+      Alert.alert('Log Out', 'Are you sure?', [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Log Out', style: 'destructive', onPress: async () => await supabase.auth.signOut() },
+      ]);
+    }
   };
 
   const handleDeleteAccount = () => {
-    Alert.alert(
-      'Delete Account',
-      'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              const { error } = await supabase.rpc('delete_user_account');
-              if (error) throw error;
-              await supabase.auth.signOut();
-            } catch (err: any) {
-              Alert.alert('Error', err.message || 'Could not delete account.');
-            }
+    const performDelete = async () => {
+      try {
+        const { error } = await supabase.rpc('delete_user_account');
+        if (error) throw error;
+        await supabase.auth.signOut();
+      } catch (err: any) {
+        if (Platform.OS === 'web') {
+          window.alert(err.message || 'Could not delete account.');
+        } else {
+          Alert.alert('Error', err.message || 'Could not delete account.');
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.'
+      );
+      if (confirmed) {
+        performDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Account',
+        'Are you absolutely sure you want to permanently delete your account? This action cannot be undone and all your data will be erased.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: performDelete,
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
   };
 
   return (
