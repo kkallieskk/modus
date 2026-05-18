@@ -166,7 +166,7 @@ export const CreatorProfileScreen = () => {
 
   // 3. Parse live Instagram metrics from social_link JSON
   let followersText = '0';
-  let engagementText = '3.5%';
+  let engagementText = '0%';
   let nicheList = ['Lifestyle', 'Fashion', 'Comedy', 'Fitness'];
   let parsedSocialStats: any = null;
 
@@ -188,7 +188,8 @@ export const CreatorProfileScreen = () => {
           followersText = String(count);
         }
 
-        const rate = parsedSocialStats.engagementRate || parsedSocialStats.average_engagement_rate || 3.5;
+        const rate = typeof parsedSocialStats.engagementRate === 'number' ? parsedSocialStats.engagementRate : 
+                     (typeof parsedSocialStats.average_engagement_rate === 'number' ? parsedSocialStats.average_engagement_rate : 0);
         engagementText = rate.toFixed(1) + '%';
       }
     } catch (e) {

@@ -106,8 +106,8 @@ export const CreatorOnboardingScreen = () => {
             loaded[acc.platform] = {
               handle: acc.username,
               displayName: acc.display_name || acc.username,
-              followersCount: acc.follower_count,
-              engagementRate: acc.engagement_rate || 3.5,
+              followersCount: acc.follower_count || 0,
+              engagementRate: typeof acc.engagement_rate === 'number' ? acc.engagement_rate : 0,
               niche: 'Lifestyle',
               contentStyle: 'Creator Content',
               avatarUrl: acc.profile_picture_url || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=200&auto=format&fit=crop',
@@ -329,7 +329,8 @@ export const CreatorOnboardingScreen = () => {
         displayName: verifiedInstagramStats.displayName || verifiedInstagramStats.display_name || verifiedInstagramStats.handle || '',
         followersCount: Number(verifiedInstagramStats.followersCount) || Number(verifiedInstagramStats.follower_count) || Number(verifiedInstagramStats.followers) || 0,
         avatarUrl: verifiedInstagramStats.profilePictureUrl || verifiedInstagramStats.profile_picture_url || verifiedInstagramStats.avatarUrl || '',
-        engagementRate: Number(verifiedInstagramStats.engagementRate) || Number(verifiedInstagramStats.average_engagement_rate) || 3.5,
+        engagementRate: typeof verifiedInstagramStats.engagementRate === 'number' ? verifiedInstagramStats.engagementRate : 
+                        (typeof verifiedInstagramStats.average_engagement_rate === 'number' ? verifiedInstagramStats.average_engagement_rate : 0),
         niche: verifiedInstagramStats.niche || 'Lifestyle',
         contentStyle: verifiedInstagramStats.contentStyle || 'Creator Content',
         recentPostThemes: verifiedInstagramStats.recentPostThemes || [],
