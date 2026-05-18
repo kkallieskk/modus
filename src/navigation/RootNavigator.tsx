@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
-import { ActivityIndicator, View, Text } from 'react-native';
+import { ActivityIndicator, View, Text, StyleSheet } from 'react-native';
 
 // Screens & Stacks
 import { AdminStack } from './AdminStack';
@@ -38,14 +38,14 @@ export const RootNavigator = () => {
 
   if (authLoading || profileLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
+      <View style={styles.loadingContainer}>
         <ActivityIndicator size="large" color="#000" />
       </View>
     );
   }
 
   // Check if onboarding is completed
-  const needsOnboarding = userProfile?.onboarding_completed === false;
+  const needsOnboarding = !userProfile || userProfile.onboarding_completed === false;
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -71,11 +71,25 @@ export const RootNavigator = () => {
         <Stack.Screen name="InfluencerRoot" component={InfluencerStack} />
       ) : (
         <Stack.Screen name="AppPlaceholder" component={() => (
-          <View className="flex-1 items-center justify-center bg-white">
-            <Text className="text-xl font-bold">Welcome {userProfile?.role}</Text>
+          <View style={styles.loadingContainer}>
+            <Text style={styles.placeholderText}>Welcome {userProfile?.role}</Text>
           </View>
         )} />
       )}
     </Stack.Navigator>
   );
 };
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+  },
+  placeholderText: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#000000',
+  },
+});
