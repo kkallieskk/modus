@@ -28,7 +28,10 @@ import {
   TrendingUp,
   Award,
   Share2,
-  Copy
+  Copy,
+  Users,
+  PieChart,
+  MapPin
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -327,6 +330,39 @@ export const CreatorProfileScreen = () => {
           </ScrollView>
         </View>
 
+        {/* Verified Audience Demographics */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Users size={18} color="#000" />
+              <Text style={styles.sectionTitle}>Audience Demographics</Text>
+            </View>
+            <View style={styles.verifiedTag}>
+              <Award size={12} color="#10B981" />
+              <Text style={styles.verifiedTagText}>Meta Verified</Text>
+            </View>
+          </View>
+
+          {parsedSocialStats?.audienceDemographics ? (
+            <View style={styles.demographicsCard}>
+              <Text style={styles.demoPlaceholder}>
+                (Demographics charts will render here based on {Object.keys(parsedSocialStats.audienceDemographics).length} metric nodes)
+              </Text>
+            </View>
+          ) : (
+            <LinearGradient
+              colors={['#F3F4F6', '#E5E7EB']}
+              style={styles.demoNudgeCard}
+            >
+              <TrendingUp size={24} color="#6B7280" />
+              <Text style={styles.demoNudgeTitle}>Grow Your Audience</Text>
+              <Text style={styles.demoNudgeText}>
+                Meta requires at least 100 followers to unlock verified audience insights. Focus on consistent posting to unlock this powerful brand magnet!
+              </Text>
+            </LinearGradient>
+          )}
+        </View>
+
         {/* Niche Tags */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Niches & Expertise</Text>
@@ -585,5 +621,54 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#E1306C',
     flex: 1,
+  },
+  // Demographics
+  verifiedTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  verifiedTagText: {
+    color: '#065F46',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  demographicsCard: {
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  demoPlaceholder: {
+    color: '#6B7280',
+    fontSize: 13,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  demoNudgeCard: {
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  demoNudgeTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111',
+    marginTop: 12,
+    marginBottom: 6,
+  },
+  demoNudgeText: {
+    fontSize: 13,
+    color: '#4B5563',
+    textAlign: 'center',
+    lineHeight: 18,
   },
 });

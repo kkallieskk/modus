@@ -142,7 +142,7 @@ export async function linkInstagramAccount(userId: string): Promise<{
   const authParams = new URLSearchParams({
     client_id: instagramAppId,
     redirect_uri: edgeFunctionCallbackUrl,
-    scope: 'instagram_business_basic',
+    scope: 'instagram_business_basic,instagram_business_manage_insights',
     response_type: 'code',
     state: stateStr, // Pass userId and optionally the web redirect URL
   });
