@@ -15,6 +15,7 @@ import {
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
 import { supabase } from '@/lib/supabase';
+import { linkInstagramAccount } from '@/lib/socialAuth';
 import { 
   Settings, 
   Edit3, 
@@ -37,6 +38,7 @@ export const CreatorProfileScreen = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<any>(null);
   const [reputation, setReputation] = useState<any>(null);
+  const [isLinkingInstagram, setIsLinkingInstagram] = useState(false);
 
   useEffect(() => {
     if (isFocused) {
@@ -111,6 +113,47 @@ export const CreatorProfileScreen = () => {
     const profileLink = `https://modus.app/u/${profile.id}`;
     Clipboard.setString(profileLink);
     Alert.alert('Link Copied', 'Your Media Kit link has been copied to your clipboard!');
+  };
+
+  const handleLinkInstagram = async () => {
+    try {
+      setIsLinkingInstagram(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { Alert.alert('Error', 'Please log in first.'); return; }
+
+      // Clear stale callbacks
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('instagram_oauth_callback');
+        window.localStorage.removeItem('instagram_oauth_error');
+      }
+
+      await linkInstagramAccount(user.id);
+
+      // Poll for up to 10 seconds for the DB to update
+      let success = false;
+      for (let i = 0; i < 10; i++) {
+        await new Promise(r => setTimeout(r, 1000));
+        const { data } = await supabase.from('profiles').select('social_link').eq('id', user.id).single();
+        if (data?.social_link) {
+          try {
+            const s = typeof data.social_link === 'string' ? JSON.parse(data.social_link) : data.social_link;
+            if (s?.instagram?.handle) {
+              success = true;
+              await fetchProfileData();
+              Alert.alert('🎉 Linked!', `@${s.instagram.handle} successfully connected!`);
+              break;
+            }
+          } catch (_) {}
+        }
+      }
+      if (!success) {
+        Alert.alert('Timeout', 'Could not verify connection. Please try again.');
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Something went wrong.');
+    } finally {
+      setIsLinkingInstagram(false);
+    }
   };
 
   if (loading) {
@@ -295,6 +338,50 @@ export const CreatorProfileScreen = () => {
           </View>
         </View>
 
+        {/* Instagram Link Banner — shown only if NOT linked yet */}
+        {!parsedSocialStats && (
+          <View style={styles.igBanner}>
+            <View style={styles.igBannerLeft}>
+              <Instagram size={22} color="#E1306C" />
+              <View style={{ marginLeft: 12, flex: 1 }}>
+                <Text style={styles.igBannerTitle}>Link your Instagram</Text>
+                <Text style={styles.igBannerSub}>Let brands discover you & see your real stats</Text>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={styles.igBannerBtn}
+              onPress={handleLinkInstagram}
+              disabled={isLinkingInstagram}
+            >
+              {isLinkingInstagram
+                ? <ActivityIndicator size="small" color="#FFF" />
+                : <Text style={styles.igBannerBtnText}>Connect</Text>
+              }
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {/* Developer Settings — visible only in dev/testing phase */}
+        {__DEV__ && (
+          <View style={styles.devSection}>
+            <View style={styles.devSectionHeader}>
+              <Text style={styles.devSectionTitle}>⚙️ Developer Settings</Text>
+              <Text style={styles.devSectionSub}>Only visible in development builds</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.devBtn, isLinkingInstagram && { opacity: 0.6 }]}
+              onPress={handleLinkInstagram}
+              disabled={isLinkingInstagram}
+            >
+              <Instagram size={18} color="#E1306C" />
+              <Text style={styles.devBtnText}>
+                {parsedSocialStats ? `Re-link Instagram (@${parsedSocialStats.handle})` : 'Link Instagram Account'}
+              </Text>
+              {isLinkingInstagram && <ActivityIndicator size="small" color="#E1306C" style={{ marginLeft: 8 }} />}
+            </TouchableOpacity>
+          </View>
+        )}
+
         <View style={{ height: 100 }} />
       </ScrollView>
     </SafeAreaView>
@@ -414,5 +501,88 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  // Instagram Link Banner
+  igBanner: {
+    marginHorizontal: 20,
+    marginTop: 8,
+    marginBottom: 4,
+    backgroundColor: '#FFF0F5',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#FBCFE8',
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  igBannerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 12,
+  },
+  igBannerTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111',
+  },
+  igBannerSub: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  igBannerBtn: {
+    backgroundColor: '#E1306C',
+    borderRadius: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    minWidth: 80,
+    alignItems: 'center',
+  },
+  igBannerBtnText: {
+    color: '#FFF',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  // Developer Settings
+  devSection: {
+    marginHorizontal: 20,
+    marginTop: 24,
+    borderRadius: 16,
+    backgroundColor: '#F8F8F8',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    padding: 16,
+  },
+  devSectionHeader: {
+    marginBottom: 12,
+  },
+  devSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#374151',
+  },
+  devSectionSub: {
+    fontSize: 12,
+    color: '#9CA3AF',
+    marginTop: 2,
+  },
+  devBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#FFF',
+    borderWidth: 1,
+    borderColor: '#FBCFE8',
+    borderRadius: 12,
+    padding: 14,
+  },
+  devBtnText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#E1306C',
+    flex: 1,
   },
 });
