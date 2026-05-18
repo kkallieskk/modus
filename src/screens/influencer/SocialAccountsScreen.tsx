@@ -155,50 +155,46 @@ export const SocialAccountsScreen = () => {
 
       // 2. Fetch live metrics and stats by calling our secure Supabase Edge Function!
       let insights: any = null;
-      try {
-        console.log(`[SocialAuth] Calling instagram-oauth Edge Function to exchange code & sync profile...`);
-        const { data: { session } } = await supabase.auth.getSession();
+      console.log(`[SocialAuth] Calling instagram-oauth Edge Function to exchange code & sync profile...`);
+      const { data: { session } } = await supabase.auth.getSession();
 
-        const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/instagram-oauth`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${session?.access_token || ''}`,
-            'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
-          },
-          body: JSON.stringify({
-            code: oauthResult.code,
-            state: user?.id
-          })
-        });
+      const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/instagram-oauth`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session?.access_token || ''}`,
+          'apikey': process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || ''
+        },
+        body: JSON.stringify({
+          code: oauthResult.code,
+          state: user?.id
+        })
+      });
 
-        if (response.ok) {
-          const edgeResult = await response.json();
-          if (edgeResult.success) {
-            insights = {
-              handle: edgeResult.username,
-              displayName: edgeResult.displayName,
-              followersCount: edgeResult.followersCount,
-              avatarUrl: edgeResult.profilePictureUrl,
-              engagementRate: edgeResult.engagementRate || 4.85,
-              niche: edgeResult.niche || 'Lifestyle',
-              contentStyle: edgeResult.contentStyle || 'Modern & minimal lifestyle aesthetic',
-              recentPostThemes: edgeResult.recentPostThemes || ["Lifestyle vlog", "Product showcase"],
-              isPrivateOrEstimated: false,
-              audienceGenderSplit: { female: 70, male: 30 },
-              audienceAgeBracket: "18-24",
-              topGeos: ["India", "United States"]
-            };
-          }
-        }
-      } catch (edgeErr) {
-        console.warn(`[SocialAuth] Failed to call instagram-oauth Edge Function, falling back to search insights:`, edgeErr);
+      if (!response.ok) {
+        const errText = await response.text();
+        throw new Error(`Meta App verification failed: ${errText}`);
       }
 
-      if (!insights) {
-        // Fallback if Edge Function fails or returns error
-        insights = await fetchSocialInsights(oauthResult.handle, platform);
+      const edgeResult = await response.json();
+      if (!edgeResult.success) {
+        throw new Error(edgeResult.error || 'Meta App returned integration error.');
       }
+
+      insights = {
+        handle: edgeResult.username,
+        displayName: edgeResult.displayName,
+        followersCount: edgeResult.followersCount,
+        avatarUrl: edgeResult.profilePictureUrl,
+        engagementRate: edgeResult.engagementRate || 4.85,
+        niche: edgeResult.niche || 'Lifestyle',
+        contentStyle: edgeResult.contentStyle || 'Modern & minimal lifestyle aesthetic',
+        recentPostThemes: edgeResult.recentPostThemes || ["Lifestyle vlog", "Product showcase"],
+        isPrivateOrEstimated: false,
+        audienceGenderSplit: { female: 70, male: 30 },
+        audienceAgeBracket: "18-24",
+        topGeos: ["India", "United States"]
+      };
 
       // Save OAuth credentials along with insights
       const completeInsights = {

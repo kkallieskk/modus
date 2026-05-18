@@ -116,11 +116,26 @@ serve(async (req) => {
       } else {
         console.warn("[InstagramOAuth] Meta API credentials missing in Edge runtime. Processing in high-fidelity simulation mode...");
         
-        // Let's generate a highly realistic set of details if the handle is the user's handle
         if (code.includes("kk.23.02") || code.includes("kk")) {
           username = "kk.23.02";
-          displayName = "Karan Kallies";
           followerCount = 142800;
+        }
+
+        if (creatorId) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", creatorId)
+            .single();
+          
+          if (profile && profile.full_name) {
+            displayName = profile.full_name;
+            console.log(`[InstagramOAuth] Loaded creator full_name from profile: ${displayName}`);
+          } else {
+            displayName = username;
+          }
+        } else {
+          displayName = username;
         }
       }
 
