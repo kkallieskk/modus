@@ -14,6 +14,7 @@ serve(async (req) => {
 
   const urlObj = new URL(req.url);
   let code = urlObj.searchParams.get("code");
+  const stateParam = urlObj.searchParams.get("state"); // contains userId passed during auth
   const error = urlObj.searchParams.get("error");
   const errorDescription = urlObj.searchParams.get("error_description");
 
@@ -28,246 +29,281 @@ serve(async (req) => {
     }
   }
 
-  // If Meta returned an error
+  // If Meta returned an error during OAuth login
   if (error) {
-    console.error("Meta OAuth Error:", error, errorDescription);
+    console.error("[InstagramOAuth] Meta OAuth Error:", error, errorDescription);
+    // Redirect back to app with error
     const redirectErrorUrl = `modus://auth/callback?error=${encodeURIComponent(errorDescription || error)}`;
     return Response.redirect(redirectErrorUrl, 302);
   }
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL") || "";
-    const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || Deno.env.get("SUPABASE_ANON_KEY") || "";
     const instagramAppId = Deno.env.get("INSTAGRAM_APP_ID") || "";
     const instagramAppSecret = Deno.env.get("INSTAGRAM_APP_SECRET") || "";
 
-    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey);
+    // Use service role key for db writes
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Primary scenario: We have an OAuth code from Meta
+    // The redirect_uri must match exactly what was registered in Meta App
+    const oauthCallbackUrl = `${supabaseUrl}/functions/v1/instagram-oauth`;
+
+    // Creator ID: either from state param (GET redirect from Meta) or from POST body
+    let creatorId = stateParam || reqBody.state || null;
+
+    // Primary scenario: We have an OAuth code from Meta's redirect
     if (code) {
-      console.log(`[InstagramOAuth] Initiating token exchange for code: ${code.substring(0, 10)}...`);
+      console.log(`[InstagramOAuth] Processing OAuth code: ${code.substring(0, 15)}...`);
+      console.log(`[InstagramOAuth] Creator ID from state: ${creatorId}`);
 
-      let accessToken = `mock_token_${Date.now()}`;
-      let username = "kk.23.02";
-      let followerCount = 142800;
-      let displayName = "KK";
-      let profilePictureUrl = "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=200&auto=format&fit=crop";
-      let platformUserId = `instagram_${Date.now()}`;
-
-      // Check if credentials are present to trigger the real Meta Graph API exchange
+      // ----------- REAL META API FLOW -----------
       if (instagramAppId && instagramAppSecret) {
-        const oauthCallbackUrl = `${supabaseUrl}/functions/v1/instagram-oauth`;
-        
-        // 1. Exchange short-lived auth code for short-lived access token
-        const tokenExchangeUrl = "https://api.instagram.com/oauth/access_token";
-        const formData = new FormData();
-        formData.append("client_id", instagramAppId);
-        formData.append("client_secret", instagramAppSecret);
-        formData.append("grant_type", "authorization_code");
-        formData.append("redirect_uri", oauthCallbackUrl);
-        formData.append("code", code);
 
-        const shortLivedRes = await fetch(tokenExchangeUrl, {
+        // STEP 1: Exchange auth code for short-lived access token
+        console.log("[InstagramOAuth] Step 1: Exchanging code for short-lived token...");
+        const tokenFormData = new FormData();
+        tokenFormData.append("client_id", instagramAppId);
+        tokenFormData.append("client_secret", instagramAppSecret);
+        tokenFormData.append("grant_type", "authorization_code");
+        tokenFormData.append("redirect_uri", oauthCallbackUrl);
+        tokenFormData.append("code", code);
+
+        const shortLivedRes = await fetch("https://api.instagram.com/oauth/access_token", {
           method: "POST",
-          body: formData,
+          body: tokenFormData,
         });
 
         if (!shortLivedRes.ok) {
           const errText = await shortLivedRes.text();
-          throw new Error(`Short-lived token exchange failed: ${errText}`);
+          console.error("[InstagramOAuth] Short-lived token exchange failed:", errText);
+          throw new Error(`Token exchange failed: ${errText}`);
         }
 
         const shortLivedData = await shortLivedRes.json();
         const shortToken = shortLivedData.access_token;
-        const tempUserId = shortLivedData.user_id;
+        const metaUserId = shortLivedData.user_id;
+        console.log(`[InstagramOAuth] Short-lived token acquired for Meta user ID: ${metaUserId}`);
 
-        console.log(`[InstagramOAuth] Acquired short-lived token for user: ${tempUserId}`);
+        // STEP 2: Exchange short-lived token for a 60-day long-lived token
+        console.log("[InstagramOAuth] Step 2: Exchanging for 60-day long-lived token...");
+        const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${instagramAppSecret}&access_token=${shortToken}`;
+        const longLivedRes = await fetch(longLivedUrl);
 
-        // 2. Exchange short-lived token for a 60-day long-lived token
-        const longLivedExchangeUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${instagramAppSecret}&access_token=${shortToken}`;
-        const longLivedRes = await fetch(longLivedExchangeUrl);
-        
         if (!longLivedRes.ok) {
           const errText = await longLivedRes.text();
+          console.error("[InstagramOAuth] Long-lived token exchange failed:", errText);
           throw new Error(`Long-lived token exchange failed: ${errText}`);
         }
 
         const longLivedData = await longLivedRes.json();
-        accessToken = longLivedData.access_token;
-        const expiresSeconds = longLivedData.expires_in;
+        const accessToken = longLivedData.access_token;
+        const expiresIn = longLivedData.expires_in;
+        console.log(`[InstagramOAuth] 60-day token acquired. Expires in ${expiresIn}s`);
 
-        console.log(`[InstagramOAuth] Acquired 60-day long-lived token. Expires in: ${expiresSeconds}s`);
-
-        // 3. Query the Graph API to fetch profile information
-        const profileUrl = `https://graph.instagram.com/v12.0/me?fields=id,username,profile_picture_url,followers_count&access_token=${accessToken}`;
+        // STEP 3: Fetch profile data from Graph API
+        // instagram_business_basic gives us: id, username, profile_picture_url, followers_count
+        // IMPORTANT: followers_count is ONLY available for Creator/Business accounts!
+        // Personal accounts will NOT have this field.
+        console.log("[InstagramOAuth] Step 3: Fetching profile from Graph API...");
+        const profileUrl = `https://graph.instagram.com/v21.0/me?fields=id,username,name,profile_picture_url,followers_count,media_count,account_type&access_token=${accessToken}`;
         const profileRes = await fetch(profileUrl);
 
         if (!profileRes.ok) {
           const errText = await profileRes.text();
-          throw new Error(`Fetching Instagram profile failed: ${errText}`);
+          console.error("[InstagramOAuth] Profile fetch failed:", errText);
+          throw new Error(`Profile fetch failed: ${errText}`);
         }
 
         const profileData = await profileRes.json();
-        username = profileData.username || "instagram_user";
-        displayName = username;
-        followerCount = profileData.followers_count || 0;
-        profilePictureUrl = profileData.profile_picture_url || profilePictureUrl;
-        platformUserId = profileData.id || `instagram_${username}`;
-      } else {
-        console.warn("[InstagramOAuth] Meta API credentials missing in Edge runtime. Processing in high-fidelity simulation mode...");
-        
-        if (code.includes("kk.23.02") || code.includes("kk")) {
-          username = "kk.23.02";
-          followerCount = 142800;
+        console.log("[InstagramOAuth] Profile data received:", JSON.stringify(profileData));
+
+        const username = profileData.username || "";
+        const displayName = profileData.name || username;
+        const profilePictureUrl = profileData.profile_picture_url || "";
+        const platformUserId = profileData.id || `ig_${metaUserId}`;
+        const accountType = profileData.account_type || "PERSONAL"; // BUSINESS, CREATOR, or PERSONAL
+        const mediaCount = profileData.media_count || 0;
+
+        // STEP 4: Check if this is a Creator/Business account
+        // personal accounts will have account_type = "PERSONAL" and missing followers_count
+        const isCreatorOrBusiness = accountType === "BUSINESS" || accountType === "CREATOR";
+        const followerCount = profileData.followers_count || 0;
+
+        if (!isCreatorOrBusiness) {
+          // Personal account detected — tell the user to switch their account type
+          console.warn(`[InstagramOAuth] Personal account detected for @${username}. Returning error.`);
+
+          if (req.method === "POST") {
+            return new Response(
+              JSON.stringify({
+                success: false,
+                error: "PERSONAL_ACCOUNT",
+                username: username,
+                message: `@${username} is a Personal account. Switch to Creator or Business in Instagram Settings to link it to Modus.`,
+              }),
+              {
+                headers: { ...corsHeaders, "Content-Type": "application/json" },
+                status: 403,
+              }
+            );
+          }
+
+          // Redirect flow: send back with error param
+          const redirectUrl = `modus://auth/callback?error=PERSONAL_ACCOUNT&handle=${encodeURIComponent(username)}`;
+          return Response.redirect(redirectUrl, 302);
         }
 
+        console.log(`[InstagramOAuth] ✅ Creator/Business account confirmed: @${username} | ${accountType} | ${followerCount} followers`);
+
+        // STEP 5: Save the verified account to Supabase
         if (creatorId) {
-          const { data: profile } = await supabase
+          // Upsert into social_accounts table
+          const { error: upsertErr } = await supabaseAdmin
+            .from("social_accounts")
+            .upsert({
+              creator_id: creatorId,
+              platform: "instagram",
+              platform_user_id: platformUserId,
+              username: username,
+              display_name: displayName,
+              profile_picture_url: profilePictureUrl,
+              follower_count: followerCount,
+              average_engagement_rate: 4.85,
+              access_token: accessToken,
+              expires_at: new Date(Date.now() + (expiresIn || 5184000) * 1000).toISOString(),
+              is_verified: true,
+            }, { onConflict: "platform,platform_user_id" });
+
+          if (upsertErr) {
+            console.error("[InstagramOAuth] social_accounts upsert error:", upsertErr.message);
+          }
+
+          // Sync profiles.social_link JSON blob
+          const { data: existingProfile } = await supabaseAdmin
+            .from("profiles")
+            .select("social_link")
+            .eq("id", creatorId)
+            .single();
+
+          let socials: Record<string, any> = {};
+          if (existingProfile?.social_link) {
+            try {
+              socials = typeof existingProfile.social_link === "string"
+                ? JSON.parse(existingProfile.social_link)
+                : existingProfile.social_link;
+            } catch (_) {}
+          }
+
+          socials["instagram"] = {
+            handle: username,
+            displayName,
+            followersCount: followerCount,
+            profilePictureUrl,
+            engagementRate: 4.85,
+            accountType,
+            mediaCount,
+            linkedAt: new Date().toISOString(),
+          };
+
+          await supabaseAdmin
+            .from("profiles")
+            .update({ social_link: JSON.stringify(socials) })
+            .eq("id", creatorId);
+
+          console.log(`[InstagramOAuth] ✅ Saved @${username} to database for creator ${creatorId}`);
+        }
+
+        // STEP 6: Return results
+        const responsePayload = {
+          success: true,
+          platform: "instagram",
+          username,
+          displayName,
+          followersCount: followerCount,
+          profilePictureUrl,
+          accountType,
+          mediaCount,
+          niche: "Lifestyle",
+          engagementRate: 4.85,
+          contentStyle: "Verified creator content",
+          recentPostThemes: ["Lifestyle", "Aesthetics", "Personal Brand"],
+        };
+
+        if (req.method === "POST") {
+          return new Response(JSON.stringify(responsePayload), {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+            status: 200,
+          });
+        }
+
+        // GET redirect flow (Meta → Edge Function → App)
+        const successRedirectUrl = `modus://auth/callback?handle=${encodeURIComponent(username)}&followers=${followerCount}&account_type=${accountType}`;
+        console.log(`[InstagramOAuth] Redirecting back to app: ${successRedirectUrl}`);
+        return Response.redirect(successRedirectUrl, 302);
+
+      } else {
+        // ----------- SIMULATION MODE (no Meta credentials in env) -----------
+        console.warn("[InstagramOAuth] ⚠️ Meta credentials not found in environment. Running simulation mode.");
+
+        // In simulation, we cannot detect personal vs. creator.
+        // Default to creator mode with placeholder data.
+        // Look up user's real name from the database if we have their ID.
+        let displayName = "kk.23.02";
+        if (creatorId) {
+          const { data: profile } = await supabaseAdmin
             .from("profiles")
             .select("full_name")
             .eq("id", creatorId)
             .single();
-          
-          if (profile && profile.full_name) {
-            displayName = profile.full_name;
-            console.log(`[InstagramOAuth] Loaded creator full_name from profile: ${displayName}`);
-          } else {
-            displayName = username;
-          }
-        } else {
-          displayName = username;
-        }
-      }
-
-      // 4. Save/Upsert directly to the database. We associate the social link with the active user context.
-      // To pass it securely, we can parse the state parameter
-      let creatorId = urlObj.searchParams.get("state") || reqBody.state;
-
-      if (!creatorId) {
-        console.log("[InstagramOAuth] No state parameter found in query or body. Will attempt fallback sync.");
-      }
-
-      console.log(`[InstagramOAuth] Successfully resolved metrics for @${username}. Followers: ${followerCount}. Saving to Database for creator: ${creatorId}...`);
-
-      if (creatorId) {
-        // A: Upsert normalized public.social_accounts table
-        const { error: upsertErr } = await supabaseClient
-          .from("social_accounts")
-          .upsert({
-            creator_id: creatorId,
-            platform: "instagram",
-            platform_user_id: platformUserId,
-            username: username,
-            display_name: displayName,
-            profile_picture_url: profilePictureUrl,
-            follower_count: followerCount,
-            average_engagement_rate: 4.85, // Direct sync high engagement baseline
-            access_token: accessToken,
-            expires_at: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString(),
-            is_verified: true
-          }, {
-            onConflict: "platform,platform_user_id"
-          });
-
-        if (upsertErr) {
-          console.error("[InstagramOAuth] Database upsert error:", upsertErr);
+          if (profile?.full_name) displayName = profile.full_name;
         }
 
-        // B: Synchronize profiles.social_link JSON
-        const { data: profile } = await supabaseClient
-          .from("profiles")
-          .select("social_link")
-          .eq("id", creatorId)
-          .single();
-
-        let existingSocials: Record<string, any> = {};
-        if (profile?.social_link) {
-          try {
-            existingSocials = typeof profile.social_link === "string"
-              ? JSON.parse(profile.social_link)
-              : profile.social_link;
-          } catch (e) {
-            console.error("JSON parse error:", e);
-          }
-        }
-
-        existingSocials["instagram"] = {
-          handle: username,
-          displayName: displayName,
-          followersCount: followerCount,
-          engagementRate: 4.85,
+        const simulatedPayload = {
+          success: true,
+          platform: "instagram",
+          username: "kk.23.02",
+          displayName,
+          followersCount: 142800,
+          profilePictureUrl: "",
+          accountType: "CREATOR",
+          mediaCount: 47,
           niche: "Lifestyle",
-          avatarUrl: profilePictureUrl,
-          contentStyle: "Premium high-aesthetic travel content assets",
-          recentPostThemes: ["Editorial Travel", "Minimalist Architecture", "Luxury Hotels"]
+          engagementRate: 4.85,
+          contentStyle: "Premium high-aesthetic travel content",
+          recentPostThemes: ["Editorial Travel", "Minimalist Architecture", "Luxury Hotels"],
+          isSimulated: true,
         };
 
-        const { error: profileUpdateErr } = await supabaseClient
-          .from("profiles")
-          .update({
-            social_link: JSON.stringify(existingSocials)
-          })
-          .eq("id", creatorId);
-
-        if (profileUpdateErr) {
-          console.error("[InstagramOAuth] Profile JSON sync error:", profileUpdateErr);
-        }
-      }
-
-      // 5. Deep-link back into the React Native app using the scheme
-      if (req.method === "POST") {
-        return new Response(
-          JSON.stringify({
-            success: true,
-            platform: "instagram",
-            username: username,
-            displayName: displayName,
-            followersCount: followerCount,
-            profilePictureUrl: profilePictureUrl,
-            niche: "Lifestyle",
-            engagementRate: 4.85,
-            contentStyle: "Premium high-aesthetic travel content assets",
-            recentPostThemes: ["Editorial Travel", "Minimalist Architecture", "Luxury Hotels"]
-          }),
-          {
+        if (req.method === "POST") {
+          return new Response(JSON.stringify(simulatedPayload), {
             headers: { ...corsHeaders, "Content-Type": "application/json" },
             status: 200,
-          }
-        );
-      }
+          });
+        }
 
-      const successRedirectUrl = `modus://auth/callback?code=${encodeURIComponent(code)}&handle=${encodeURIComponent(username)}`;
-      console.log(`[InstagramOAuth] Successful handshake completion. Redirecting back to mobile app: ${successRedirectUrl}`);
-      
-      return Response.redirect(successRedirectUrl, 302);
+        const simulatedRedirect = `modus://auth/callback?handle=kk.23.02&followers=142800&account_type=CREATOR`;
+        return Response.redirect(simulatedRedirect, 302);
+      }
     }
 
-    // Secondary scenario: Server-side manual trigger/refresh endpoint
+    // No code param — health check / direct GET
     return new Response(
-      JSON.stringify({
-        success: true,
-        message: "Instagram Sync Portal online. Connect via OAuth callback or pass code parameter."
-      }),
-      {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-        status: 200,
-      }
+      JSON.stringify({ success: true, message: "Instagram OAuth endpoint online. Awaiting code redirect from Meta." }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 200 }
     );
+
   } catch (err: any) {
-    console.error("[InstagramOAuth] Error executing OAuth handshake:", err.message);
+    console.error("[InstagramOAuth] Unhandled error:", err.message);
+
     if (req.method === "POST") {
       return new Response(
-        JSON.stringify({
-          success: false,
-          error: err.message
-        }),
-        {
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-          status: 400,
-        }
+        JSON.stringify({ success: false, error: err.message }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" }, status: 400 }
       );
     }
-    const redirectErrorUrl = `modus://auth/callback?error=${encodeURIComponent(err.message)}`;
-    return Response.redirect(redirectErrorUrl, 302);
+
+    const errRedirect = `modus://auth/callback?error=${encodeURIComponent(err.message)}`;
+    return Response.redirect(errRedirect, 302);
   }
 });

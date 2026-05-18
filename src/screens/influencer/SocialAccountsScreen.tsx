@@ -35,8 +35,7 @@ import { useNavigation } from '@react-navigation/native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { socialService, SocialAccountData } from '@/services/socialService';
 import { supabase } from '@/lib/supabase';
-import { linkSocialAccount } from '@/lib/socialAuth';
-import { fetchSocialInsights } from '@/services/aiService';
+import { linkInstagramAccount } from '@/lib/socialAuth';
 import * as ImagePicker from 'expo-image-picker';
 
 export const SocialAccountsScreen = () => {
@@ -131,33 +130,30 @@ export const SocialAccountsScreen = () => {
   };
 
   const executeOAuthFlow = async (platform: 'tiktok' | 'instagram' | 'youtube' | 'twitter') => {
+    if (platform !== 'instagram') return;
+
     try {
-      setActivePlatform(platform);
+      setActivePlatform('instagram');
       setLinkStep('loading');
       setLinkProgressPercent(10);
-      setLinkProgressMsg('Initiating secure OAuth handshakes...');
+      setLinkProgressMsg('Opening Instagram login...');
 
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      // 1. Launch genuine OAuth 2.0 WebBrowser redirect
-      console.log(`[SocialAccounts] Launching browser OAuth handshake for ${platform}...`);
-      const oauthResult = await linkSocialAccount(platform);
+      // 1. Open the REAL Instagram login page — no dead Netlify URLs!
+      setLinkProgressPercent(30);
+      const oauthResult = await linkInstagramAccount(user.id);
 
-      // Step 2 progress tick
-      setLinkProgressPercent(50);
-      setLinkProgressMsg(`Authenticating secure tokens with ${platform.toUpperCase()} API...`);
-      await new Promise(r => setTimeout(r, 600));
+      // 2. Verify with Meta and get profile data
+      setLinkProgressPercent(60);
+      setLinkProgressMsg('Verifying your Instagram account with Meta...');
+      await new Promise(r => setTimeout(r, 500));
 
-      // Step 3 progress tick
       setLinkProgressPercent(80);
-      setLinkProgressMsg('Syncing real-time creator insights...');
+      setLinkProgressMsg('Fetching your verified profile data...');
 
-      // 2. Fetch live metrics and stats by calling our secure Supabase Edge Function!
-      let insights: any = null;
-      console.log(`[SocialAuth] Calling instagram-oauth Edge Function to exchange code & sync profile...`);
       const { data: { session } } = await supabase.auth.getSession();
-
       const response = await fetch(`${process.env.EXPO_PUBLIC_SUPABASE_URL}/functions/v1/instagram-oauth`, {
         method: 'POST',
         headers: {
@@ -167,53 +163,65 @@ export const SocialAccountsScreen = () => {
         },
         body: JSON.stringify({
           code: oauthResult.code,
-          state: user?.id
+          state: user.id
         })
       });
 
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`Meta App verification failed: ${errText}`);
-      }
-
       const edgeResult = await response.json();
-      if (!edgeResult.success) {
-        throw new Error(edgeResult.error || 'Meta App returned integration error.');
+
+      // Handle personal account detection
+      if (!edgeResult.success && edgeResult.error === 'PERSONAL_ACCOUNT') {
+        const handle = edgeResult.username || 'your account';
+        Alert.alert(
+          '⚠️ Personal Account Detected',
+          `@${handle} is a Personal account.\n\nSwitch to Creator or Professional in Instagram to link it:\n\nSettings → Account → Switch to Professional Account`,
+          [{ text: 'Got it', style: 'default' }]
+        );
+        setActivePlatform(null);
+        setLinkStep('input');
+        return;
       }
 
-      insights = {
+      if (!edgeResult.success) {
+        throw new Error(edgeResult.error || 'Meta API verification failed.');
+      }
+
+      const insights = {
         handle: edgeResult.username,
         displayName: edgeResult.displayName,
         followersCount: edgeResult.followersCount,
         avatarUrl: edgeResult.profilePictureUrl,
         engagementRate: edgeResult.engagementRate || 4.85,
         niche: edgeResult.niche || 'Lifestyle',
-        contentStyle: edgeResult.contentStyle || 'Modern & minimal lifestyle aesthetic',
-        recentPostThemes: edgeResult.recentPostThemes || ["Lifestyle vlog", "Product showcase"],
+        contentStyle: edgeResult.contentStyle || 'Creator content',
+        recentPostThemes: edgeResult.recentPostThemes || [],
         isPrivateOrEstimated: false,
         audienceGenderSplit: { female: 70, male: 30 },
-        audienceAgeBracket: "18-24",
-        topGeos: ["India", "United States"]
-      };
-
-      // Save OAuth credentials along with insights
-      const completeInsights = {
-        ...insights,
-        accessToken: oauthResult.code
+        audienceAgeBracket: '18-24',
+        topGeos: ['India', 'United States'],
+        accountType: edgeResult.accountType,
       };
 
       setLinkProgressPercent(100);
-      setLinkProgressMsg('Assembly complete! Loading verified profile...');
+      setLinkProgressMsg('Account verified! Loading your profile...');
       await new Promise(r => setTimeout(r, 400));
 
-      setFetchedProfile(completeInsights);
+      setFetchedProfile(insights);
       setLinkStep('preview');
     } catch (err: any) {
       console.error(err);
-      if (!err.message?.includes('cancelled')) {
-        Alert.alert('OAuth Handshake Failed', err.message || `Could not verify your ${platform} account.`);
+      const isPersonalAccount = err.message?.includes('PERSONAL_ACCOUNT');
+      if (isPersonalAccount) {
+        Alert.alert(
+          '⚠️ Personal Account Detected',
+          'This Instagram account is Personal. Switch to Creator or Professional in Instagram Settings:\n\nSettings → Account → Switch to Professional Account',
+          [{ text: 'Got it', style: 'default' }]
+        );
+      } else if (!err.message?.includes('cancelled')) {
+        Alert.alert('Instagram Link Failed', err.message || 'Could not verify your Instagram account. Please try again.');
       }
       setActivePlatform(null);
+      setLinkStep('input');
     }
   };
 

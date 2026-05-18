@@ -1,18 +1,12 @@
 import * as AuthSession from 'expo-auth-session';
 import * as WebBrowser from 'expo-web-browser';
+import { Platform } from 'react-native';
 import { supabase } from './supabase';
-
 import { createClient } from '@supabase/supabase-js';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// Use the Supabase callback URL as the redirect - Supabase will then
-// deep-link back into the app using the scheme configured in app.json.
-// Let Expo handle generating the correct exp:// or modus:// URI automatically
 export async function signInWithGoogle(role?: 'brand' | 'influencer') {
-  // Explicitly defining scheme and path ensures a highly predictable URL structure.
-  // In Expo Go, this becomes exp://<ip>:8081/--/auth/callback
-  // In the standalone app, it becomes modus://auth/callback
   const redirectTo = AuthSession.makeRedirectUri({
     scheme: 'modus',
     path: 'auth/callback',
@@ -37,7 +31,6 @@ export async function signInWithGoogle(role?: 'brand' | 'influencer') {
     throw new Error('Google sign-in was cancelled');
   }
 
-  // Extract tokens from the redirect URL fragment
   const url = result.url;
   const params = new URLSearchParams(url.includes('#') ? url.split('#')[1] : url.split('?')[1]);
 
@@ -48,27 +41,17 @@ export async function signInWithGoogle(role?: 'brand' | 'influencer') {
     throw new Error('Missing authentication tokens');
   }
 
-  // If a role was provided during signup, update the profile BEFORE setting the session globally
-  // This prevents the race condition where RootNavigator routes the user based on default 'influencer' role
   if (role) {
     const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
     const supabaseAnonKey = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || '';
-    
-    // Create a temporary authenticated client
+
     const tempClient = createClient(supabaseUrl, supabaseAnonKey, {
-      global: {
-        headers: {
-          Authorization: `Bearer ${access_token}`
-        }
-      }
+      global: { headers: { Authorization: `Bearer ${access_token}` } }
     });
 
     const { data: { user } } = await tempClient.auth.getUser();
     if (user) {
-      await tempClient
-        .from('profiles')
-        .update({ role })
-        .eq('id', user.id);
+      await tempClient.from('profiles').update({ role }).eq('id', user.id);
     }
   }
 
@@ -78,71 +61,136 @@ export async function signInWithGoogle(role?: 'brand' | 'influencer') {
   });
 
   if (sessionError) throw sessionError;
-
   return sessionData;
 }
 
 /**
- * Initiates the official OAuth 2.0 redirect flow for linking social channels.
- * Uses Expo WebBrowser/AuthSession to redirect to platform logins and capture authentication code.
+ * Builds the real Instagram OAuth URL pointing to our Supabase Edge Function as the redirect receiver.
+ * The Edge Function will complete the server-side code exchange and then deep-link back into the app.
+ */
+export function buildInstagramAuthUrl(userId: string): string {
+  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '1402057978405029';
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+
+  // The Edge Function is the redirect_uri so it can do the server-side token exchange
+  const edgeFunctionCallbackUrl = `${supabaseUrl}/functions/v1/instagram-oauth`;
+
+  // Pass the user's ID as 'state' so the Edge Function knows who to link the account to
+  const params = new URLSearchParams({
+    client_id: instagramAppId,
+    redirect_uri: edgeFunctionCallbackUrl,
+    scope: 'instagram_business_basic,instagram_business_manage_messages',
+    response_type: 'code',
+    state: userId,
+  });
+
+  return `https://api.instagram.com/oauth/authorize?${params.toString()}`;
+}
+
+/**
+ * Initiates the real Instagram OAuth 2.0 login flow.
+ * Opens the actual Instagram login page in a browser.
+ * After login, Meta redirects to our Edge Function which detects account type,
+ * exchanges the token, fetches profile data, and deep-links back with results.
+ *
+ * Returns the verified Instagram profile data or throws with account_type info.
+ */
+export async function linkInstagramAccount(userId: string): Promise<{
+  code: string;
+  handle: string;
+  accountType: 'creator' | 'personal' | 'unknown';
+}> {
+  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '1402057978405029';
+  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
+
+  if (!instagramAppId || !supabaseUrl) {
+    throw new Error('Instagram App ID or Supabase URL is not configured.');
+  }
+
+  // The Edge Function receives the OAuth code and handles the token exchange server-side
+  const edgeFunctionCallbackUrl = `${supabaseUrl}/functions/v1/instagram-oauth`;
+
+  // Build the real Meta authorization URL
+  const authParams = new URLSearchParams({
+    client_id: instagramAppId,
+    redirect_uri: edgeFunctionCallbackUrl,
+    scope: 'instagram_business_basic',
+    response_type: 'code',
+    state: userId, // Pass userId so Edge Function knows who to link
+  });
+
+  const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?${authParams.toString()}`;
+
+  console.log(`[SocialAuth] Opening real Instagram login page. App ID: ${instagramAppId}`);
+  console.log(`[SocialAuth] Edge Function callback: ${edgeFunctionCallbackUrl}`);
+  console.log(`[SocialAuth] Full Instagram OAuth URL: ${instagramAuthUrl}`);
+
+  // The app's deep link scheme that the Edge Function will redirect back to
+  const appDeepLinkCallback = Platform.OS === 'web'
+    ? `${window.location.origin}/auth/callback`
+    : AuthSession.makeRedirectUri({ scheme: 'modus', path: 'auth/callback' });
+
+  try {
+    // Open the actual Instagram login page
+    const result = await WebBrowser.openAuthSessionAsync(
+      instagramAuthUrl,
+      // Watch for our app's callback URL pattern (the Edge Function redirects here after token exchange)
+      Platform.OS === 'web' ? `${window.location.origin}/auth/callback` : 'modus://auth/callback'
+    );
+
+    console.log(`[SocialAuth] Browser session result type: ${result.type}`);
+
+    if (result.type === 'cancel' || result.type === 'dismiss') {
+      throw new Error('Instagram login was cancelled.');
+    }
+
+    if (result.type === 'success' && result.url) {
+      const callbackUrl = result.url;
+      console.log(`[SocialAuth] Received callback URL: ${callbackUrl}`);
+
+      const urlParams = new URLSearchParams(
+        callbackUrl.includes('?') ? callbackUrl.split('?')[1] : ''
+      );
+
+      const error = urlParams.get('error');
+      if (error) {
+        const errorDesc = urlParams.get('error_description') || error;
+        // Check if this is a personal account error from the Edge Function
+        if (errorDesc.includes('personal') || errorDesc.includes('not a business') || errorDesc.includes('not_business')) {
+          throw new Error(`PERSONAL_ACCOUNT: ${errorDesc}`);
+        }
+        throw new Error(errorDesc);
+      }
+
+      const code = urlParams.get('code');
+      const handle = urlParams.get('handle') || '';
+
+      if (code) {
+        return { code, handle, accountType: 'creator' };
+      }
+    }
+
+    // If browser returned without a proper callback, it likely means the Edge Function
+    // already handled the redirect server-side. The account data is in the database.
+    throw new Error('Instagram login completed but no callback received. Try refreshing.');
+  } catch (err: any) {
+    throw err;
+  }
+}
+
+/**
+ * @deprecated Use linkInstagramAccount() instead. Kept for compatibility.
  */
 export async function linkSocialAccount(
   platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter'
 ): Promise<{ code: string; handle: string }> {
-  // Generate redirect URI back into the app
-  const redirectTo = AuthSession.makeRedirectUri({
-    scheme: 'modus',
-    path: 'auth/callback',
-  });
-
-  console.log(`[SocialAuth] Initiating OAuth flow for ${platform}. Redirect URI: ${redirectTo}`);
-
-  // Base platform authorize URLs
-  let authUrl = '';
-  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '';
-  const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
-
-  // Use the Edge Function as the primary redirect receiver so it can complete the secure short-to-long server-side exchange
-  const oauthCallbackUrl = `${supabaseUrl}/functions/v1/instagram-oauth`;
-
-  if (platform === 'instagram' && instagramAppId) {
-    authUrl = `https://api.instagram.com/oauth/authorize?client_id=${instagramAppId}&redirect_uri=${encodeURIComponent(oauthCallbackUrl)}&scope=instagram_business_basic&response_type=code`;
-  } else if (platform === 'instagram') {
-    // Fall back to sandbox portal if Meta API keys are not supplied yet
-    authUrl = `https://kallies-modus-oauth.netlify.app/authorize.html?platform=instagram&redirect_uri=${encodeURIComponent(redirectTo)}`;
-  } else if (platform === 'tiktok') {
-    authUrl = `https://www.tiktok.com/v2/auth/authorize/?client_key=tiktok_mock_client&scope=user.info.basic&response_type=code&redirect_uri=${encodeURIComponent(redirectTo)}`;
-  } else if (platform === 'youtube') {
-    authUrl = `https://accounts.google.com/o/oauth2/v2/auth?client_id=google_mock_client&redirect_uri=${encodeURIComponent(redirectTo)}&scope=https://www.googleapis.com/auth/youtube.readonly&response_type=code`;
-  } else {
-    authUrl = `https://twitter.com/i/oauth2/authorize?client_id=twitter_mock_client&redirect_uri=${encodeURIComponent(redirectTo)}&scope=users.read&response_type=code`;
+  if (platform !== 'instagram') {
+    throw new Error(`${platform} linking is not supported yet. Only Instagram is available.`);
   }
 
-  // If using generic third-party platforms (non-instagram, or instagram without app id)
-  const targetUrl = (platform === 'instagram' && instagramAppId) ? authUrl : `https://kallies-modus-oauth.netlify.app/authorize.html?platform=${platform}&redirect_uri=${encodeURIComponent(redirectTo)}`;
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) throw new Error('You must be logged in to link your Instagram account.');
 
-  try {
-    const result = await WebBrowser.openAuthSessionAsync(targetUrl, redirectTo);
-
-    if (result.type !== 'success' || !result.url) {
-      throw new Error(`${platform.toUpperCase()} authentication was cancelled by the user.`);
-    }
-
-    // Extract callback code and handle
-    const url = result.url;
-    const params = new URLSearchParams(url.includes('#') ? url.split('#')[1] : url.split('?')[1]);
-    const code = params.get('code') || `mock_code_${platform}_${Date.now()}`;
-    const handle = params.get('handle') || 'kk.23.02';
-
-    return { code, handle };
-  } catch (err: any) {
-    console.warn('[SocialAuth] WebBrowser redirect failed or bypassed, falling back to simulated prompt...', err.message);
-    
-    // Self-contained elegant native fallback in case of simulator deep-linking limitations
-    return {
-      code: `mock_code_${platform}_${Date.now()}`,
-      handle: 'kk.23.02'
-    };
-  }
+  const result = await linkInstagramAccount(user.id);
+  return { code: result.code, handle: result.handle };
 }
-
