@@ -216,100 +216,142 @@ export const CreatorOnboardingScreen = () => {
       setLinkProgressPercent(10);
       setLinkProgressMsg('Opening Instagram login...');
 
-      // Get the authenticated user's ID to pass as state
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('You need to be logged in to link Instagram.');
 
-      // 1. Open the REAL Instagram login page via WebBrowser
-      setLinkProgressPercent(30);
-      
-      let oauthResult: any = null;
-      try {
-        oauthResult = await linkInstagramAccount(user.id);
-      } catch (err: any) {
-        console.log('[executeOAuthFlow] Popup completed/cancelled/dismissed:', err.message);
-        // Do not throw immediately. We will poll the database next to see if the server-side code exchange completed!
+      // Clear any stale callback data from localStorage before starting
+      if (typeof window !== 'undefined') {
+        window.localStorage.removeItem('instagram_oauth_callback');
+        window.localStorage.removeItem('instagram_oauth_error');
       }
 
-      setLinkProgressPercent(60);
-      setLinkProgressMsg('Synchronizing verified details from Meta...');
+      setLinkProgressPercent(30);
+      setLinkProgressMsg('Opening Instagram login...');
 
-      // Poll profiles.social_link up to 6 times (6 seconds total)
+      // Open the Instagram OAuth login popup
+      // For web: this redirects the tab to Instagram login → Edge Function → /auth/callback
+      // App.tsx captures the callback params into localStorage on page reload
+      try {
+        await linkInstagramAccount(user.id);
+      } catch (popupErr: any) {
+        // Popup dismissed/cancelled is expected on web — the tab navigated away and came back
+        console.log('[executeOAuthFlow] Popup closed/dismissed (expected on web):', popupErr?.message);
+      }
+
+      setLinkProgressPercent(55);
+      setLinkProgressMsg('Verifying your Instagram account...');
+
+      // Poll for up to 12 seconds. Check localStorage (web callback) OR Supabase DB.
       let verifiedInstagramStats: any = null;
-      for (let attempt = 1; attempt <= 6; attempt++) {
-        console.log(`[executeOAuthFlow] Polling profiles.social_link, attempt ${attempt}...`);
+
+      for (let attempt = 1; attempt <= 12; attempt++) {
+        setLinkProgressPercent(55 + Math.floor((attempt / 12) * 40)); // 55% → 95%
+        console.log(`[executeOAuthFlow] Poll attempt ${attempt}/12...`);
+
+        // 1. Check localStorage first (fastest, set by App.tsx on redirect callback)
+        if (typeof window !== 'undefined') {
+          const callbackRaw = window.localStorage.getItem('instagram_oauth_callback');
+          const errorRaw = window.localStorage.getItem('instagram_oauth_error');
+
+          if (errorRaw) {
+            window.localStorage.removeItem('instagram_oauth_error');
+            throw new Error(errorRaw.includes('PERSONAL_ACCOUNT')
+              ? `PERSONAL_ACCOUNT: ${errorRaw}`
+              : errorRaw);
+          }
+
+          if (callbackRaw) {
+            try {
+              const callback = JSON.parse(callbackRaw);
+              // Only use if fresh (within last 2 minutes)
+              if (callback.handle && (Date.now() - callback.timestamp) < 120000) {
+                window.localStorage.removeItem('instagram_oauth_callback');
+                verifiedInstagramStats = {
+                  handle: callback.handle,
+                  displayName: callback.handle,
+                  followersCount: callback.followers || 0,
+                  engagementRate: 3.5,
+                  profilePictureUrl: '',
+                };
+                console.log('[executeOAuthFlow] ✅ Got callback from localStorage:', verifiedInstagramStats);
+                break;
+              }
+            } catch (e) {
+              console.warn('[executeOAuthFlow] Failed to parse localStorage callback:', e);
+            }
+          }
+        }
+
+        // 2. Check Supabase DB (populated by Edge Function server-side)
         const { data: profileData } = await supabase
           .from('profiles')
           .select('social_link')
           .eq('id', user.id)
           .single();
 
-        if (profileData?.social_link) {
+        if (profileData?.social_link && profileData.social_link !== '{}') {
           try {
             const socials = typeof profileData.social_link === 'string'
               ? JSON.parse(profileData.social_link)
               : profileData.social_link;
-            
-            if (socials && socials.instagram) {
+
+            if (socials && socials.instagram && socials.instagram.handle) {
               verifiedInstagramStats = socials.instagram;
-              console.log('[executeOAuthFlow] Found verified Instagram inside social_link!', verifiedInstagramStats);
+              console.log('[executeOAuthFlow] ✅ Got data from Supabase DB:', verifiedInstagramStats);
               break;
             }
           } catch (e) {
-            console.warn('[executeOAuthFlow] JSON parse error during polling:', e);
+            console.warn('[executeOAuthFlow] JSON parse error during DB poll:', e);
           }
         }
+
         await new Promise(r => setTimeout(r, 1000));
       }
 
-      if (!verifiedInstagramStats && oauthResult) {
-        // Fallback to oauthResult values if database sync didn't write to profiles table yet but popup returned
-        verifiedInstagramStats = {
-          handle: oauthResult.handle,
-          displayName: oauthResult.handle,
-          followersCount: oauthResult.followers || 0,
-          profilePictureUrl: '',
-          engagementRate: 3.5,
-          accountType: oauthResult.accountType || 'creator',
-        };
-      }
-
       if (!verifiedInstagramStats) {
-        throw new Error('Meta authentication could not be verified. Please make sure your Instagram is a Professional/Creator account and try again.');
+        throw new Error(
+          'Could not verify your Instagram connection after 12 seconds. ' +
+          'Please make sure you approved access on Instagram and try again.'
+        );
       }
 
       const insights: LinkedProfile = {
         handle: verifiedInstagramStats.handle || verifiedInstagramStats.username || '',
         displayName: verifiedInstagramStats.displayName || verifiedInstagramStats.display_name || verifiedInstagramStats.handle || '',
-        followersCount: Number(verifiedInstagramStats.followersCount) || Number(verifiedInstagramStats.follower_count) || 0,
-        avatarUrl: verifiedInstagramStats.profilePictureUrl || verifiedInstagramStats.profile_picture_url || verifiedInstagramStats.avatarUrl || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=200&auto=format&fit=crop',
+        followersCount: Number(verifiedInstagramStats.followersCount) || Number(verifiedInstagramStats.follower_count) || Number(verifiedInstagramStats.followers) || 0,
+        avatarUrl: verifiedInstagramStats.profilePictureUrl || verifiedInstagramStats.profile_picture_url || verifiedInstagramStats.avatarUrl || '',
         engagementRate: Number(verifiedInstagramStats.engagementRate) || Number(verifiedInstagramStats.average_engagement_rate) || 3.5,
         niche: verifiedInstagramStats.niche || 'Lifestyle',
-        contentStyle: verifiedInstagramStats.contentStyle || 'Verified Creator Content',
+        contentStyle: verifiedInstagramStats.contentStyle || 'Creator Content',
         recentPostThemes: verifiedInstagramStats.recentPostThemes || [],
         isVerified: true
       };
 
       setLinkProgressPercent(100);
-      setLinkProgressMsg('Account verified! Loading your profile...');
-      await new Promise(r => setTimeout(r, 400));
+      setLinkProgressMsg('✅ Account verified!');
+      await new Promise(r => setTimeout(r, 600));
 
       setFetchedProfile(insights);
       setLinkStep('preview');
     } catch (err: any) {
-      console.error('[executeOAuthFlow]', err);
+      console.error('[executeOAuthFlow] ERROR:', err.message);
       const isPersonalAccount = err.message?.includes('PERSONAL_ACCOUNT');
       if (isPersonalAccount) {
         Alert.alert(
           '⚠️ Personal Account Detected',
-          'This Instagram account is set to Personal. Switch to Creator or Professional in Instagram Settings to link it.\n\nSettings → Account → Switch to Professional Account',
+          'This Instagram account is Personal. Switch to Creator or Professional account in Instagram Settings to link it.\n\nInstagram → Settings → Account → Switch to Professional Account',
           [{ text: 'Got it', style: 'default' }]
         );
       } else {
-        Alert.alert('Instagram Link Failed', err.message || 'Something went wrong. Please try again.');
+        Alert.alert(
+          'Instagram Link Failed',
+          err.message || 'Something went wrong. Please try again.',
+          [{ text: 'OK' }]
+        );
       }
       setActivePlatform(null);
       setLinkStep('idle');
+      setLinkProgressPercent(0);
     }
   };
 
