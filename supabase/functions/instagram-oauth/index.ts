@@ -263,7 +263,7 @@ Return ONLY a valid JSON object matching this exact schema, with no markdown for
                 "Content-Type": "application/json"
               },
               body: JSON.stringify({
-                model: "llama3-8b-8192", // Fast and good enough for basic classification
+                model: "llama-3.1-8b-instant", // Fast Llama 3.1 model on Groq
                 messages: [{ role: "user", content: aiPrompt }],
                 temperature: 0.2,
                 response_format: { type: "json_object" }
@@ -289,29 +289,8 @@ Return ONLY a valid JSON object matching this exact schema, with no markdown for
           console.log("[InstagramOAuth] ⚠️ Skipping Groq AI analysis (Missing GROQ_API_KEY or insufficient captions).");
         }
 
-        // STEP 6: Save the verified account to Supabase
+        // STEP 6: Save the verified account to Supabase profiles table
         if (creatorId) {
-          // Upsert into social_accounts table
-          const { error: upsertErr } = await supabaseAdmin
-            .from("social_accounts")
-            .upsert({
-              creator_id: creatorId,
-              platform: "instagram",
-              platform_user_id: platformUserId,
-              username: username,
-              display_name: displayName,
-              profile_picture_url: profilePictureUrl,
-              follower_count: followerCount,
-              average_engagement_rate: calculatedEngagementRate,
-              access_token: accessToken,
-              expires_at: new Date(Date.now() + (expiresIn || 5184000) * 1000).toISOString(),
-              is_verified: true,
-            }, { onConflict: "platform,platform_user_id" });
-
-          if (upsertErr) {
-            console.error("[InstagramOAuth] social_accounts upsert error:", upsertErr.message);
-          }
-
           // Sync profiles.social_link JSON blob
           const { data: existingProfile } = await supabaseAdmin
             .from("profiles")
