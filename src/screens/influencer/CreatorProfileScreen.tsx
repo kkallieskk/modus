@@ -426,25 +426,23 @@ export const CreatorProfileScreen = () => {
         )}
 
         {/* Developer Settings — visible only in dev/testing phase */}
-        {__DEV__ && (
-          <View style={styles.devSection}>
-            <View style={styles.devSectionHeader}>
-              <Text style={styles.devSectionTitle}>⚙️ Developer Settings</Text>
-              <Text style={styles.devSectionSub}>Only visible in development builds</Text>
-            </View>
-            <TouchableOpacity
-              style={[styles.devBtn, isLinkingInstagram && { opacity: 0.6 }]}
-              onPress={handleLinkInstagram}
-              disabled={isLinkingInstagram}
-            >
-              <Instagram size={18} color="#E1306C" />
-              <Text style={styles.devBtnText}>
-                {parsedSocialStats ? `Re-link Instagram (@${parsedSocialStats.handle})` : 'Link Instagram Account'}
-              </Text>
-              {isLinkingInstagram && <ActivityIndicator size="small" color="#E1306C" style={{ marginLeft: 8 }} />}
-            </TouchableOpacity>
+        <View style={styles.devSection}>
+          <View style={styles.devSectionHeader}>
+            <Text style={styles.devSectionTitle}>⚙️ Developer Settings</Text>
+            <Text style={styles.devSectionSub}>Temporary testing tools</Text>
           </View>
-        )}
+          <TouchableOpacity
+            style={[styles.devBtn, isLinkingInstagram && { opacity: 0.6 }]}
+            onPress={handleLinkInstagram}
+            disabled={isLinkingInstagram}
+          >
+            <Instagram size={18} color="#E1306C" />
+            <Text style={styles.devBtnText}>
+              {parsedSocialStats ? `Re-link Instagram (@${parsedSocialStats.handle})` : 'Link Instagram Account'}
+            </Text>
+            {isLinkingInstagram && <ActivityIndicator size="small" color="#E1306C" style={{ marginLeft: 8 }} />}
+          </TouchableOpacity>
+        </View>
 
         <View style={{ height: 100 }} />
       </ScrollView>
