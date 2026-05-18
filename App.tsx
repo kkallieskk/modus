@@ -5,6 +5,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { RootNavigator } from './src/navigation/RootNavigator';
+import * as WebBrowser from 'expo-web-browser';
 import { 
   Platform, 
   View, 
@@ -13,6 +14,11 @@ import {
   StyleSheet, 
   StatusBar 
 } from 'react-native';
+
+// Complete any pending Auth session (e.g. from popup callback on Web)
+if (Platform.OS === 'web') {
+  WebBrowser.maybeCompleteAuthSession();
+}
 import { Sparkles, Shield, Compass, Cpu } from 'lucide-react-native';
 
 import { ProfileProvider } from './src/lib/ProfileContext';
