@@ -91,7 +91,7 @@ export async function signInWithGoogle(role?: 'brand' | 'influencer') {
  * The Edge Function will complete the server-side code exchange and then deep-link back into the app.
  */
 export function buildInstagramAuthUrl(userId: string): string {
-  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '3924189761222584';
+  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '1530182758639376';
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 
   // The Edge Function is the redirect_uri so it can do the server-side token exchange
@@ -122,7 +122,7 @@ export async function linkInstagramAccount(userId: string): Promise<{
   handle: string;
   accountType: 'creator' | 'personal' | 'unknown';
 }> {
-  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '3924189761222584';
+  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '1530182758639376';
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 
   if (!instagramAppId || !supabaseUrl) {
