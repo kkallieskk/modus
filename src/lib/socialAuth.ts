@@ -132,13 +132,18 @@ export async function linkInstagramAccount(userId: string): Promise<{
   // The Edge Function receives the OAuth code and handles the token exchange server-side
   const edgeFunctionCallbackUrl = `${supabaseUrl}/functions/v1/instagram-oauth`;
 
+  // For web, pass the dynamic web redirect URL appended to the userId, e.g. "USER_ID__webRedirect__URL"
+  const isWeb = Platform.OS === 'web';
+  const webRedirectUrl = isWeb ? `${window.location.origin}/auth/callback` : '';
+  const stateStr = isWeb ? `${userId}__webRedirect__${webRedirectUrl}` : userId;
+
   // Build the real Meta authorization URL
   const authParams = new URLSearchParams({
     client_id: instagramAppId,
     redirect_uri: edgeFunctionCallbackUrl,
     scope: 'instagram_business_basic',
     response_type: 'code',
-    state: userId, // Pass userId so Edge Function knows who to link
+    state: stateStr, // Pass userId and optionally the web redirect URL
   });
 
   const instagramAuthUrl = `https://api.instagram.com/oauth/authorize?${authParams.toString()}`;

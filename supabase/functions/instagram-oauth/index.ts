@@ -18,6 +18,15 @@ serve(async (req) => {
   const error = urlObj.searchParams.get("error");
   const errorDescription = urlObj.searchParams.get("error_description");
 
+  // Parse webRedirectUrl if present in state (format: USER_ID__webRedirect__URL)
+  let webRedirectUrl: string | null = null;
+  let parsedState = stateParam;
+  if (stateParam && stateParam.includes("__webRedirect__")) {
+    const parts = stateParam.split("__webRedirect__");
+    parsedState = parts[0];
+    webRedirectUrl = parts[1];
+  }
+
   // Check request body if POST
   let reqBody: any = {};
   if (req.method === "POST") {
@@ -32,6 +41,10 @@ serve(async (req) => {
   // If Meta returned an error during OAuth login
   if (error) {
     console.error("[InstagramOAuth] Meta OAuth Error:", error, errorDescription);
+    if (webRedirectUrl) {
+      const errRedirect = `${webRedirectUrl}?error=${encodeURIComponent(errorDescription || error)}`;
+      return Response.redirect(errRedirect, 302);
+    }
     // Redirect back to app with error
     const redirectErrorUrl = `modus://auth/callback?error=${encodeURIComponent(errorDescription || error)}`;
     return Response.redirect(redirectErrorUrl, 302);
@@ -50,7 +63,12 @@ serve(async (req) => {
     const oauthCallbackUrl = `${supabaseUrl}/functions/v1/instagram-oauth`;
 
     // Creator ID: either from state param (GET redirect from Meta) or from POST body
-    let creatorId = stateParam || reqBody.state || null;
+    let creatorId = parsedState || reqBody.state || null;
+    if (creatorId && creatorId.includes("__webRedirect__")) {
+      const parts = creatorId.split("__webRedirect__");
+      creatorId = parts[0];
+      if (!webRedirectUrl) webRedirectUrl = parts[1];
+    }
 
     // Primary scenario: We have an OAuth code from Meta's redirect
     if (code) {
@@ -237,9 +255,14 @@ serve(async (req) => {
           });
         }
 
-        // GET redirect flow (Meta → Edge Function → App)
+        // GET redirect flow (Meta → Edge Function → App / Web)
+        if (webRedirectUrl) {
+          const successRedirectUrl = `${webRedirectUrl}?code=${code}&handle=${encodeURIComponent(username)}&followers=${followerCount}&account_type=${accountType}`;
+          console.log(`[InstagramOAuth] Redirecting back to Web App: ${successRedirectUrl}`);
+          return Response.redirect(successRedirectUrl, 302);
+        }
         const successRedirectUrl = `modus://auth/callback?handle=${encodeURIComponent(username)}&followers=${followerCount}&account_type=${accountType}`;
-        console.log(`[InstagramOAuth] Redirecting back to app: ${successRedirectUrl}`);
+        console.log(`[InstagramOAuth] Redirecting back to Mobile App: ${successRedirectUrl}`);
         return Response.redirect(successRedirectUrl, 302);
 
       } else {
@@ -282,6 +305,10 @@ serve(async (req) => {
           });
         }
 
+        if (webRedirectUrl) {
+          const simulatedRedirect = `${webRedirectUrl}?code=simulated_code&handle=kk.23.02&followers=142800&account_type=CREATOR`;
+          return Response.redirect(simulatedRedirect, 302);
+        }
         const simulatedRedirect = `modus://auth/callback?handle=kk.23.02&followers=142800&account_type=CREATOR`;
         return Response.redirect(simulatedRedirect, 302);
       }
@@ -303,6 +330,10 @@ serve(async (req) => {
       );
     }
 
+    if (webRedirectUrl) {
+      const errRedirect = `${webRedirectUrl}?error=${encodeURIComponent(err.message)}`;
+      return Response.redirect(errRedirect, 302);
+    }
     const errRedirect = `modus://auth/callback?error=${encodeURIComponent(err.message)}`;
     return Response.redirect(errRedirect, 302);
   }
