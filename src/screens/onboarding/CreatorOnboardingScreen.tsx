@@ -249,6 +249,7 @@ export const CreatorOnboardingScreen = () => {
         console.log(`[executeOAuthFlow] Poll attempt ${attempt}/12...`);
 
         // 1. Check localStorage first (fastest, set by App.tsx on redirect callback)
+        let localCallback: any = null;
         if (typeof window !== 'undefined') {
           const callbackRaw = window.localStorage.getItem('instagram_oauth_callback');
           const errorRaw = window.localStorage.getItem('instagram_oauth_error');
@@ -266,15 +267,8 @@ export const CreatorOnboardingScreen = () => {
               // Only use if fresh (within last 2 minutes)
               if (callback.handle && (Date.now() - callback.timestamp) < 120000) {
                 window.localStorage.removeItem('instagram_oauth_callback');
-                verifiedInstagramStats = {
-                  handle: callback.handle,
-                  displayName: callback.handle,
-                  followersCount: callback.followers || 0,
-                  engagementRate: 3.5,
-                  profilePictureUrl: '',
-                };
-                console.log('[executeOAuthFlow] ✅ Got callback from localStorage:', verifiedInstagramStats);
-                break;
+                localCallback = callback;
+                console.log('[executeOAuthFlow] ✅ Got callback from localStorage, fetching full DB stats...');
               }
             } catch (e) {
               console.warn('[executeOAuthFlow] Failed to parse localStorage callback:', e);
@@ -297,7 +291,7 @@ export const CreatorOnboardingScreen = () => {
 
             if (socials && socials.instagram && socials.instagram.handle) {
               verifiedInstagramStats = socials.instagram;
-              console.log('[executeOAuthFlow] ✅ Got data from Supabase DB:', verifiedInstagramStats);
+              console.log('[executeOAuthFlow] ✅ Got full data from Supabase DB:', verifiedInstagramStats);
               break;
             }
           } catch (e) {
@@ -306,6 +300,21 @@ export const CreatorOnboardingScreen = () => {
         }
 
         await new Promise(r => setTimeout(r, 1000));
+      }
+
+      // 3. Fallback: If DB didn't sync in time but we got the local callback, use it
+      if (!verifiedInstagramStats && localCallback) {
+        verifiedInstagramStats = {
+          handle: localCallback.handle,
+          displayName: localCallback.handle,
+          followersCount: localCallback.followers || 0,
+          engagementRate: 4.85, // temporary fallback until DB syncs
+          profilePictureUrl: '',
+          niche: 'Creator',
+          contentStyle: 'Recent content',
+          recentPostThemes: ['Content Creator'],
+        };
+        console.log('[executeOAuthFlow] ⚠️ Using local callback fallback (DB not ready):', verifiedInstagramStats);
       }
 
       if (!verifiedInstagramStats) {
