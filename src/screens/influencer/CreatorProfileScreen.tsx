@@ -376,6 +376,17 @@ export const CreatorProfileScreen = () => {
                 </View>
               );
             })()
+          ) : parsedSocialStats?.mediaCount === 0 ? (
+            <LinearGradient
+              colors={['#F3F4F6', '#E5E7EB']}
+              style={styles.demoNudgeCard}
+            >
+              <Play size={24} color="#6B7280" />
+              <Text style={styles.demoNudgeTitle}>Start Posting Content</Text>
+              <Text style={styles.demoNudgeText}>
+                Meta cannot generate audience insights because you haven't published any posts yet. Publish your first video to start building your audience!
+              </Text>
+            </LinearGradient>
           ) : (
             <LinearGradient
               colors={['#F3F4F6', '#E5E7EB']}
