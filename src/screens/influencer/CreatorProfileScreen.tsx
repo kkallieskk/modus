@@ -121,6 +121,45 @@ export const CreatorProfileScreen = () => {
     );
   }
 
+  // 3. Parse live Instagram metrics from social_link JSON
+  let followersText = '0';
+  let engagementText = '3.5%';
+  let nicheList = ['Lifestyle', 'Fashion', 'Comedy', 'Fitness'];
+  let parsedSocialStats: any = null;
+
+  if (profile?.social_link) {
+    try {
+      const socials = typeof profile.social_link === 'string'
+        ? JSON.parse(profile.social_link)
+        : profile.social_link;
+      const primaryPlatform = Object.keys(socials)[0];
+      if (primaryPlatform && socials[primaryPlatform]) {
+        parsedSocialStats = socials[primaryPlatform];
+        
+        const count = parsedSocialStats.followersCount || parsedSocialStats.followerCount || 0;
+        if (count >= 1000000) {
+          followersText = (count / 1000000).toFixed(1) + 'M';
+        } else if (count >= 1000) {
+          followersText = (count / 1000).toFixed(1) + 'K';
+        } else {
+          followersText = String(count);
+        }
+
+        const rate = parsedSocialStats.engagementRate || parsedSocialStats.average_engagement_rate || 3.5;
+        engagementText = rate.toFixed(1) + '%';
+      }
+    } catch (e) {
+      console.warn('Error parsing social_link JSON in CreatorProfileScreen:', e);
+    }
+  }
+
+  // Niches List from database profile or falling back to default lists
+  if (profile?.niche_industry) {
+    nicheList = profile.niche_industry.split(',').map((s: string) => s.trim()).filter(Boolean);
+  }
+
+  const avatarUri = profile?.avatar_url || parsedSocialStats?.avatarUrl || parsedSocialStats?.profilePictureUrl || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6';
+
   return (
     <SafeAreaView style={styles.container}>
       {/* Header Controls */}
@@ -139,14 +178,14 @@ export const CreatorProfileScreen = () => {
           <Text style={styles.editBtnText}>Edit Profile</Text>
         </TouchableOpacity>
       </View>
-
+ 
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={styles.avatarOuter}>
             <View style={styles.avatarInner}>
               <Image 
-                source={{ uri: profile?.avatar_url || 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6' }} 
+                source={{ uri: avatarUri }} 
                 style={styles.avatar} 
               />
             </View>
@@ -161,17 +200,17 @@ export const CreatorProfileScreen = () => {
           {/* Social Stats */}
           <View style={styles.statsContainer}>
             <View style={styles.statBox}>
-              <Text style={styles.statValue}>15.2K</Text>
+              <Text style={styles.statValue}>{followersText}</Text>
               <Text style={styles.statLabel}>Followers</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.statBox}>
-              <Text style={styles.statValue}>4.2%</Text>
+              <Text style={styles.statValue}>{engagementText}</Text>
               <Text style={styles.statLabel}>Engagement</Text>
             </View>
             <View style={styles.divider} />
             <View style={styles.statBox}>
-              <Text style={styles.statValue}>85</Text>
+              <Text style={styles.statValue}>{reputation?.reviewCount || 0}</Text>
               <Text style={styles.statLabel}>Collabs</Text>
             </View>
           </View>
@@ -248,7 +287,7 @@ export const CreatorProfileScreen = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Niches & Expertise</Text>
           <View style={styles.nicheContainer}>
-            {['Lifestyle', 'Fashion', 'Comedy', 'Fitness'].map((niche) => (
+            {nicheList.map((niche) => (
               <View key={niche} style={styles.nicheBadge}>
                 <Text style={styles.nicheText}>{niche}</Text>
               </View>

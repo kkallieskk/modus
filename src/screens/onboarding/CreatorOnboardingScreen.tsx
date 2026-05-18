@@ -221,55 +221,72 @@ export const CreatorOnboardingScreen = () => {
       if (!user) throw new Error('You need to be logged in to link Instagram.');
 
       // 1. Open the REAL Instagram login page via WebBrowser
-      // linkInstagramAccount opens api.instagram.com/oauth/authorize and
-      // returns after the Edge Function receives Meta's redirect and processes it.
       setLinkProgressPercent(30);
-      const oauthResult = await linkInstagramAccount(user.id);
+      
+      let oauthResult: any = null;
+      try {
+        oauthResult = await linkInstagramAccount(user.id);
+      } catch (err: any) {
+        console.log('[executeOAuthFlow] Popup completed/cancelled/dismissed:', err.message);
+        // Do not throw immediately. We will poll the database next to see if the server-side code exchange completed!
+      }
 
-      // Step 2: Token exchange & database write already completed successfully inside the Edge Function!
-      setLinkProgressPercent(70);
-      setLinkProgressMsg('Verifying your Instagram account with Meta...');
-      await new Promise(r => setTimeout(r, 600)); // Make sure the DB write finishes committing
+      setLinkProgressPercent(60);
+      setLinkProgressMsg('Synchronizing verified details from Meta...');
 
-      // Step 3: Fetch the verified social account row from the database!
-      setLinkProgressPercent(90);
-      setLinkProgressMsg('Fetching your verified profile details...');
+      // Poll profiles.social_link up to 6 times (6 seconds total)
+      let verifiedInstagramStats: any = null;
+      for (let attempt = 1; attempt <= 6; attempt++) {
+        console.log(`[executeOAuthFlow] Polling profiles.social_link, attempt ${attempt}...`);
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('social_link')
+          .eq('id', user.id)
+          .single();
 
-      const { data: dbAccount, error: dbErr } = await supabase
-        .from('social_accounts')
-        .select('*')
-        .eq('creator_id', user.id)
-        .eq('platform', 'instagram')
-        .order('created_at', { ascending: false })
-        .limit(1);
+        if (profileData?.social_link) {
+          try {
+            const socials = typeof profileData.social_link === 'string'
+              ? JSON.parse(profileData.social_link)
+              : profileData.social_link;
+            
+            if (socials && socials.instagram) {
+              verifiedInstagramStats = socials.instagram;
+              console.log('[executeOAuthFlow] Found verified Instagram inside social_link!', verifiedInstagramStats);
+              break;
+            }
+          } catch (e) {
+            console.warn('[executeOAuthFlow] JSON parse error during polling:', e);
+          }
+        }
+        await new Promise(r => setTimeout(r, 1000));
+      }
 
-      let username = oauthResult.handle;
-      let followerCount = oauthResult.followers || 0;
-      let displayName = oauthResult.handle;
-      let profilePictureUrl = 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=200&auto=format&fit=crop';
-      let engagementRate = 3.5;
-      let accountType = oauthResult.accountType || 'creator';
+      if (!verifiedInstagramStats && oauthResult) {
+        // Fallback to oauthResult values if database sync didn't write to profiles table yet but popup returned
+        verifiedInstagramStats = {
+          handle: oauthResult.handle,
+          displayName: oauthResult.handle,
+          followersCount: oauthResult.followers || 0,
+          profilePictureUrl: '',
+          engagementRate: 3.5,
+          accountType: oauthResult.accountType || 'creator',
+        };
+      }
 
-      if (!dbErr && dbAccount && dbAccount.length > 0) {
-        const acc = dbAccount[0];
-        console.log('[executeOAuthFlow] Found verified DB account:', acc);
-        username = acc.username || username;
-        followerCount = Number(acc.follower_count) || followerCount;
-        displayName = acc.display_name || username;
-        profilePictureUrl = acc.profile_picture_url || profilePictureUrl;
-        engagementRate = Number(acc.average_engagement_rate) || engagementRate;
-        accountType = acc.is_verified ? 'creator' : 'personal';
+      if (!verifiedInstagramStats) {
+        throw new Error('Meta authentication could not be verified. Please make sure your Instagram is a Professional/Creator account and try again.');
       }
 
       const insights: LinkedProfile = {
-        handle: username,
-        displayName: displayName,
-        followersCount: followerCount,
-        avatarUrl: profilePictureUrl,
-        engagementRate: engagementRate,
-        niche: 'Lifestyle',
-        contentStyle: 'Creator Content',
-        recentPostThemes: [],
+        handle: verifiedInstagramStats.handle || verifiedInstagramStats.username || '',
+        displayName: verifiedInstagramStats.displayName || verifiedInstagramStats.display_name || verifiedInstagramStats.handle || '',
+        followersCount: Number(verifiedInstagramStats.followersCount) || Number(verifiedInstagramStats.follower_count) || 0,
+        avatarUrl: verifiedInstagramStats.profilePictureUrl || verifiedInstagramStats.profile_picture_url || verifiedInstagramStats.avatarUrl || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=200&auto=format&fit=crop',
+        engagementRate: Number(verifiedInstagramStats.engagementRate) || Number(verifiedInstagramStats.average_engagement_rate) || 3.5,
+        niche: verifiedInstagramStats.niche || 'Lifestyle',
+        contentStyle: verifiedInstagramStats.contentStyle || 'Verified Creator Content',
+        recentPostThemes: verifiedInstagramStats.recentPostThemes || [],
         isVerified: true
       };
 
@@ -288,7 +305,7 @@ export const CreatorOnboardingScreen = () => {
           'This Instagram account is set to Personal. Switch to Creator or Professional in Instagram Settings to link it.\n\nSettings → Account → Switch to Professional Account',
           [{ text: 'Got it', style: 'default' }]
         );
-      } else if (!err.message?.includes('cancelled')) {
+      } else {
         Alert.alert('Instagram Link Failed', err.message || 'Something went wrong. Please try again.');
       }
       setActivePlatform(null);

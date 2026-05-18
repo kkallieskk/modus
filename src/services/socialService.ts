@@ -174,7 +174,10 @@ export const socialService = {
         display_name: item.displayName || item.display_name,
         follower_count: item.followersCount || item.followerCount || 0,
         profile_picture_url: item.avatarUrl || item.profilePictureUrl || '',
-        platform_user_id: `${platform}_synced`
+        platform_user_id: `${platform}_synced`,
+        engagement_rate: item.engagementRate || item.engagement_rate || 3.5,
+        niche: item.niche || 'Lifestyle',
+        content_style: item.contentStyle || item.content_style || 'Creator Content'
       }));
     } catch (e) {
       console.error('Error parsing social_link JSON in getLinkedAccounts:', e);
