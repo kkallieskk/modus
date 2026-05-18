@@ -120,6 +120,7 @@ export function buildInstagramAuthUrl(userId: string): string {
 export async function linkInstagramAccount(userId: string): Promise<{
   code: string;
   handle: string;
+  followers: number;
   accountType: 'creator' | 'personal' | 'unknown';
 }> {
   const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '1530182758639376';
@@ -189,11 +190,16 @@ export async function linkInstagramAccount(userId: string): Promise<{
         throw new Error(errorDesc);
       }
 
-      const code = urlParams.get('code');
+      const code = urlParams.get('code') || '';
       const handle = urlParams.get('handle') || '';
+      const followers = parseInt(urlParams.get('followers') || '0', 10);
+      const rawAccountType = urlParams.get('account_type') || 'creator';
+      const accountType: 'creator' | 'personal' | 'unknown' = 
+        rawAccountType === 'personal' ? 'personal' : 
+        rawAccountType === 'creator' ? 'creator' : 'unknown';
 
       if (code) {
-        return { code, handle, accountType: 'creator' };
+        return { code, handle, followers, accountType };
       }
     }
 

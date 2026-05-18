@@ -208,24 +208,6 @@ export async function fetchSocialInsights(
   platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter'
 ) {
   const normalizedHandle = handle.replace(/^@/, '').toLowerCase().trim();
-  if (normalizedHandle === 'kk.23.02' || normalizedHandle === 'kk') {
-    console.log(`[AI Social Service] Intercepted user's verified handle: ${handle}. Returning correct Karan Kallies profile.`);
-    return {
-      handle: 'kk.23.02',
-      displayName: 'Karan Kallies',
-      avatarUrl: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=500&auto=format",
-      followersCount: 142800,
-      engagementRate: 4.85,
-      niche: "Lifestyle",
-      contentStyle: "Premium high-aesthetic travel content assets",
-      isPrivateOrEstimated: false,
-      audienceGenderSplit: { female: 70, male: 30 },
-      audienceAgeBracket: "18-24",
-      topGeos: ["India", "United States"],
-      recentPostThemes: ["Editorial Travel", "Minimalist Architecture", "Luxury Hotels"]
-    };
-  }
-
   const geminiApiKey = process.env.EXPO_PUBLIC_GEMINI_API_KEY;
   const groqApiKey = process.env.EXPO_PUBLIC_GROQ_API_KEY;
 
