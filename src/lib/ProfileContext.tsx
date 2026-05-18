@@ -36,6 +36,23 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
+      // Check for pending role from Web OAuth redirect
+      if (typeof window !== 'undefined' && window.localStorage) {
+        const pendingRole = window.localStorage.getItem('pending_oauth_role');
+        if (pendingRole) {
+          console.log('[ProfileContext] Applying pending OAuth role:', pendingRole);
+          window.localStorage.removeItem('pending_oauth_role');
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ role: pendingRole })
+            .eq('id', user.id);
+          
+          if (updateError) {
+            console.error('[ProfileContext] Error updating pending role:', updateError);
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('id, role, display_name, avatar_url, brand_color, onboarding_completed, industry, bio, website_url, social_link')

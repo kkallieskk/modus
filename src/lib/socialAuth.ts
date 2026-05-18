@@ -7,6 +7,8 @@ import { createClient } from '@supabase/supabase-js';
 WebBrowser.maybeCompleteAuthSession();
 
 export async function signInWithGoogle(role?: 'brand' | 'influencer') {
+  const isWeb = Platform.OS === 'web';
+
   const redirectTo = AuthSession.makeRedirectUri({
     scheme: 'modus',
     path: 'auth/callback',
@@ -14,6 +16,26 @@ export async function signInWithGoogle(role?: 'brand' | 'influencer') {
 
   console.log('Google Auth Redirect URI:', redirectTo);
 
+  if (isWeb) {
+    // Store role in local storage for retrieval after redirection
+    if (role && typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem('pending_oauth_role', role);
+    }
+
+    // Direct in-window redirect on the web to avoid popups blocking or hanging
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo,
+        skipBrowserRedirect: false,
+      },
+    });
+
+    if (error) throw error;
+    return;
+  }
+
+  // Native platforms flow (iOS / Android) using WebBrowser
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
@@ -69,7 +91,7 @@ export async function signInWithGoogle(role?: 'brand' | 'influencer') {
  * The Edge Function will complete the server-side code exchange and then deep-link back into the app.
  */
 export function buildInstagramAuthUrl(userId: string): string {
-  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '1402057978405029';
+  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '3924189761222584';
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 
   // The Edge Function is the redirect_uri so it can do the server-side token exchange
@@ -100,7 +122,7 @@ export async function linkInstagramAccount(userId: string): Promise<{
   handle: string;
   accountType: 'creator' | 'personal' | 'unknown';
 }> {
-  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '1402057978405029';
+  const instagramAppId = process.env.EXPO_PUBLIC_INSTAGRAM_APP_ID || '3924189761222584';
   const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL || '';
 
   if (!instagramAppId || !supabaseUrl) {
