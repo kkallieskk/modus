@@ -103,26 +103,28 @@ serve(async (req) => {
         const metaUserId = shortLivedData.user_id;
         console.log(`[InstagramOAuth] Short-lived token acquired for Meta user ID: ${metaUserId}`);
 
-        // STEP 2: Exchange short-lived token for a 60-day long-lived token
-        console.log("[InstagramOAuth] Step 2: Exchanging for 60-day long-lived token...");
-        const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${instagramAppSecret}&access_token=${shortToken}`;
-        const longLivedRes = await fetch(longLivedUrl);
-
-        if (!longLivedRes.ok) {
-          const errText = await longLivedRes.text();
-          console.error("[InstagramOAuth] Long-lived token exchange failed:", errText);
-          throw new Error(`Long-lived token exchange failed: ${errText}`);
+        // STEP 2: Try to upgrade to long-lived token (may fail in dev mode — graceful fallback)
+        let accessToken = shortToken;
+        let expiresIn = 3600; // short-lived = 1 hour
+        try {
+          console.log("[InstagramOAuth] Step 2: Attempting 60-day long-lived token upgrade...");
+          const longLivedUrl = `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${instagramAppSecret}&access_token=${shortToken}`;
+          const longLivedRes = await fetch(longLivedUrl);
+          if (longLivedRes.ok) {
+            const longLivedData = await longLivedRes.json();
+            accessToken = longLivedData.access_token || shortToken;
+            expiresIn = longLivedData.expires_in || expiresIn;
+            console.log(`[InstagramOAuth] Long-lived token acquired. Expires in ${expiresIn}s`);
+          } else {
+            const errText = await longLivedRes.text();
+            console.warn(`[InstagramOAuth] Long-lived token upgrade failed (using short-lived): ${errText}`);
+            // Continue with short-lived token — it works for profile fetching
+          }
+        } catch (upgradeErr: any) {
+          console.warn(`[InstagramOAuth] Long-lived upgrade exception (using short-lived): ${upgradeErr.message}`);
         }
 
-        const longLivedData = await longLivedRes.json();
-        const accessToken = longLivedData.access_token;
-        const expiresIn = longLivedData.expires_in;
-        console.log(`[InstagramOAuth] 60-day token acquired. Expires in ${expiresIn}s`);
-
-        // STEP 3: Fetch profile data from Graph API
-        // instagram_business_basic gives us: id, username, profile_picture_url, followers_count
-        // IMPORTANT: followers_count is ONLY available for Creator/Business accounts!
-        // Personal accounts will NOT have this field.
+        // STEP 3: Fetch profile data from Graph API using whichever token we have
         console.log("[InstagramOAuth] Step 3: Fetching profile from Graph API...");
         const profileUrl = `https://graph.instagram.com/v21.0/me?fields=id,username,name,profile_picture_url,followers_count,media_count,account_type&access_token=${accessToken}`;
         const profileRes = await fetch(profileUrl);
@@ -152,6 +154,9 @@ serve(async (req) => {
           // Personal account detected — tell the user to switch their account type
           console.warn(`[InstagramOAuth] Personal account detected for @${username}. Returning error.`);
 
+          if (webRedirectUrl) {
+            return Response.redirect(`${webRedirectUrl}?error=PERSONAL_ACCOUNT&handle=${encodeURIComponent(username)}`, 302);
+          }
           if (req.method === "POST") {
             return new Response(
               JSON.stringify({
