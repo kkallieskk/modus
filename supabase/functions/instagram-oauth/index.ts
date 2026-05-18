@@ -225,10 +225,8 @@ serve(async (req) => {
           console.warn(`[InstagramOAuth] Media fetch exception: ${mediaErr.message}`);
         }
         
-        // If calculation failed or returned 0, fallback to a realistic placeholder based on followers
-        if (calculatedEngagementRate === 0) {
-          calculatedEngagementRate = followerCount < 10000 ? 5.2 : (followerCount < 100000 ? 3.5 : 2.1);
-        }
+        // If calculation returned 0 because they have no posts, we keep it as 0.
+        // We no longer fake the engagement rate with a placeholder.
 
         // STEP 5: AI Post Analysis using Groq
         console.log("[InstagramOAuth] Step 5: Analyzing content with Groq AI...");
