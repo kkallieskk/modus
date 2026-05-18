@@ -344,11 +344,38 @@ export const CreatorProfileScreen = () => {
           </View>
 
           {parsedSocialStats?.audienceDemographics ? (
-            <View style={styles.demographicsCard}>
-              <Text style={styles.demoPlaceholder}>
-                (Demographics charts will render here based on {Object.keys(parsedSocialStats.audienceDemographics).length} metric nodes)
-              </Text>
-            </View>
+            (() => {
+              const genderAge = parsedSocialStats.audienceDemographics.audience_gender_age || {};
+              let total = 0;
+              let female = 0;
+              let male = 0;
+              
+              Object.keys(genderAge).forEach(key => {
+                const val = genderAge[key];
+                total += val;
+                if (key.startsWith('F')) female += val;
+                if (key.startsWith('M')) male += val;
+              });
+
+              const femalePct = total > 0 ? Math.round((female / total) * 100) : 0;
+              const malePct = total > 0 ? Math.round((male / total) * 100) : 0;
+
+              return (
+                <View style={styles.demographicsCard}>
+                  <Text style={styles.demoTitle}>Audience Gender Split</Text>
+                  
+                  <View style={styles.demoBarContainer}>
+                    <View style={[styles.demoBarFemale, { width: `${femalePct}%` }]} />
+                    <View style={[styles.demoBarMale, { width: `${malePct}%` }]} />
+                  </View>
+                  
+                  <View style={styles.demoLabels}>
+                    <Text style={styles.demoLabelText}>👩 {femalePct}% Female</Text>
+                    <Text style={styles.demoLabelText}>👨 {malePct}% Male</Text>
+                  </View>
+                </View>
+              );
+            })()
           ) : (
             <LinearGradient
               colors={['#F3F4F6', '#E5E7EB']}
@@ -646,11 +673,39 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  demoPlaceholder: {
-    color: '#6B7280',
+  demoTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#374151',
+    marginBottom: 16,
+  },
+  demoBarContainer: {
+    width: '100%',
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#F3F4F6',
+    flexDirection: 'row',
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  demoBarFemale: {
+    backgroundColor: '#EC4899', // Pink
+    height: '100%',
+  },
+  demoBarMale: {
+    backgroundColor: '#3B82F6', // Blue
+    height: '100%',
+  },
+  demoLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    width: '100%',
+    paddingHorizontal: 8,
+  },
+  demoLabelText: {
     fontSize: 13,
-    fontStyle: 'italic',
-    textAlign: 'center',
+    color: '#4B5563',
+    fontWeight: '500',
   },
   demoNudgeCard: {
     borderRadius: 16,
