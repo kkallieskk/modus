@@ -90,6 +90,11 @@ const RoleCard = ({
     ]).start();
   }, [isHovered]);
 
+  const isBrand = title.includes('Brand');
+  const accentColor = isBrand ? '#8B5CF6' : '#10B981';
+  const iconBg = isBrand ? '#8B5CF612' : '#10B98112';
+  const bgIconColor = isBrand ? 'rgba(139, 92, 246, 0.03)' : 'rgba(16, 185, 129, 0.03)';
+
   return (
     <Pressable
       onPress={onPress}
@@ -102,24 +107,27 @@ const RoleCard = ({
         styles.cardWrapper,
         {
           transform: [{ scale }, { translateY }],
-          shadowColor: isHovered ? '#6366f1' : '#000',
-          shadowOpacity: isHovered ? 0.3 : 0.1,
-          elevation: isHovered ? 12 : 6,
+          shadowColor: isHovered ? accentColor : '#000',
+          shadowOpacity: isHovered ? 0.08 : 0.04,
+          elevation: isHovered ? 12 : 3,
         }
       ]}>
         <LinearGradient
-          colors={['#111827', '#1F2937']}
+          colors={['#FFFFFF', '#F9FAFB']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={[styles.card, isHovered && styles.cardHovered]}
+          style={[
+            styles.card, 
+            isHovered && { borderColor: accentColor }
+          ]}
         >
           {/* Subtle Background Icon */}
           <View style={styles.cardBgIcon}>
-            <BackgroundIcon size={120} color="#FFFFFF08" strokeWidth={1} />
+            <BackgroundIcon size={120} color={bgIconColor} strokeWidth={1} />
           </View>
           
-          <View style={[styles.iconContainer, { backgroundColor: '#FFFFFF15' }]}>
-            <Icon size={32} color="#FFFFFF" />
+          <View style={[styles.iconContainer, { backgroundColor: iconBg }]}>
+            <Icon size={32} color={accentColor} />
           </View>
           
           <View style={styles.cardContent}>
@@ -128,7 +136,7 @@ const RoleCard = ({
           </View>
           
           <View style={styles.arrowContainer}>
-            <ChevronRight size={20} color={isHovered ? "#FFFFFF" : "#6B7280"} />
+            <ChevronRight size={20} color={isHovered ? accentColor : "#D1D5DB"} />
           </View>
         </LinearGradient>
       </Animated.View>
@@ -237,8 +245,24 @@ const styles = StyleSheet.create({
   },
   cardWrapper: {
     borderRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    shadowRadius: 16,
+    backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.04,
+        shadowRadius: 24,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 12 },
+        shadowOpacity: 0.04,
+        shadowRadius: 24,
+      }
+    }),
   },
   card: {
     flexDirection: 'row',
@@ -246,17 +270,17 @@ const styles = StyleSheet.create({
     padding: 24,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#374151',
+    borderColor: '#F3F4F6',
     overflow: 'hidden',
   },
   cardHovered: {
-    borderColor: '#4F46E5',
+    // Handled dynamic border in component inline styles
   },
   cardBgIcon: {
     position: 'absolute',
     right: -20,
     bottom: -20,
-    opacity: 0.8,
+    opacity: 0.5,
   },
   iconContainer: {
     width: 56,
@@ -272,12 +296,12 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: '800',
-    color: '#FFF',
+    color: '#111827',
     marginBottom: 4,
   },
   cardDescription: {
     fontSize: 13,
-    color: '#9CA3AF',
+    color: '#4B5563',
     lineHeight: 18,
     fontWeight: '500',
   },
