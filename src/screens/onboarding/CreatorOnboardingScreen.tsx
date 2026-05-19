@@ -13,6 +13,7 @@ import {
   Animated,
   Easing,
   useWindowDimensions,
+  Pressable,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '@/lib/supabase';
@@ -119,7 +120,7 @@ export const CreatorOnboardingScreen = () => {
   const [activePlatform, setActivePlatform] = useState<'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'linkedin' | null>(null);
   const [socialHandle, setSocialHandle] = useState('');
   const [linkStep, setLinkStep] = useState<'input' | 'loading' | 'preview'>('input');
-  const [showInstagramInterception, setShowInstagramInterception] = useState(false);
+  const [hoveredPlatform, setHoveredPlatform] = useState<'instagram' | 'youtube' | 'linkedin' | 'twitter'>('instagram');
   
   // Real-time simulated API progress states
   const [linkProgressMsg, setLinkProgressMsg] = useState('');
@@ -238,16 +239,10 @@ export const CreatorOnboardingScreen = () => {
   };
 
   const startLinking = async (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'linkedin') => {
-    if (platform === 'instagram') {
-      setActivePlatform('instagram');
-      setShowInstagramInterception(true);
-      return;
+    if (platform !== 'tiktok') {
+      setHoveredPlatform(platform as any);
     }
     await executeOAuthFlow(platform);
-  };
-
-  const triggerInstagramOnboardingOAuth = async () => {
-    await executeOAuthFlow('instagram');
   };
 
   const executeOAuthFlow = async (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'linkedin') => {
@@ -528,132 +523,349 @@ export const CreatorOnboardingScreen = () => {
   };
 
   // Step 1 Layout
-  const renderStep1 = () => (
-    <View style={styles.stepContainer}>
-      <View style={styles.header}>
-        <Text style={styles.stepTitle}>Connect Social Handles</Text>
-        <Text style={styles.stepSubtitle}>Securely connect your primary account.</Text>
-      </View>
-
-      <View style={styles.socialGrid}>
-        {/* Instagram Card */}
-        <TouchableOpacity 
-          onPress={() => startLinking('instagram')}
-          style={[
-            styles.socialGridCard, 
-            connectedProfiles.instagram && styles.socialGridCardActiveInstagram
-          ]}
-        >
-          <View style={styles.socialGridCardHeader}>
-            <LinearGradient
-              colors={['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888']}
-              style={styles.socialGridIconBg}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 0 }}
-            >
-              <Instagram size={18} color="#FFF" />
-            </LinearGradient>
-            {connectedProfiles.instagram && <Check size={16} color="#059669" />}
-          </View>
-          <View style={styles.socialGridContent}>
-            <Text style={styles.socialGridLabel}>Instagram</Text>
-            {connectedProfiles.instagram ? (
-              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
-                {connectedProfiles.instagram.handle} • {connectedProfiles.instagram.followersCount.toLocaleString()}
-              </Text>
-            ) : (
-              <Text style={styles.socialGridSubtext}>Connect Feed</Text>
-            )}
-          </View>
-        </TouchableOpacity>
-
-        {/* YouTube Card */}
-        <TouchableOpacity 
-          onPress={() => startLinking('youtube')}
-          style={[
-            styles.socialGridCard, 
-            connectedProfiles.youtube && styles.socialGridCardActiveYoutube
-          ]}
-        >
-          <View style={styles.socialGridCardHeader}>
-            <View style={[styles.socialGridIconBg, { backgroundColor: '#FF0000' }]}>
-              <Youtube size={18} color="#FFF" />
+  const renderStep1 = () => {
+    if (isDesktop) {
+      return (
+        <View style={styles.stepContainerSplit}>
+          {/* Left Column */}
+          <View style={styles.leftColumnStep1}>
+            <View style={styles.header}>
+              <Text style={styles.stepTitle}>Connect Social Handles</Text>
+              <Text style={styles.stepSubtitle}>Securely connect your primary account.</Text>
             </View>
-            {connectedProfiles.youtube && <Check size={16} color="#059669" />}
-          </View>
-          <View style={styles.socialGridContent}>
-            <Text style={styles.socialGridLabel}>YouTube</Text>
-            {connectedProfiles.youtube ? (
-              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
-                {connectedProfiles.youtube.handle} • {connectedProfiles.youtube.followersCount.toLocaleString()}
-              </Text>
-            ) : (
-              <Text style={styles.socialGridSubtext}>Connect Channel</Text>
-            )}
-          </View>
-        </TouchableOpacity>
 
-        {/* LinkedIn Card */}
-        <TouchableOpacity 
-          onPress={() => startLinking('linkedin')}
-          style={[
-            styles.socialGridCard, 
-            connectedProfiles.linkedin && styles.socialGridCardActiveLinkedin
-          ]}
-        >
-          <View style={styles.socialGridCardHeader}>
-            <View style={[styles.socialGridIconBg, { backgroundColor: '#0077B5' }]}>
-              <Linkedin size={18} color="#FFF" />
+            <View style={styles.socialGrid}>
+              {/* Instagram Card */}
+              <Pressable 
+                onPress={() => startLinking('instagram')}
+                onHoverIn={() => setHoveredPlatform('instagram')}
+                style={[
+                  styles.socialGridCard, 
+                  hoveredPlatform === 'instagram' && styles.socialGridCardHovered,
+                  connectedProfiles.instagram && styles.socialGridCardActiveInstagram
+                ]}
+              >
+                <View style={styles.socialGridCardHeader}>
+                  <LinearGradient
+                    colors={['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888']}
+                    style={styles.socialGridIconBg}
+                    start={{ x: 0, y: 1 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <Instagram size={18} color="#FFF" />
+                  </LinearGradient>
+                  {connectedProfiles.instagram && <Check size={16} color="#059669" />}
+                </View>
+                <View style={styles.socialGridContent}>
+                  <Text style={styles.socialGridLabel}>Instagram</Text>
+                  {connectedProfiles.instagram ? (
+                    <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                      {connectedProfiles.instagram.handle} • {connectedProfiles.instagram.followersCount.toLocaleString()}
+                    </Text>
+                  ) : (
+                    <Text style={styles.socialGridSubtext}>Connect Feed</Text>
+                  )}
+                </View>
+              </Pressable>
+
+              {/* YouTube Card */}
+              <Pressable 
+                onPress={() => startLinking('youtube')}
+                onHoverIn={() => setHoveredPlatform('youtube')}
+                style={[
+                  styles.socialGridCard, 
+                  hoveredPlatform === 'youtube' && styles.socialGridCardHovered,
+                  connectedProfiles.youtube && styles.socialGridCardActiveYoutube
+                ]}
+              >
+                <View style={styles.socialGridCardHeader}>
+                  <View style={[styles.socialGridIconBg, { backgroundColor: '#FF0000' }]}>
+                    <Youtube size={18} color="#FFF" />
+                  </View>
+                  {connectedProfiles.youtube && <Check size={16} color="#059669" />}
+                </View>
+                <View style={styles.socialGridContent}>
+                  <Text style={styles.socialGridLabel}>YouTube</Text>
+                  {connectedProfiles.youtube ? (
+                    <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                      {connectedProfiles.youtube.handle} • {connectedProfiles.youtube.followersCount.toLocaleString()}
+                    </Text>
+                  ) : (
+                    <Text style={styles.socialGridSubtext}>Connect Channel</Text>
+                  )}
+                </View>
+              </Pressable>
+
+              {/* LinkedIn Card */}
+              <Pressable 
+                onPress={() => startLinking('linkedin')}
+                onHoverIn={() => setHoveredPlatform('linkedin')}
+                style={[
+                  styles.socialGridCard, 
+                  hoveredPlatform === 'linkedin' && styles.socialGridCardHovered,
+                  connectedProfiles.linkedin && styles.socialGridCardActiveLinkedin
+                ]}
+              >
+                <View style={styles.socialGridCardHeader}>
+                  <View style={[styles.socialGridIconBg, { backgroundColor: '#0077B5' }]}>
+                    <Linkedin size={18} color="#FFF" />
+                  </View>
+                  {connectedProfiles.linkedin && <Check size={16} color="#059669" />}
+                </View>
+                <View style={styles.socialGridContent}>
+                  <Text style={styles.socialGridLabel}>LinkedIn</Text>
+                  {connectedProfiles.linkedin ? (
+                    <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                      {connectedProfiles.linkedin.handle} • {connectedProfiles.linkedin.followersCount.toLocaleString()}
+                    </Text>
+                  ) : (
+                    <Text style={styles.socialGridSubtext}>Connect Profile</Text>
+                  )}
+                </View>
+              </Pressable>
+
+              {/* X (Twitter) Card */}
+              <Pressable 
+                onPress={() => startLinking('twitter')}
+                onHoverIn={() => setHoveredPlatform('twitter')}
+                style={[
+                  styles.socialGridCard, 
+                  hoveredPlatform === 'twitter' && styles.socialGridCardHovered,
+                  connectedProfiles.twitter && styles.socialGridCardActiveTwitter
+                ]}
+              >
+                <View style={styles.socialGridCardHeader}>
+                  <View style={[styles.socialGridIconBg, { backgroundColor: '#000000' }]}>
+                    <Twitter size={18} color="#FFF" />
+                  </View>
+                  {connectedProfiles.twitter && <Check size={16} color="#059669" />}
+                </View>
+                <View style={styles.socialGridContent}>
+                  <Text style={styles.socialGridLabel}>X (Twitter)</Text>
+                  {connectedProfiles.twitter ? (
+                    <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                      {connectedProfiles.twitter.handle} • {connectedProfiles.twitter.followersCount.toLocaleString()}
+                    </Text>
+                  ) : (
+                    <Text style={styles.socialGridSubtext}>Connect Account</Text>
+                  )}
+                </View>
+              </Pressable>
             </View>
-            {connectedProfiles.linkedin && <Check size={16} color="#059669" />}
-          </View>
-          <View style={styles.socialGridContent}>
-            <Text style={styles.socialGridLabel}>LinkedIn</Text>
-            {connectedProfiles.linkedin ? (
-              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
-                {connectedProfiles.linkedin.handle} • {connectedProfiles.linkedin.followersCount.toLocaleString()}
-              </Text>
-            ) : (
-              <Text style={styles.socialGridSubtext}>Connect Profile</Text>
-            )}
-          </View>
-        </TouchableOpacity>
 
-        {/* X (Twitter) Card */}
-        <TouchableOpacity 
-          onPress={() => startLinking('twitter')}
-          style={[
-            styles.socialGridCard, 
-            connectedProfiles.twitter && styles.socialGridCardActiveTwitter
-          ]}
-        >
-          <View style={styles.socialGridCardHeader}>
-            <View style={[styles.socialGridIconBg, { backgroundColor: '#000000' }]}>
-              <Twitter size={18} color="#FFF" />
+            <View style={styles.securityNote}>
+              <ShieldCheck size={18} color="#6B7280" />
+              <Text style={styles.securityNoteText}>
+                Modus matches verify read-only API access to parse authentic follower counts. We secure fully encrypted transactions.
+              </Text>
             </View>
-            {connectedProfiles.twitter && <Check size={16} color="#059669" />}
           </View>
-          <View style={styles.socialGridContent}>
-            <Text style={styles.socialGridLabel}>X (Twitter)</Text>
-            {connectedProfiles.twitter ? (
-              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
-                {connectedProfiles.twitter.handle} • {connectedProfiles.twitter.followersCount.toLocaleString()}
-              </Text>
-            ) : (
-              <Text style={styles.socialGridSubtext}>Connect Account</Text>
-            )}
-          </View>
-        </TouchableOpacity>
-      </View>
 
-      <View style={styles.securityNote}>
-        <ShieldCheck size={18} color="#6B7280" />
-        <Text style={styles.securityNoteText}>
-          Modus matches verify read-only API access to parse authentic follower counts. We secure fully encrypted transactions.
-        </Text>
+          {/* Vertical Divider */}
+          <View style={styles.verticalDivider} />
+
+          {/* Right Column */}
+          <View style={styles.rightColumnStep1}>
+            {renderOnboardingGuidePanel()}
+          </View>
+        </View>
+      );
+    }
+
+    // Mobile single column fallback
+    return (
+      <View style={styles.stepContainer}>
+        <View style={styles.header}>
+          <Text style={styles.stepTitle}>Connect Social Handles</Text>
+          <Text style={styles.stepSubtitle}>Securely connect your primary account.</Text>
+        </View>
+
+        <View style={styles.socialGrid}>
+          {/* Instagram Card */}
+          <Pressable 
+            onPress={() => startLinking('instagram')}
+            onHoverIn={() => setHoveredPlatform('instagram')}
+            style={[
+              styles.socialGridCard, 
+              hoveredPlatform === 'instagram' && styles.socialGridCardHovered,
+              connectedProfiles.instagram && styles.socialGridCardActiveInstagram
+            ]}
+          >
+            <View style={styles.socialGridCardHeader}>
+              <LinearGradient
+                colors={['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888']}
+                style={styles.socialGridIconBg}
+                start={{ x: 0, y: 1 }}
+                end={{ x: 1, y: 0 }}
+              >
+                <Instagram size={18} color="#FFF" />
+              </LinearGradient>
+              {connectedProfiles.instagram && <Check size={16} color="#059669" />}
+            </View>
+            <View style={styles.socialGridContent}>
+              <Text style={styles.socialGridLabel}>Instagram</Text>
+              {connectedProfiles.instagram ? (
+                <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                  {connectedProfiles.instagram.handle} • {connectedProfiles.instagram.followersCount.toLocaleString()}
+                </Text>
+              ) : (
+                <Text style={styles.socialGridSubtext}>Connect Feed</Text>
+              )}
+            </View>
+          </Pressable>
+
+          {/* YouTube Card */}
+          <Pressable 
+            onPress={() => startLinking('youtube')}
+            onHoverIn={() => setHoveredPlatform('youtube')}
+            style={[
+              styles.socialGridCard, 
+              hoveredPlatform === 'youtube' && styles.socialGridCardHovered,
+              connectedProfiles.youtube && styles.socialGridCardActiveYoutube
+            ]}
+          >
+            <View style={styles.socialGridCardHeader}>
+              <View style={[styles.socialGridIconBg, { backgroundColor: '#FF0000' }]}>
+                <Youtube size={18} color="#FFF" />
+              </View>
+              {connectedProfiles.youtube && <Check size={16} color="#059669" />}
+            </View>
+            <View style={styles.socialGridContent}>
+              <Text style={styles.socialGridLabel}>YouTube</Text>
+              {connectedProfiles.youtube ? (
+                <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                  {connectedProfiles.youtube.handle} • {connectedProfiles.youtube.followersCount.toLocaleString()}
+                </Text>
+              ) : (
+                <Text style={styles.socialGridSubtext}>Connect Channel</Text>
+              )}
+            </View>
+          </Pressable>
+
+          {/* LinkedIn Card */}
+          <Pressable 
+            onPress={() => startLinking('linkedin')}
+            onHoverIn={() => setHoveredPlatform('linkedin')}
+            style={[
+              styles.socialGridCard, 
+              hoveredPlatform === 'linkedin' && styles.socialGridCardHovered,
+              connectedProfiles.linkedin && styles.socialGridCardActiveLinkedin
+            ]}
+          >
+            <View style={styles.socialGridCardHeader}>
+              <View style={[styles.socialGridIconBg, { backgroundColor: '#0077B5' }]}>
+                <Linkedin size={18} color="#FFF" />
+              </View>
+              {connectedProfiles.linkedin && <Check size={16} color="#059669" />}
+            </View>
+            <View style={styles.socialGridContent}>
+              <Text style={styles.socialGridLabel}>LinkedIn</Text>
+              {connectedProfiles.linkedin ? (
+                <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                  {connectedProfiles.linkedin.handle} • {connectedProfiles.linkedin.followersCount.toLocaleString()}
+                </Text>
+              ) : (
+                <Text style={styles.socialGridSubtext}>Connect Profile</Text>
+              )}
+            </View>
+          </Pressable>
+
+          {/* X (Twitter) Card */}
+          <Pressable 
+            onPress={() => startLinking('twitter')}
+            onHoverIn={() => setHoveredPlatform('twitter')}
+            style={[
+              styles.socialGridCard, 
+              hoveredPlatform === 'twitter' && styles.socialGridCardHovered,
+              connectedProfiles.twitter && styles.socialGridCardActiveTwitter
+            ]}
+          >
+            <View style={styles.socialGridCardHeader}>
+              <View style={[styles.socialGridIconBg, { backgroundColor: '#000000' }]}>
+                <Twitter size={18} color="#FFF" />
+              </View>
+              {connectedProfiles.twitter && <Check size={16} color="#059669" />}
+            </View>
+            <View style={styles.socialGridContent}>
+              <Text style={styles.socialGridLabel}>X (Twitter)</Text>
+              {connectedProfiles.twitter ? (
+                <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                  {connectedProfiles.twitter.handle} • {connectedProfiles.twitter.followersCount.toLocaleString()}
+                </Text>
+              ) : (
+                <Text style={styles.socialGridSubtext}>Connect Account</Text>
+              )}
+            </View>
+          </Pressable>
+        </View>
+
+        <View style={styles.mobileGuideContainer}>
+          {renderOnboardingGuidePanel()}
+        </View>
+
+        <View style={styles.securityNote}>
+          <ShieldCheck size={18} color="#6B7280" />
+          <Text style={styles.securityNoteText}>
+            Modus matches verify read-only API access to parse authentic follower counts. We secure fully encrypted transactions.
+          </Text>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
+
+  const renderOnboardingGuidePanel = () => {
+    const guides = {
+      instagram: {
+        header: 'Convert your Instagram account to a Professional account to sync:',
+        steps: [
+          'Go to your Instagram profile page.',
+          'Open Settings & Activity (menu icon).',
+          'Tap "Account type and tools" under Professionals.',
+          'Switch to a Professional account (select Creator or Business).'
+        ]
+      },
+      youtube: {
+        header: 'Requirements to sync your YouTube channel reach:',
+        steps: [
+          'Ensure your channel is public and active.',
+          'Authenticate using the associated Google account.',
+          'Grant read-only permissions to import stats.'
+        ]
+      },
+      linkedin: {
+        header: 'Steps to sync your LinkedIn profile connections:',
+        steps: [
+          'Log in to the secure LinkedIn OAuth portal.',
+          'Authorize Modus read-only network access.',
+          'Import and verify connection counts.'
+        ]
+      },
+      twitter: {
+        header: 'Steps to sync your X (Twitter) account reach:',
+        steps: [
+          'Log in using your secure X (Twitter) credentials.',
+          'Authorize the read-only application access.',
+          'Import and verify follower counts.'
+        ]
+      }
+    };
+
+    const guide = guides[hoveredPlatform] || guides.instagram;
+
+    return (
+      <View style={styles.simpleGuideContainer}>
+        <Text style={styles.simpleGuideHeader}>{guide.header}</Text>
+        <View style={styles.simpleGuideStepsList}>
+          {guide.steps.map((stepText, idx) => (
+            <View key={idx} style={styles.simpleGuideStepItem}>
+              <Text style={styles.simpleGuideStepNumber}>{idx + 1}.</Text>
+              <Text style={styles.simpleGuideStepText}>{stepText}</Text>
+            </View>
+          ))}
+        </View>
+      </View>
+    );
+  };
 
   // Step 2 Layout
   const renderStep2 = () => (
@@ -1005,97 +1217,7 @@ export const CreatorOnboardingScreen = () => {
     );
   };
 
-  const renderInstagramInterceptionModal = () => {
-    if (!showInstagramInterception) return null;
 
-    return (
-      <View style={styles.modalBackdrop}>
-        <View style={styles.modalCard}>
-          {/* Header */}
-          <View style={styles.modalHeader}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Instagram size={24} color="#E1306C" />
-              <Text style={styles.modalTitle}>Instagram Direct Sync</Text>
-            </View>
-            <TouchableOpacity onPress={() => { setShowInstagramInterception(false); setActivePlatform(null); }}>
-              <X size={20} color="#9CA3AF" />
-            </TouchableOpacity>
-          </View>
-
-          <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
-            <View style={{ gap: 16 }}>
-              {/* Alert Warning */}
-              <View style={styles.estimatedAlert}>
-                <Info size={18} color="#D97706" style={{ marginTop: 2 }} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.estimatedAlertTitle}>Free Creator Account Required</Text>
-                  <Text style={styles.estimatedAlertText}>
-                    To securely pull your verified statistics and get hired by top brands, Modus requires a free Instagram Creator or Business account. Personal profiles will return an error from Meta.
-                  </Text>
-                </View>
-              </View>
-
-              {/* Guide Title */}
-              <Text style={{ fontSize: 14, fontWeight: '800', color: '#1F2937' }}>
-                How to convert your account (10 seconds & 100% Free):
-              </Text>
-
-              <View style={{ gap: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B9811A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>1</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>Open Instagram Settings</Text>
-                    <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Go to your profile page, open Settings & Activity ⚙️</Text>
-                  </View>
-                </View>
- 
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B9811A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>2</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>Account Type and Tools</Text>
-                    <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Scroll down and tap "Account type and tools" under For Professionals</Text>
-                  </View>
-                </View>
- 
-                <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B9811A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>3</Text>
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>Switch to Professional Account</Text>
-                    <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Tap "Switch to Professional Account", select "Creator" and tap Done!</Text>
-                  </View>
-                </View>
-              </View>
-
-              {/* Gatekeeper Confirmation Button */}
-              <TouchableOpacity 
-                style={[styles.confirmSyncBtn, { backgroundColor: '#E1306C', marginTop: 16 }]}
-                onPress={() => {
-                  setShowInstagramInterception(false);
-                  triggerInstagramOnboardingOAuth();
-                }}
-              >
-                <ShieldCheck size={20} color="white" />
-                <Text style={styles.confirmSyncBtnText}>My account is set to Creator/Professional</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity 
-                style={{ paddingVertical: 12, alignItems: 'center' }}
-                onPress={() => { setShowInstagramInterception(false); setActivePlatform(null); }}
-              >
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#6B7280' }}>Cancel connection</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
-        </View>
-      </View>
-    );
-  };
 
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]}>
@@ -1121,7 +1243,7 @@ export const CreatorOnboardingScreen = () => {
       )}
 
       {/* Onboarding Glassmorphic Modal Box */}
-      <View style={isDesktop ? styles.centerCardWrapperDesktop : styles.centerCardWrapper}>
+      <View style={isDesktop ? [styles.centerCardWrapperDesktop, step === 1 && { maxWidth: 840 }] : styles.centerCardWrapper}>
         <View style={isDesktop ? styles.cardDesktop : styles.card}>
           {/* Progress Bar */}
           <View style={[styles.progressContainer, isDesktop && styles.progressContainerDesktop]}>
@@ -1204,7 +1326,6 @@ export const CreatorOnboardingScreen = () => {
 
       {/* Linking Modal Overlay */}
       {renderPlatformModal()}
-      {renderInstagramInterceptionModal()}
     </View>
   );
 };
@@ -1972,5 +2093,72 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '800',
     color: '#10B981'
-  }
+  },
+  stepContainerSplit: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: 32,
+  },
+  leftColumnStep1: {
+    flex: 1.1,
+  },
+  verticalDivider: {
+    width: 1,
+    backgroundColor: '#F3F4F6',
+    marginVertical: 4,
+  },
+  rightColumnStep1: {
+    flex: 0.9,
+    paddingTop: 8,
+  },
+  simpleGuideContainer: {
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  simpleGuideHeader: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  simpleGuideStepsList: {
+    gap: 12,
+  },
+  simpleGuideStepItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 6,
+  },
+  simpleGuideStepNumber: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#94A3B8',
+    width: 16,
+  },
+  simpleGuideStepText: {
+    fontSize: 12,
+    color: '#64748B',
+    lineHeight: 17,
+    flex: 1,
+  },
+  mobileGuideContainer: {
+    marginTop: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  socialGridCardHovered: {
+    borderColor: '#6366F1',
+    backgroundColor: '#F8FAFC',
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+  },
 });
