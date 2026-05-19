@@ -30,6 +30,7 @@ import {
   ChevronRight,
   Youtube,
   Twitter,
+  Linkedin,
   Globe,
   Info,
   Lock,
