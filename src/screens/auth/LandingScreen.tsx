@@ -116,6 +116,14 @@ export const LandingScreen = () => {
 
   return (
     <View style={s.pageWrapper}>
+      {/* ── BACKGROUND MESH (Fixed to viewport) ── */}
+      <View style={s.bgGlowWrap}>
+        <View style={s.bgGlow1} />
+        <View style={s.bgGlow2} />
+        <View style={s.bgGlow3} />
+        <View style={s.bgGlow4} />
+      </View>
+
       {/* ── STICKY NAV ── */}
       <View style={s.nav}>
         <Text style={s.logo}>Modus.</Text>
@@ -150,12 +158,6 @@ export const LandingScreen = () => {
 
         {/* ── HERO ── */}
         <View style={[s.hero, { minHeight: Math.min(H * 0.75, 800), justifyContent: 'center' }]}>
-          <View style={s.bgGlowWrap}>
-            <View style={s.bgGlow1} />
-            <View style={s.bgGlow2} />
-            <View style={s.bgGlow3} />
-            <View style={s.bgGlow4} />
-          </View>
           <HeroIllustrations />
 
         <Animated.View style={{ opacity: fade1, transform: [{ translateY: slide1 }], alignItems: 'center', zIndex: 10 }}>
@@ -272,7 +274,8 @@ const s = StyleSheet.create({
     ...(IS_WEB ? { 
       position: 'fixed', top: 24, left: '50%', transform: [{ translateX: '-50%' }] as any,
       width: '90%', maxWidth: 1100, zIndex: 100, 
-      backdropFilter: 'blur(30px) saturate(150%)' 
+      backdropFilter: 'blur(30px) saturate(150%)',
+      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)'
     } : {}),
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: IS_WEB ? 32 : 24, paddingVertical: 14,
@@ -280,7 +283,7 @@ const s = StyleSheet.create({
     borderWidth: IS_WEB ? 1 : 0, 
     borderColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: IS_WEB ? 100 : 0,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 24 }, shadowOpacity: 0.06, shadowRadius: 40,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 24 }, shadowOpacity: 0.12, shadowRadius: 40,
   },
   logo: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
   navCenter: { flexDirection: 'row', gap: 32, alignItems: 'center' },
