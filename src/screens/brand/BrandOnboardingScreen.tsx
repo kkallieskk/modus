@@ -160,6 +160,28 @@ export const BrandOnboardingScreen = () => {
     }
   };
 
+  const handleBackToRoleSelection = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Reset role to null to redirect back to RoleSelectionScreen in RootNavigator
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await refreshProfile();
+    } catch (err: any) {
+      console.error('Error resetting role:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const currentStep = STEP_TITLES[step - 1];
 
   return (
@@ -170,6 +192,16 @@ export const BrandOnboardingScreen = () => {
       {/* Soft floating accents */}
       <View style={[s.blob, { top: -60, right: -40 }]} />
       <View style={[s.blob, s.blobSmall, { bottom: 120, left: -30 }]} />
+
+      {/* Top Sign Out Button */}
+      <TouchableOpacity 
+        onPress={async () => {
+          await supabase.auth.signOut();
+        }}
+        style={{ position: 'absolute', top: 68, right: 28, zIndex: 10 }}
+      >
+        <Text style={{ fontSize: 14, fontWeight: '600', color: '#9CA3AF' }}>Sign Out</Text>
+      </TouchableOpacity>
 
       {/* Top section */}
       <View style={s.header}>
@@ -329,7 +361,9 @@ export const BrandOnboardingScreen = () => {
             <ChevronLeft size={22} color="#000" />
           </TouchableOpacity>
         ) : (
-          <View style={{ width: 48 }} />
+          <TouchableOpacity onPress={handleBackToRoleSelection} style={s.backBtn} disabled={loading}>
+            {loading ? <ActivityIndicator size="small" color="#000" /> : <ChevronLeft size={22} color="#000" />}
+          </TouchableOpacity>
         )}
 
         {step < 4 ? (

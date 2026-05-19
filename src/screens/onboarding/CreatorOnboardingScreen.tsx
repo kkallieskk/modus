@@ -71,6 +71,29 @@ export const CreatorOnboardingScreen = () => {
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState<(string | null)[]>([null, null, null]);
   const [isFinishing, setIsFinishing] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const handleBackToRoleSelection = async () => {
+    try {
+      setLoading(true);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      // Reset role to null to redirect back to RoleSelectionScreen in RootNavigator
+      const { error } = await supabase
+        .from('profiles')
+        .update({ role: null })
+        .eq('id', user.id);
+
+      if (error) throw error;
+
+      await refreshProfile();
+    } catch (err: any) {
+      console.error('Error resetting role:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Link Social Modal / Overlay State
   const [activePlatform, setActivePlatform] = useState<'instagram' | 'tiktok' | 'youtube' | 'twitter' | null>(null);
@@ -977,7 +1000,16 @@ export const CreatorOnboardingScreen = () => {
             ]} 
           />
         </View>
-        <Text style={styles.progressText}>Step {step} of {totalSteps}</Text>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+          <Text style={styles.progressText}>Step {step} of {totalSteps}</Text>
+          <TouchableOpacity 
+            onPress={async () => {
+              await supabase.auth.signOut();
+            }}
+          >
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#9CA3AF' }}>Sign Out</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
@@ -988,12 +1020,20 @@ export const CreatorOnboardingScreen = () => {
 
       {/* Footer Navigation */}
       <View style={styles.navigation}>
-        {step > 1 && (
+        {step > 1 ? (
           <TouchableOpacity 
             onPress={() => setStep(step - 1)}
             style={styles.backButton}
           >
             <Text style={styles.backText}>Back</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity 
+            onPress={handleBackToRoleSelection}
+            disabled={loading}
+            style={styles.backButton}
+          >
+            {loading ? <ActivityIndicator size="small" color="#6B7280" /> : <Text style={styles.backText}>Change Role</Text>}
           </TouchableOpacity>
         )}
         
