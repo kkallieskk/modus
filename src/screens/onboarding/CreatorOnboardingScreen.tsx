@@ -535,106 +535,114 @@ export const CreatorOnboardingScreen = () => {
         <Text style={styles.stepSubtitle}>Securely connect your primary account.</Text>
       </View>
 
-      <View style={styles.socialContainer}>
+      <View style={styles.socialGrid}>
         {/* Instagram Card */}
         <TouchableOpacity 
           onPress={() => startLinking('instagram')}
-          style={[styles.socialButton, connectedProfiles.instagram && styles.socialButtonActive]}
+          style={[
+            styles.socialGridCard, 
+            connectedProfiles.instagram && styles.socialGridCardActiveInstagram
+          ]}
         >
-          <LinearGradient
-            colors={['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888']}
-            style={styles.instagramIconBg}
-            start={{ x: 0, y: 1 }}
-            end={{ x: 1, y: 0 }}
-          >
-            <Instagram size={24} color="#FFF" />
-          </LinearGradient>
-          <View style={styles.socialContent}>
-            <Text style={styles.socialLabel}>Instagram Business</Text>
+          <View style={styles.socialGridCardHeader}>
+            <LinearGradient
+              colors={['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888']}
+              style={styles.socialGridIconBg}
+              start={{ x: 0, y: 1 }}
+              end={{ x: 1, y: 0 }}
+            >
+              <Instagram size={18} color="#FFF" />
+            </LinearGradient>
+            {connectedProfiles.instagram && <Check size={16} color="#059669" />}
+          </View>
+          <View style={styles.socialGridContent}>
+            <Text style={styles.socialGridLabel}>Instagram</Text>
             {connectedProfiles.instagram ? (
-              <View style={styles.verifiedBadge}>
-                <ShieldCheck size={14} color="#059669" />
-                <Text style={styles.verifiedText}>
-                  {connectedProfiles.instagram.handle} • {connectedProfiles.instagram.followersCount.toLocaleString()} Followers
-                </Text>
-              </View>
+              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                {connectedProfiles.instagram.handle} • {connectedProfiles.instagram.followersCount.toLocaleString()}
+              </Text>
             ) : (
-              <Text style={styles.socialSubtext}>Tap to connect business feed</Text>
+              <Text style={styles.socialGridSubtext}>Connect Feed</Text>
             )}
           </View>
-          {connectedProfiles.instagram ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
         </TouchableOpacity>
 
         {/* YouTube Card */}
         <TouchableOpacity 
           onPress={() => startLinking('youtube')}
-          style={[styles.socialButton, connectedProfiles.youtube && styles.socialButtonActive]}
+          style={[
+            styles.socialGridCard, 
+            connectedProfiles.youtube && styles.socialGridCardActiveYoutube
+          ]}
         >
-          <View style={[styles.instagramIconBg, { backgroundColor: '#FF0000' }]}>
-            <Youtube size={24} color="#FFF" />
+          <View style={styles.socialGridCardHeader}>
+            <View style={[styles.socialGridIconBg, { backgroundColor: '#FF0000' }]}>
+              <Youtube size={18} color="#FFF" />
+            </View>
+            {connectedProfiles.youtube && <Check size={16} color="#059669" />}
           </View>
-          <View style={styles.socialContent}>
-            <Text style={styles.socialLabel}>YouTube Channel</Text>
+          <View style={styles.socialGridContent}>
+            <Text style={styles.socialGridLabel}>YouTube</Text>
             {connectedProfiles.youtube ? (
-              <View style={styles.verifiedBadge}>
-                <ShieldCheck size={14} color="#059669" />
-                <Text style={styles.verifiedText}>
-                  {connectedProfiles.youtube.handle} • {connectedProfiles.youtube.followersCount.toLocaleString()} Subs
-                </Text>
-              </View>
+              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                {connectedProfiles.youtube.handle} • {connectedProfiles.youtube.followersCount.toLocaleString()}
+              </Text>
             ) : (
-              <Text style={styles.socialSubtext}>Tap to connect channel</Text>
+              <Text style={styles.socialGridSubtext}>Connect Channel</Text>
             )}
           </View>
-          {connectedProfiles.youtube ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
         </TouchableOpacity>
 
         {/* LinkedIn Card */}
         <TouchableOpacity 
           onPress={() => startLinking('linkedin')}
-          style={[styles.socialButton, connectedProfiles.linkedin && styles.socialButtonActive]}
+          style={[
+            styles.socialGridCard, 
+            connectedProfiles.linkedin && styles.socialGridCardActiveLinkedin
+          ]}
         >
-          <View style={[styles.instagramIconBg, { backgroundColor: '#0077B5' }]}>
-            <Linkedin size={24} color="#FFF" />
+          <View style={styles.socialGridCardHeader}>
+            <View style={[styles.socialGridIconBg, { backgroundColor: '#0077B5' }]}>
+              <Linkedin size={18} color="#FFF" />
+            </View>
+            {connectedProfiles.linkedin && <Check size={16} color="#059669" />}
           </View>
-          <View style={styles.socialContent}>
-            <Text style={styles.socialLabel}>LinkedIn Profile</Text>
+          <View style={styles.socialGridContent}>
+            <Text style={styles.socialGridLabel}>LinkedIn</Text>
             {connectedProfiles.linkedin ? (
-              <View style={styles.verifiedBadge}>
-                <ShieldCheck size={14} color="#059669" />
-                <Text style={styles.verifiedText}>
-                  {connectedProfiles.linkedin.handle} • {connectedProfiles.linkedin.followersCount.toLocaleString()} Connections
-                </Text>
-              </View>
+              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                {connectedProfiles.linkedin.handle} • {connectedProfiles.linkedin.followersCount.toLocaleString()}
+              </Text>
             ) : (
-              <Text style={styles.socialSubtext}>Tap to connect profile</Text>
+              <Text style={styles.socialGridSubtext}>Connect Profile</Text>
             )}
           </View>
-          {connectedProfiles.linkedin ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
         </TouchableOpacity>
 
         {/* X (Twitter) Card */}
         <TouchableOpacity 
           onPress={() => startLinking('twitter')}
-          style={[styles.socialButton, connectedProfiles.twitter && styles.socialButtonActive]}
+          style={[
+            styles.socialGridCard, 
+            connectedProfiles.twitter && styles.socialGridCardActiveTwitter
+          ]}
         >
-          <View style={[styles.instagramIconBg, { backgroundColor: '#000000' }]}>
-            <Twitter size={24} color="#FFF" />
+          <View style={styles.socialGridCardHeader}>
+            <View style={[styles.socialGridIconBg, { backgroundColor: '#000000' }]}>
+              <Twitter size={18} color="#FFF" />
+            </View>
+            {connectedProfiles.twitter && <Check size={16} color="#059669" />}
           </View>
-          <View style={styles.socialContent}>
-            <Text style={styles.socialLabel}>X (Twitter)</Text>
+          <View style={styles.socialGridContent}>
+            <Text style={styles.socialGridLabel}>X (Twitter)</Text>
             {connectedProfiles.twitter ? (
-              <View style={styles.verifiedBadge}>
-                <ShieldCheck size={14} color="#059669" />
-                <Text style={styles.verifiedText}>
-                  {connectedProfiles.twitter.handle} • {connectedProfiles.twitter.followersCount.toLocaleString()} Followers
-                </Text>
-              </View>
+              <Text style={styles.socialGridSubtextVerified} numberOfLines={2}>
+                {connectedProfiles.twitter.handle} • {connectedProfiles.twitter.followersCount.toLocaleString()}
+              </Text>
             ) : (
-              <Text style={styles.socialSubtext}>Tap to connect account</Text>
+              <Text style={styles.socialGridSubtext}>Connect Account</Text>
             )}
           </View>
-          {connectedProfiles.twitter ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
         </TouchableOpacity>
       </View>
 
@@ -1277,7 +1285,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 40,
     elevation: 8,
-    maxHeight: 700,
+    maxHeight: 740,
     width: '100%',
     ...(Platform.OS === 'web' ? { backdropFilter: 'blur(24px)' } as any : {})
   },
@@ -1343,6 +1351,79 @@ const styles = StyleSheet.create({
   socialContainer: {
     gap: 16,
   },
+  socialGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'space-between',
+    width: '100%',
+  },
+  socialGridCard: {
+    width: '48%',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    padding: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.03,
+    shadowRadius: 6,
+    elevation: 2,
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    minHeight: 100,
+  },
+  socialGridCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  socialGridIconBg: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  socialGridContent: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  socialGridLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  socialGridSubtext: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  socialGridSubtextVerified: {
+    fontSize: 11,
+    color: '#059669',
+    fontWeight: '700',
+    marginTop: 2,
+  },
+  socialGridCardActiveInstagram: {
+    borderColor: '#E1306C',
+    backgroundColor: '#FFF0F5',
+  },
+  socialGridCardActiveYoutube: {
+    borderColor: '#FF0000',
+    backgroundColor: '#FFF1F2',
+  },
+  socialGridCardActiveLinkedin: {
+    borderColor: '#0077B5',
+    backgroundColor: '#F0F9FF',
+  },
+  socialGridCardActiveTwitter: {
+    borderColor: '#0F172A',
+    backgroundColor: '#F8FAFC',
+  },
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1397,7 +1478,7 @@ const styles = StyleSheet.create({
   securityNote: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 32,
+    marginTop: 16,
     backgroundColor: '#F3F4F6',
     padding: 12,
     borderRadius: 12,
