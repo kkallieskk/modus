@@ -12,13 +12,12 @@ import {
   StyleSheet,
   Image,
   Dimensions,
+  useWindowDimensions,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
 import { Briefcase, Globe, ChevronDown, ChevronRight, Camera, ChevronLeft, ImagePlus, Sparkles, CheckCircle2 } from 'lucide-react-native';
 import { useProfile } from '@/lib/ProfileContext';
-
-const { width } = Dimensions.get('window');
 
 const INDUSTRIES = [
   'Fashion & Beauty',
@@ -58,6 +57,9 @@ export const BrandOnboardingScreen = () => {
   const [selectedColor, setSelectedColor] = useState(BRAND_VIBES[0].hex);
   const [bio, setBio] = useState('');
   const [showPicker, setShowPicker] = useState(false);
+
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth > 640;
 
   const nextStep = () => {
     if (step === 1 && (!company.trim() || !industry)) {
@@ -166,7 +168,6 @@ export const BrandOnboardingScreen = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Reset role to null to redirect back to RoleSelectionScreen in RootNavigator
       const { error } = await supabase
         .from('profiles')
         .update({ role: null })
@@ -187,198 +188,210 @@ export const BrandOnboardingScreen = () => {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={s.container}
+      style={[s.container, isDesktop && s.containerDesktop]}
     >
-      {/* Soft floating accents */}
+      {/* Soft floating background accents */}
       <View style={[s.blob, { top: -60, right: -40 }]} />
       <View style={[s.blob, s.blobSmall, { bottom: 120, left: -30 }]} />
 
-      {/* Top Sign Out Button */}
+      {/* Branded Watermark (Only visible on Desktop to elevate UI aesthetic) */}
+      {isDesktop && (
+        <View style={s.watermarkContainer}>
+          <Text style={s.watermarkText}>Modus.</Text>
+        </View>
+      )}
+
+      {/* Top Sign Out Button (positioned fixed in the viewport, accessible but out of focus) */}
       <TouchableOpacity 
         onPress={async () => {
           await supabase.auth.signOut();
         }}
-        style={{ position: 'absolute', top: 68, right: 28, zIndex: 10 }}
+        style={s.signOutBtn}
       >
-        <Text style={{ fontSize: 14, fontWeight: '600', color: '#9CA3AF' }}>Sign Out</Text>
+        <Text style={s.signOutBtnText}>Sign Out</Text>
       </TouchableOpacity>
 
-      {/* Top section */}
-      <View style={s.header}>
-        {/* Progress dots */}
-        <View style={s.progressRow}>
-          {[1, 2, 3].map((i) => (
-            <View key={i} style={[s.dot, i <= step && s.dotActive]} />
-          ))}
-        </View>
-
-        <Text style={s.stepLabel}>Step {step}/4</Text>
-        <Text style={s.title}>{currentStep.title}</Text>
-        <Text style={s.subtitle}>{currentStep.subtitle}</Text>
-      </View>
-
-      {/* Content */}
-      <ScrollView
-        contentContainerStyle={s.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* ─── STEP 1: Identity ─── */}
-        {step === 1 && (
-          <>
-            <View style={s.field}>
-              <Text style={s.fieldLabel}>Company Name</Text>
-              <TextInput
-                style={s.textInput}
-                placeholder="Acme Inc."
-                placeholderTextColor="#C5C8CD"
-                value={company}
-                onChangeText={setCompany}
-              />
+      {/* Onboarding Glassmorphic Modal Box */}
+      <View style={isDesktop ? s.centerCardWrapperDesktop : s.centerCardWrapper}>
+        <View style={isDesktop ? s.cardDesktop : s.card}>
+          {/* Header */}
+          <View style={[s.header, isDesktop && s.headerDesktop]}>
+            {/* Progress dots */}
+            <View style={s.progressRow}>
+              {[1, 2, 3, 4].map((i) => (
+                <View key={i} style={[s.dot, i <= step && s.dotActive]} />
+              ))}
             </View>
 
-            <View style={s.field}>
-              <Text style={s.fieldLabel}>Industry</Text>
-              <TouchableOpacity
-                onPress={() => setShowPicker(!showPicker)}
-                style={s.textInput}
-                activeOpacity={0.7}
-              >
-                <Text style={{ fontSize: 16, color: industry ? '#000' : '#C5C8CD' }}>
-                  {industry || 'Choose one'}
-                </Text>
-              </TouchableOpacity>
-              {showPicker && (
-                <View style={s.picker}>
-                  {INDUSTRIES.map((item) => (
-                    <TouchableOpacity
-                      key={item}
-                      onPress={() => { setIndustry(item); setShowPicker(false); }}
-                      style={[s.pickerItem, industry === item && s.pickerItemActive]}
-                    >
-                      <Text style={{ fontSize: 15, fontWeight: industry === item ? '600' : '400', color: '#000' }}>
-                        {item}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+            <Text style={s.stepLabel}>Step {step}/4</Text>
+            <Text style={s.title}>{currentStep.title}</Text>
+            <Text style={s.subtitle}>{currentStep.subtitle}</Text>
+          </View>
+
+          {/* Form Scroll Content */}
+          <ScrollView
+            contentContainerStyle={[s.scrollContent, isDesktop && s.scrollContentDesktop]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {/* ─── STEP 1: Identity ─── */}
+            {step === 1 && (
+              <>
+                <View style={s.field}>
+                  <Text style={s.fieldLabel}>Company Name</Text>
+                  <TextInput
+                    style={s.textInput}
+                    placeholder="Acme Inc."
+                    placeholderTextColor="#C5C8CD"
+                    value={company}
+                    onChangeText={setCompany}
+                  />
                 </View>
-              )}
-            </View>
 
-            <View style={s.field}>
-              <Text style={s.fieldLabel}>Website <Text style={{ color: '#C5C8CD', fontWeight: '400' }}>(optional)</Text></Text>
-              <TextInput
-                style={s.textInput}
-                placeholder="https://..."
-                placeholderTextColor="#C5C8CD"
-                value={website}
-                onChangeText={setWebsite}
-                autoCapitalize="none"
-                keyboardType="url"
-              />
-            </View>
-          </>
-        )}
-
-        {/* ─── STEP 2: Brand Vibe ─── */}
-        {step === 2 && (
-          <View style={s.field}>
-            <Text style={s.fieldLabel}>Select your primary theme color</Text>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={{ gap: 16, paddingVertical: 10 }}
-            >
-              {BRAND_VIBES.map((vibe) => (
-                <TouchableOpacity
-                  key={vibe.hex}
-                  onPress={() => setSelectedColor(vibe.hex)}
-                  style={[
-                    s.colorCircle,
-                    { backgroundColor: vibe.hex },
-                    selectedColor === vibe.hex && s.colorCircleSelected
-                  ]}
-                >
-                  {selectedColor === vibe.hex && (
-                    <View style={s.checkIcon}>
-                      <CheckCircle2 size={24} color="white" />
+                <View style={s.field}>
+                  <Text style={s.fieldLabel}>Industry</Text>
+                  <TouchableOpacity
+                    onPress={() => setShowPicker(!showPicker)}
+                    style={s.textInput}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={{ fontSize: 16, color: industry ? '#000' : '#C5C8CD' }}>
+                      {industry || 'Choose one'}
+                    </Text>
+                  </TouchableOpacity>
+                  {showPicker && (
+                    <View style={s.picker}>
+                      {INDUSTRIES.map((item) => (
+                        <TouchableOpacity
+                          key={item}
+                          onPress={() => { setIndustry(item); setShowPicker(false); }}
+                          style={[s.pickerItem, industry === item && s.pickerItemActive]}
+                        >
+                          <Text style={{ fontSize: 15, fontWeight: industry === item ? '600' : '400', color: '#000' }}>
+                            {item}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
                     </View>
                   )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-            <Text style={s.helperText}>This will tint your dashboard and buttons.</Text>
-          </View>
-        )}
+                </View>
 
-        {/* ─── STEP 3: Logo ─── */}
-        {step === 3 && (
-          <View style={s.logoStep}>
-            <TouchableOpacity onPress={pickImage} disabled={uploading} activeOpacity={0.8} style={s.logoCircle}>
-              {uploading ? (
-                <ActivityIndicator color="#000" />
-              ) : avatarUrl ? (
-                <Image source={{ uri: avatarUrl }} style={s.logoImage} />
-              ) : (
-                <Camera size={28} color="#B0B3B8" />
-              )}
-            </TouchableOpacity>
-
-            <TouchableOpacity onPress={pickImage} disabled={uploading} style={s.uploadBtn}>
-              <ImagePlus size={16} color="#000" />
-              <Text style={s.uploadBtnText}>
-                {avatarUrl ? 'Change Logo' : 'Choose from Gallery'}
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={s.helperText}>Square image, at least 400×400px</Text>
-          </View>
-        )}
-
-        {/* ─── STEP 4: Bio ─── */}
-        {step === 4 && (
-          <>
-            <View style={s.field}>
-              <Text style={s.fieldLabel}>About your brand</Text>
-              <TextInput
-                style={[s.textInput, s.textArea]}
-                placeholder="What do you do? What kind of creators are you looking for?"
-                placeholderTextColor="#C5C8CD"
-                multiline
-                textAlignVertical="top"
-                value={bio}
-                onChangeText={setBio}
-              />
-            </View>
-          </>
-        )}
-      </ScrollView>
-
-      {/* Footer */}
-      <View style={s.footer}>
-        {step > 1 ? (
-          <TouchableOpacity onPress={prevStep} style={s.backBtn}>
-            <ChevronLeft size={22} color="#000" />
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={handleBackToRoleSelection} style={s.backBtn} disabled={loading}>
-            {loading ? <ActivityIndicator size="small" color="#000" /> : <ChevronLeft size={22} color="#000" />}
-          </TouchableOpacity>
-        )}
-
-        {step < 4 ? (
-          <TouchableOpacity onPress={nextStep} style={s.primaryBtn} activeOpacity={0.85}>
-            <Text style={s.primaryBtnText}>Continue</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity onPress={handleSubmit} disabled={loading} style={[s.primaryBtn, loading && { opacity: 0.6 }]} activeOpacity={0.85}>
-            {loading ? (
-              <ActivityIndicator color="#FFF" />
-            ) : (
-              <Text style={s.primaryBtnText}>Launch Dashboard →</Text>
+                <View style={s.field}>
+                  <Text style={s.fieldLabel}>Website <Text style={{ color: '#C5C8CD', fontWeight: '400' }}>(optional)</Text></Text>
+                  <TextInput
+                    style={s.textInput}
+                    placeholder="https://..."
+                    placeholderTextColor="#C5C8CD"
+                    value={website}
+                    onChangeText={setWebsite}
+                    autoCapitalize="none"
+                    keyboardType="url"
+                  />
+                </View>
+              </>
             )}
-          </TouchableOpacity>
-        )}
+
+            {/* ─── STEP 2: Brand Vibe ─── */}
+            {step === 2 && (
+              <View style={s.field}>
+                <Text style={s.fieldLabel}>Select your primary theme color</Text>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ gap: 16, paddingVertical: 10 }}
+                >
+                  {BRAND_VIBES.map((vibe) => (
+                    <TouchableOpacity
+                      key={vibe.hex}
+                      onPress={() => setSelectedColor(vibe.hex)}
+                      style={[
+                        s.colorCircle,
+                        { backgroundColor: vibe.hex },
+                        selectedColor === vibe.hex && s.colorCircleSelected
+                      ]}
+                    >
+                      {selectedColor === vibe.hex && (
+                        <View style={s.checkIcon}>
+                          <CheckCircle2 size={24} color="white" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <Text style={s.helperText}>This will tint your dashboard and buttons.</Text>
+              </View>
+            )}
+
+            {/* ─── STEP 3: Logo ─── */}
+            {step === 3 && (
+              <View style={s.logoStep}>
+                <TouchableOpacity onPress={pickImage} disabled={uploading} activeOpacity={0.8} style={s.logoCircle}>
+                  {uploading ? (
+                    <ActivityIndicator color="#000" />
+                  ) : avatarUrl ? (
+                    <Image source={{ uri: avatarUrl }} style={s.logoImage} />
+                  ) : (
+                    <Camera size={28} color="#B0B3B8" />
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={pickImage} disabled={uploading} style={s.uploadBtn}>
+                  <ImagePlus size={16} color="#000" />
+                  <Text style={s.uploadBtnText}>
+                    {avatarUrl ? 'Change Logo' : 'Choose from Gallery'}
+                  </Text>
+                </TouchableOpacity>
+
+                <Text style={s.helperText}>Square image, at least 400×400px</Text>
+              </View>
+            )}
+
+            {/* ─── STEP 4: Bio ─── */}
+            {step === 4 && (
+              <>
+                <View style={s.field}>
+                  <Text style={s.fieldLabel}>About your brand</Text>
+                  <TextInput
+                    style={[s.textInput, s.textArea]}
+                    placeholder="What do you do? What kind of creators are you looking for?"
+                    placeholderTextColor="#C5C8CD"
+                    multiline
+                    textAlignVertical="top"
+                    value={bio}
+                    onChangeText={setBio}
+                  />
+                </View>
+              </>
+            )}
+          </ScrollView>
+
+          {/* Card Action Footer */}
+          <View style={[s.footer, isDesktop && s.footerDesktop]}>
+            {step > 1 ? (
+              <TouchableOpacity onPress={prevStep} style={s.backBtn}>
+                <ChevronLeft size={22} color="#000" />
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={handleBackToRoleSelection} style={s.backBtn} disabled={loading}>
+                {loading ? <ActivityIndicator size="small" color="#000" /> : <ChevronLeft size={22} color="#000" />}
+              </TouchableOpacity>
+            )}
+
+            {step < 4 ? (
+              <TouchableOpacity onPress={nextStep} style={s.primaryBtn} activeOpacity={0.85}>
+                <Text style={s.primaryBtnText}>Continue</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity onPress={handleSubmit} disabled={loading} style={[s.primaryBtn, loading && { opacity: 0.6 }]} activeOpacity={0.85}>
+                {loading ? (
+                  <ActivityIndicator color="#FFF" />
+                ) : (
+                  <Text style={s.primaryBtnText}>Launch Dashboard →</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );
@@ -386,13 +399,92 @@ export const BrandOnboardingScreen = () => {
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#FFF' },
+  containerDesktop: {
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 
   // Floating background accents
   blob: { position: 'absolute', width: 220, height: 220, borderRadius: 110, backgroundColor: '#F5F6F7', zIndex: 0 },
   blobSmall: { width: 160, height: 160, borderRadius: 80, backgroundColor: '#F9FAFB' },
 
+  // Watermark (Desktop)
+  watermarkContainer: {
+    position: 'absolute',
+    top: 40,
+    left: 40,
+    zIndex: 5,
+  },
+  watermarkText: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -1,
+  },
+
+  // Sign out (Desktop & general)
+  signOutBtn: {
+    position: 'absolute',
+    top: 40,
+    right: 40,
+    zIndex: 10,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ECEEF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  signOutBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+
+  // Card layouts
+  centerCardWrapper: {
+    flex: 1,
+    width: '100%',
+  },
+  centerCardWrapperDesktop: {
+    width: '100%',
+    maxWidth: 550,
+    alignSelf: 'center',
+    marginVertical: 40,
+    paddingHorizontal: 16,
+    zIndex: 5,
+  },
+  card: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  cardDesktop: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#ECEEF1',
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 8,
+    maxHeight: 700,
+    width: '100%',
+  },
+
   // Header
   header: { paddingTop: 68, paddingHorizontal: 28, paddingBottom: 8, zIndex: 1 },
+  headerDesktop: {
+    paddingTop: 36,
+    paddingHorizontal: 32,
+  },
   progressRow: { flexDirection: 'row', gap: 6, marginBottom: 20 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E5E7EB' },
   dotActive: { backgroundColor: '#000', width: 24 },
@@ -402,6 +494,11 @@ const s = StyleSheet.create({
 
   // Scroll
   scrollContent: { flexGrow: 1, paddingHorizontal: 28, paddingTop: 28, paddingBottom: 20, zIndex: 1 },
+  scrollContentDesktop: {
+    paddingHorizontal: 32,
+    paddingTop: 16,
+    paddingBottom: 24,
+  },
 
   // Fields
   field: { marginBottom: 22 },
@@ -461,6 +558,11 @@ const s = StyleSheet.create({
     paddingBottom: Platform.OS === 'ios' ? 36 : 24,
     paddingTop: 16,
     zIndex: 1,
+  },
+  footerDesktop: {
+    paddingHorizontal: 32,
+    paddingBottom: 28,
+    paddingTop: 12,
   },
   backBtn: {
     width: 48,
