@@ -52,3 +52,9 @@
   animation: floatUp 8s ease-in-out infinite;
 }
 
+/* Remove default web browser blue focus outline rings globally */
+input:focus, textarea:focus, select:focus, [contenteditable="true"]:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+

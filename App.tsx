@@ -19,6 +19,20 @@ import {
 if (Platform.OS === 'web') {
   WebBrowser.maybeCompleteAuthSession();
 
+  // Inject style block to remove browser default outlines from focused inputs globally on web
+  if (typeof document !== 'undefined') {
+    const style = document.createElement('style');
+    style.type = 'text/css';
+    style.appendChild(document.createTextNode(`
+      input:focus, textarea:focus, select:focus, [contenteditable="true"]:focus {
+        outline: none !important;
+        outline-width: 0 !important;
+        box-shadow: none !important;
+      }
+    `));
+    document.head.appendChild(style);
+  }
+
   // Capture Instagram OAuth callback params from the URL and store in localStorage.
   // The Edge Function redirects to /auth/callback?handle=...&followers=...&account_type=...
   // We store them so the onboarding screen can read them after the page reloads.
