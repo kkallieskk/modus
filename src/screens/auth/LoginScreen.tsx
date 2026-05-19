@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -8,19 +8,129 @@ import {
   KeyboardAvoidingView, 
   Platform,
   ScrollView,
+  useWindowDimensions,
+  Animated,
+  StyleSheet
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { signInWithGoogle } from '@/lib/socialAuth';
-import { Mail, Lock } from 'lucide-react-native';
+import { Mail, Lock, ArrowLeft, CheckCircle2, ShieldCheck, User, Briefcase } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+
+// ─── Subtle Light-Themed UI Mockup for Brand Role ──────────────────────────────
+const BrandMockup = () => (
+  <View style={s.mockCard}>
+    <View style={s.mockHeader}>
+      <Text style={s.mockTitle}>Creator Pitch Inbox</Text>
+      <View style={s.mockBadge}>
+        <Text style={s.mockBadgeText}>3 New</Text>
+      </View>
+    </View>
+    
+    {[
+      { name: 'Sarah Jenkins', niche: 'Lifestyle & Wellness', followers: '148.2K', verified: true },
+      { name: 'David Chen', niche: 'Productivity & Tech', followers: '82.5K', verified: true },
+    ].map((c, i) => (
+      <View key={i} style={s.mockRow}>
+        <View style={s.mockAvatar}>
+          <Text style={s.mockAvatarText}>{c.name[0]}</Text>
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={s.mockName}>{c.name}</Text>
+            {c.verified && <CheckCircle2 size={12} color="#3B82F6" fill="#3B82F6" />}
+          </View>
+          <Text style={s.mockNiche}>{c.niche} · {c.followers}</Text>
+        </View>
+        <View style={s.mockActionBtn}>
+          <Text style={s.mockActionTxt}>Hire</Text>
+        </View>
+      </View>
+    ))}
+    
+    <View style={s.mockMetrics}>
+      {[
+        { val: '₹12.4L', lbl: 'Escrowed' },
+        { val: '98%', lbl: 'On-Time' },
+        { val: '6', lbl: 'Active' }
+      ].map((item, idx) => (
+        <View key={idx} style={s.mockMetricItem}>
+          <Text style={s.mockMetricVal}>{item.val}</Text>
+          <Text style={s.mockMetricLabel}>{item.lbl}</Text>
+        </View>
+      ))}
+    </View>
+  </View>
+);
+
+// ─── Subtle Light-Themed UI Mockup for Creator Role ────────────────────────────
+const CreatorMockup = () => (
+  <View style={s.mockCard}>
+    <View style={s.mockHeader}>
+      <Text style={s.mockTitle}>My Deals</Text>
+      <View style={[s.mockBadge, { backgroundColor: '#E8F5E9' }]}>
+        <Text style={[s.mockBadgeText, { color: '#2E7D32' }]}>₹5K Secured</Text>
+      </View>
+    </View>
+    
+    {[
+      { brand: 'Glow Recipe', campaign: 'Watermelon Launch', status: 'In Progress', color: '#FFF8E1', text: '#F57F17' },
+      { brand: 'Rhode Skin', campaign: 'Summer Glaze', status: 'Draft Approved', color: '#E8F5E9', text: '#2E7D32' },
+    ].map((d, i) => (
+      <View key={i} style={s.mockRow}>
+        <View style={[s.mockAvatar, { backgroundColor: '#F3F4F6' }]}>
+          <Text style={[s.mockAvatarText, { color: '#374151' }]}>{d.brand[0]}</Text>
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={s.mockName}>{d.brand}</Text>
+          <Text style={s.mockNiche}>{d.campaign}</Text>
+        </View>
+        <View style={[s.mockStatusBadge, { backgroundColor: d.color }]}>
+          <Text style={[s.mockStatusText, { color: d.text }]}>{d.status}</Text>
+        </View>
+      </View>
+    ))}
+    
+    <View style={s.mockEscrowBanner}>
+      <ShieldCheck size={14} color="#2E7D32" />
+      <Text style={s.mockEscrowText}>
+        Funds secured in Modus Escrow Vault
+      </Text>
+    </View>
+  </View>
+);
 
 export const LoginScreen = ({ route, navigation }: any) => {
-  const role = route.params?.role;
-
+  const initialRole = route.params?.role || 'influencer';
+  const { width } = useWindowDimensions();
+  const isLargeScreen = width >= 1024;
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [role, setRole] = useState<'brand' | 'influencer'>(initialRole);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [focusedInput, setFocusedInput] = useState<'email' | 'password' | null>(null);
+
+  const floatAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatAnim, {
+          toValue: 1,
+          duration: 4000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatAnim, {
+          toValue: 0,
+          duration: 4000,
+          useNativeDriver: true,
+        })
+      ])
+    ).start();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -49,7 +159,6 @@ export const LoginScreen = ({ route, navigation }: any) => {
       setGoogleLoading(true);
       setError(null);
       await signInWithGoogle(role);
-      // RootNavigator will pick up the session
     } catch (err: any) {
       if (!err.message?.includes('cancelled')) {
         setError(err.message || 'Google sign-in failed');
@@ -59,113 +168,552 @@ export const LoginScreen = ({ route, navigation }: any) => {
     }
   };
 
+  const floatingTransform = floatAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -12]
+  });
+
+  const activeColor = role === 'brand' ? '#8B5CF6' : '#10B981';
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-white"
-    >
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }} className="px-8 pt-24">
-        <View className="mb-10">
-          <Text className="text-4xl font-bold text-black mb-2">
-            {role === 'brand' ? 'Welcome, Brand.' : role === 'influencer' ? 'Welcome, Creator.' : 'Welcome Back'}
-          </Text>
-          <Text className="text-gray-500 text-lg">
-            {role === 'brand' ? "Let's grow." : role === 'influencer' ? "Let's build." : 'Sign in to manage your deals.'}
-          </Text>
-        </View>
-
-        {/* Google Sign-In Button */}
-        <TouchableOpacity 
-          onPress={handleGoogleLogin}
-          disabled={googleLoading}
-          style={{
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: 56,
-            borderRadius: 16,
-            borderWidth: 1.5,
-            borderColor: '#E5E7EB',
-            backgroundColor: '#FFF',
-            marginBottom: 16,
-          }}
-        >
-          {googleLoading ? (
-            <ActivityIndicator color="#000" />
-          ) : (
-            <>
-              <Text style={{ fontSize: 20, fontWeight: '700', marginRight: 10 }}>G</Text>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#000' }}>Continue with Google</Text>
-            </>
-          )}
-        </TouchableOpacity>
-
-        {/* Divider */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginVertical: 20 }}>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#F3F4F6' }} />
-          <Text style={{ marginHorizontal: 14, fontSize: 13, color: '#9CA3AF', fontWeight: '500' }}>or</Text>
-          <View style={{ flex: 1, height: 1, backgroundColor: '#F3F4F6' }} />
-        </View>
-
-        {/* Email / Password Form */}
-        <View className="space-y-4">
-          <View>
-            <Text className="text-gray-400 text-xs font-bold uppercase mb-2 ml-1">Email Address</Text>
-            <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 h-14">
-              <Mail size={20} color="#9CA3AF" />
-              <TextInput
-                className="flex-1 ml-3 text-black text-base"
-                placeholder="you@example.com"
-                value={email}
-                onChangeText={setEmail}
-                autoCapitalize="none"
-                keyboardType="email-address"
-              />
+    <View style={styles.container}>
+      {isLargeScreen && (
+        <View style={styles.leftPane}>
+          <LinearGradient
+            colors={['#FFFFFF', '#F9FAFB']}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={styles.leftContent}>
+            <View style={styles.brandingHeader}>
+              <Text style={styles.brandingLogo}>Modus.</Text>
             </View>
-          </View>
-
-          <View className="mt-4">
-            <Text className="text-gray-400 text-xs font-bold uppercase mb-2 ml-1">Password</Text>
-            <View className="flex-row items-center bg-gray-50 border border-gray-100 rounded-2xl px-4 h-14">
-              <Lock size={20} color="#9CA3AF" />
-              <TextInput
-                className="flex-1 ml-3 text-black text-base"
-                placeholder="••••••••"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
+            
+            <View style={styles.visualContainer}>
+              <Text style={styles.leftTitle}>
+                {role === 'brand' ? 'Scale campaigns with verified elite talent.' : 'Monetize your audience with full escrow safety.'}
+              </Text>
+              <Text style={styles.leftSubtitle}>
+                {role === 'brand' 
+                  ? 'Access audited metrics directly from social APIs. Pay only when deliverables match your brief.' 
+                  : 'Never chase an invoice again. Funds are deposited securely in escrow before you begin creating.'}
+              </Text>
+              
+              <Animated.View style={[styles.mockupWrapper, { transform: [{ translateY: floatingTransform }] }]}>
+                <View style={styles.glassContainer}>
+                  {role === 'brand' ? <BrandMockup /> : <CreatorMockup />}
+                </View>
+              </Animated.View>
             </View>
           </View>
         </View>
+      )}
 
-        {error && (
-          <View className="mt-6 bg-red-50 p-4 rounded-xl border border-red-100">
-            <Text className="text-red-600 text-sm">{error}</Text>
+      <KeyboardAvoidingView 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={styles.rightPane}
+      >
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          <View style={styles.topBar}>
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <ArrowLeft size={20} color="#374151" />
+            </TouchableOpacity>
           </View>
-        )}
 
-        <TouchableOpacity 
-          onPress={handleLogin}
-          disabled={loading}
-          className="mt-8 bg-black h-16 rounded-2xl items-center justify-center shadow-lg"
-        >
-          {loading ? (
-            <ActivityIndicator color="white" />
-          ) : (
-            <Text className="text-white font-bold text-lg">Sign In</Text>
-          )}
-        </TouchableOpacity>
+          <View style={styles.formContainer}>
+            <View style={styles.header}>
+              <Text style={styles.title}>Welcome Back</Text>
+              <Text style={styles.subtitle}>
+                {role === 'brand' ? 'Sign in as partner brand.' : 'Sign in as verified creator.'}
+              </Text>
+            </View>
 
-        <TouchableOpacity 
-          onPress={() => navigation.navigate('SignUp', { role })}
-          className="mt-6 py-2"
-        >
-          <Text className="text-gray-500 text-center">
-            Don't have an account? <Text className="text-black font-bold">Apply to join Modus</Text>
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+            {/* Role Selector Segmented Control */}
+            <View style={styles.roleSelector}>
+              <TouchableOpacity 
+                onPress={() => setRole('influencer')}
+                style={[styles.roleOption, role === 'influencer' && styles.roleOptionActive]}
+              >
+                <User size={15} color={role === 'influencer' ? '#10B981' : '#6B7280'} style={{ marginRight: 6 }} />
+                <Text style={[styles.roleText, role === 'influencer' && { color: '#10B981', fontWeight: '800' }]}>Creator</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                onPress={() => setRole('brand')}
+                style={[styles.roleOption, role === 'brand' && styles.roleOptionActive]}
+              >
+                <Briefcase size={15} color={role === 'brand' ? '#8B5CF6' : '#6B7280'} style={{ marginRight: 6 }} />
+                <Text style={[styles.roleText, role === 'brand' && { color: '#8B5CF6', fontWeight: '800' }]}>Brand</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Google Sign-In Button */}
+            <TouchableOpacity 
+              onPress={handleGoogleLogin}
+              disabled={googleLoading}
+              style={styles.googleButton}
+            >
+              {googleLoading ? (
+                <ActivityIndicator color="#000" />
+              ) : (
+                <>
+                  <Text style={styles.googleIcon}>G</Text>
+                  <Text style={styles.googleText}>Continue with Google</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            {/* Divider */}
+            <View style={styles.dividerContainer}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>or</Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {/* Email / Password Form */}
+            <View style={styles.inputGroup}>
+              <View>
+                <Text style={styles.inputLabel}>Email Address</Text>
+                <View style={[
+                  styles.inputContainer,
+                  focusedInput === 'email' && { borderColor: activeColor, borderWidth: 1.5 }
+                ]}>
+                  <Mail size={18} color={focusedInput === 'email' ? activeColor : '#9CA3AF'} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="you@example.com"
+                    value={email}
+                    onChangeText={setEmail}
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    placeholderTextColor="#9CA3AF"
+                    onFocus={() => setFocusedInput('email')}
+                    onBlur={() => setFocusedInput(null)}
+                  />
+                </View>
+              </View>
+
+              <View style={{ marginTop: 16 }}>
+                <Text style={styles.inputLabel}>Password</Text>
+                <View style={[
+                  styles.inputContainer,
+                  focusedInput === 'password' && { borderColor: activeColor, borderWidth: 1.5 }
+                ]}>
+                  <Lock size={18} color={focusedInput === 'password' ? activeColor : '#9CA3AF'} />
+                  <TextInput
+                    style={styles.input}
+                    placeholder="••••••••"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    placeholderTextColor="#9CA3AF"
+                    onFocus={() => setFocusedInput('password')}
+                    onBlur={() => setFocusedInput(null)}
+                  />
+                </View>
+              </View>
+            </View>
+
+            {error && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>{error}</Text>
+              </View>
+            )}
+
+            <TouchableOpacity 
+              onPress={handleLogin}
+              disabled={loading}
+              style={[
+                styles.submitButton,
+                { backgroundColor: activeColor }
+              ]}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <Text style={styles.submitButtonText}>Sign In</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              onPress={() => navigation.navigate('SignUp', { role })}
+              style={styles.signupLink}
+            >
+              <Text style={styles.signupLinkText}>
+                Don't have an account? <Text style={[styles.signupLinkHighlight, { color: activeColor }]}>Apply to join Modus</Text>
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 };
+
+// ─── Shared Mockup Components styles ──────────────────────────────────────────
+const s = StyleSheet.create({
+  mockCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+  },
+  mockHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  mockTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  mockBadge: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 100,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+  },
+  mockBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#1E40AF',
+  },
+  mockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  mockAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mockAvatarText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  mockName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  mockNiche: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  mockActionBtn: {
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  mockActionTxt: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  mockStatusBadge: {
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  mockStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  mockMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  mockMetricItem: {
+    alignItems: 'center',
+  },
+  mockMetricVal: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  mockMetricLabel: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  mockEscrowBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 10,
+    gap: 6,
+  },
+  mockEscrowText: {
+    fontSize: 11,
+    color: '#2E7D32',
+    fontWeight: '700',
+  },
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+  },
+  leftPane: {
+    flex: 0.75,
+    overflow: 'hidden',
+    borderRightWidth: 1,
+    borderColor: '#F3F4F6',
+  },
+  leftContent: {
+    flex: 1,
+    padding: 48,
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  brandingHeader: {
+    alignSelf: 'flex-start',
+  },
+  brandingLogo: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#000000',
+    letterSpacing: -0.5,
+  },
+  visualContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  leftTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#111827',
+    letterSpacing: -0.75,
+    lineHeight: 38,
+    marginBottom: 12,
+  },
+  leftSubtitle: {
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+    fontWeight: '500',
+    marginBottom: 36,
+  },
+  mockupWrapper: {
+    width: '100%',
+    maxWidth: 380,
+    alignSelf: 'center',
+  },
+  glassContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    borderRadius: 24,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: 'rgba(243, 244, 246, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
+    elevation: 3,
+    opacity: 0.85,
+  },
+  rightPane: {
+    flex: 1.25,
+    backgroundColor: '#FFFFFF',
+  },
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 48,
+    paddingVertical: 32,
+    justifyContent: 'center',
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  backButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  formContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    maxWidth: 440,
+    width: '100%',
+    alignSelf: 'center',
+  },
+  header: {
+    marginBottom: 24,
+  },
+  title: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#111827',
+    marginBottom: 6,
+    letterSpacing: -0.75,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#6B7280',
+    fontWeight: '500',
+  },
+  roleSelector: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 14,
+    padding: 3,
+    marginBottom: 24,
+  },
+  roleOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 11,
+  },
+  roleOptionActive: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  roleText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+  googleButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#FFFFFF',
+    marginBottom: 16,
+  },
+  googleIcon: {
+    fontSize: 18,
+    fontWeight: '800',
+    marginRight: 8,
+    color: '#000000',
+  },
+  googleText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#374151',
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 18,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: '#F3F4F6',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+  inputGroup: {
+    marginBottom: 24,
+  },
+  inputLabel: {
+    color: '#4B5563',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginBottom: 6,
+    marginLeft: 2,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 52,
+  },
+  input: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    color: '#111827',
+  },
+  errorContainer: {
+    backgroundColor: '#FEF2F2',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    marginBottom: 20,
+  },
+  errorText: {
+    color: '#DC2626',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  submitButton: {
+    height: 52,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  signupLink: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  signupLinkText: {
+    color: '#6B7280',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  signupLinkHighlight: {
+    fontWeight: '700',
+  },
+});

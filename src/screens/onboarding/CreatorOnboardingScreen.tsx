@@ -625,7 +625,7 @@ export const CreatorOnboardingScreen = () => {
           {/* Header */}
           <View style={styles.modalHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <Sparkles size={20} color="#8B5CF6" />
+              <Sparkles size={20} color="#10B981" />
               <Text style={styles.modalTitle}>AI Social Indexing</Text>
             </View>
             <TouchableOpacity onPress={() => setActivePlatform(null)}>
@@ -659,7 +659,7 @@ export const CreatorOnboardingScreen = () => {
 
           {linkStep === 'loading' && (
             <View style={{ padding: 12, alignItems: 'center' }}>
-              <ActivityIndicator size="large" color="#8B5CF6" />
+              <ActivityIndicator size="large" color="#10B981" />
               <Text style={styles.progressMessage}>{linkProgressMsg}</Text>
               
               {/* Progress bar */}
@@ -756,7 +756,7 @@ export const CreatorOnboardingScreen = () => {
                     />
 
                     <TouchableOpacity onPress={handleUploadScreenshot} style={styles.uploadBtn}>
-                      <ImageIcon size={18} color="#8B5CF6" />
+                      <ImageIcon size={18} color="#10B981" />
                       <Text style={styles.uploadBtnText}>
                         {verificationScreenshot ? '✓ Verification Screenshot Attached' : 'Upload Analytics Screenshot'}
                       </Text>
@@ -871,7 +871,7 @@ export const CreatorOnboardingScreen = () => {
                       onPress={() => setIsEditingMetrics(true)} 
                       style={styles.refineTriggerBtn}
                     >
-                      <Sparkles size={16} color="#8B5CF6" />
+                      <Sparkles size={16} color="#10B981" />
                       <Text style={styles.refineTriggerBtnText}>Refine Metrics &amp; Upload Screenshot</Text>
                     </TouchableOpacity>
                   </View>
@@ -930,31 +930,30 @@ export const CreatorOnboardingScreen = () => {
                 How to convert your account (10 seconds & 100% Free):
               </Text>
 
-              {/* 3-Step Guide List */}
               <View style={{ gap: 12 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#8B5CF61A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#8B5CF6' }}>1</Text>
+                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B9811A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>1</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>Open Instagram Settings</Text>
                     <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Go to your profile page, open Settings & Activity ⚙️</Text>
                   </View>
                 </View>
-
+ 
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#8B5CF61A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#8B5CF6' }}>2</Text>
+                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B9811A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>2</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>Account Type and Tools</Text>
                     <Text style={{ fontSize: 12, color: '#6B7280', marginTop: 2 }}>Scroll down and tap "Account type and tools" under For Professionals</Text>
                   </View>
                 </View>
-
+ 
                 <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
-                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#8B5CF61A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#8B5CF6' }}>3</Text>
+                  <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: '#10B9811A', alignItems: 'center', justifyContent: 'center', marginTop: 2 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#10B981' }}>3</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#374151' }}>Switch to Professional Account</Text>
@@ -1372,13 +1371,13 @@ const styles = StyleSheet.create({
   },
   modalProgressFill: {
     height: '100%',
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#10B981',
     borderRadius: 3
   },
   progressPercent: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#8B5CF6',
+    color: '#10B981',
     marginTop: 8
   },
 
@@ -1467,17 +1466,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap'
   },
   nicheBadge: {
-    backgroundColor: '#8B5CF61A',
+    backgroundColor: '#10B9811A',
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#8B5CF630'
+    borderColor: '#10B98130'
   },
   nicheBadgeText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#8B5CF6'
+    color: '#10B981'
   },
   vibeText: {
     fontSize: 14,
@@ -1606,17 +1605,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderColor: '#8B5CF650',
+    borderColor: '#10B98150',
     borderWidth: 1,
     borderRadius: 10,
     height: 44,
     marginTop: 16,
-    backgroundColor: '#8B5CF608'
+    backgroundColor: '#10B98108'
   },
   uploadBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#8B5CF6'
+    color: '#10B981'
   },
   screenshotPreview: {
     width: '100%',
@@ -1626,7 +1625,7 @@ const styles = StyleSheet.create({
     resizeMode: 'cover'
   },
   applyRefinedBtn: {
-    backgroundColor: '#8B5CF6',
+    backgroundColor: '#10B981',
     height: 46,
     borderRadius: 10,
     alignItems: 'center',
@@ -1643,17 +1642,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    borderColor: '#8B5CF630',
+    borderColor: '#10B98130',
     borderWidth: 1,
     borderRadius: 12,
     height: 48,
-    backgroundColor: '#8B5CF60C',
+    backgroundColor: '#10B9810C',
     marginTop: 12,
     marginBottom: 10
   },
   refineTriggerBtnText: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#8B5CF6'
+    color: '#10B981'
   }
 });

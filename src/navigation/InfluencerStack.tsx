@@ -28,7 +28,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width > 768;
   const { profile } = useProfile();
-  const brandColor = profile?.brand_color || '#8B5CF6';
+  const creatorColor = '#10B981';
 
   if (isDesktop) {
     return (
@@ -58,7 +58,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
               };
 
               const renderIcon = () => {
-                const iconColor = isFocused ? brandColor : '#64748B';
+                const iconColor = isFocused ? creatorColor : '#64748B';
                 if (label === 'Opportunities') return <Briefcase size={20} color={iconColor} />;
                 if (label === 'Workspace') return <Inbox size={20} color={iconColor} />;
                 if (label === 'Earnings') return <Wallet size={20} color={iconColor} />;
@@ -150,7 +150,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
         };
 
         const renderIcon = () => {
-          const iconColor = isFocused ? brandColor : '#9CA3AF';
+          const iconColor = isFocused ? creatorColor : '#9CA3AF';
           if (label === 'Opportunities') return <Briefcase size={22} color={iconColor} />;
           if (label === 'Workspace') return <Inbox size={22} color={iconColor} />;
           if (label === 'Earnings') return <Wallet size={22} color={iconColor} />;
@@ -164,7 +164,7 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
             style={styles.mobileTabItem}
           >
             {renderIcon()}
-            <Text style={[styles.mobileTabLabel, { color: isFocused ? brandColor : '#9CA3AF' }]}>
+            <Text style={[styles.mobileTabLabel, { color: isFocused ? creatorColor : '#9CA3AF' }]}>
               {label}
             </Text>
           </TouchableOpacity>

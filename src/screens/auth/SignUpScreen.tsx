@@ -111,6 +111,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [focusedInput, setFocusedInput] = useState<'email' | 'password' | null>(null);
 
   const floatAnim = useRef(new Animated.Value(0)).current;
 
@@ -239,16 +240,16 @@ export const SignUpScreen = ({ route, navigation }: any) => {
                 onPress={() => setRole('influencer')}
                 style={[styles.roleOption, role === 'influencer' && styles.roleOptionActive]}
               >
-                <User size={15} color={role === 'influencer' ? '#000' : '#6B7280'} style={{ marginRight: 6 }} />
-                <Text style={[styles.roleText, role === 'influencer' && styles.roleTextActive]}>Creator</Text>
+                <User size={15} color={role === 'influencer' ? '#10B981' : '#6B7280'} style={{ marginRight: 6 }} />
+                <Text style={[styles.roleText, role === 'influencer' && { color: '#10B981', fontWeight: '800' }]}>Creator</Text>
               </TouchableOpacity>
 
               <TouchableOpacity 
                 onPress={() => setRole('brand')}
                 style={[styles.roleOption, role === 'brand' && styles.roleOptionActive]}
               >
-                <Briefcase size={15} color={role === 'brand' ? '#000' : '#6B7280'} style={{ marginRight: 6 }} />
-                <Text style={[styles.roleText, role === 'brand' && styles.roleTextActive]}>Brand</Text>
+                <Briefcase size={15} color={role === 'brand' ? '#8B5CF6' : '#6B7280'} style={{ marginRight: 6 }} />
+                <Text style={[styles.roleText, role === 'brand' && { color: '#8B5CF6', fontWeight: '800' }]}>Brand</Text>
               </TouchableOpacity>
             </View>
 
@@ -279,8 +280,11 @@ export const SignUpScreen = ({ route, navigation }: any) => {
             <View style={styles.inputGroup}>
               <View>
                 <Text style={styles.inputLabel}>Email Address</Text>
-                <View style={styles.inputContainer}>
-                  <Mail size={18} color="#9CA3AF" />
+                <View style={[
+                  styles.inputContainer,
+                  focusedInput === 'email' && { borderColor: role === 'brand' ? '#8B5CF6' : '#10B981', borderWidth: 1.5 }
+                ]}>
+                  <Mail size={18} color={focusedInput === 'email' ? (role === 'brand' ? '#8B5CF6' : '#10B981') : '#9CA3AF'} />
                   <TextInput
                     style={styles.input}
                     placeholder="you@example.com"
@@ -289,14 +293,19 @@ export const SignUpScreen = ({ route, navigation }: any) => {
                     autoCapitalize="none"
                     keyboardType="email-address"
                     placeholderTextColor="#9CA3AF"
+                    onFocus={() => setFocusedInput('email')}
+                    onBlur={() => setFocusedInput(null)}
                   />
                 </View>
               </View>
 
               <View style={{ marginTop: 16 }}>
                 <Text style={styles.inputLabel}>Create Password</Text>
-                <View style={styles.inputContainer}>
-                  <Lock size={18} color="#9CA3AF" />
+                <View style={[
+                  styles.inputContainer,
+                  focusedInput === 'password' && { borderColor: role === 'brand' ? '#8B5CF6' : '#10B981', borderWidth: 1.5 }
+                ]}>
+                  <Lock size={18} color={focusedInput === 'password' ? (role === 'brand' ? '#8B5CF6' : '#10B981') : '#9CA3AF'} />
                   <TextInput
                     style={styles.input}
                     placeholder="••••••••"
@@ -304,6 +313,8 @@ export const SignUpScreen = ({ route, navigation }: any) => {
                     onChangeText={setPassword}
                     secureTextEntry
                     placeholderTextColor="#9CA3AF"
+                    onFocus={() => setFocusedInput('password')}
+                    onBlur={() => setFocusedInput(null)}
                   />
                 </View>
               </View>
@@ -318,7 +329,10 @@ export const SignUpScreen = ({ route, navigation }: any) => {
             <TouchableOpacity 
               onPress={handleSignUp}
               disabled={loading}
-              style={styles.submitButton}
+              style={[
+                styles.submitButton,
+                { backgroundColor: role === 'brand' ? '#8B5CF6' : '#10B981' }
+              ]}
             >
               {loading ? (
                 <ActivityIndicator color="#FFF" />
