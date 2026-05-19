@@ -40,13 +40,7 @@ const Marquee = () => {
 };
 
 
-// ─── Stat pill ────────────────────────────────────────────────────────────────
-const Stat = ({ value, label }: { value: string; label: string }) => (
-  <View style={s.statItem}>
-    <Text style={s.statValue}>{value}</Text>
-    <Text style={s.statLabel}>{label}</Text>
-  </View>
-);
+
 
 // ─── Feature block ────────────────────────────────────────────────────────────
 const Feature = ({ icon: Icon, title, body }: any) => (
@@ -118,11 +112,6 @@ export const LandingScreen = () => {
       {/* ── HERO ── */}
       <View style={s.hero}>
         <Animated.View style={{ opacity: fade1, transform: [{ translateY: slide1 }], alignItems: 'center' }}>
-          <View style={s.heroPill}>
-            <Zap size={12} color="#000" />
-            <Text style={s.heroPillText}>The creator economy, upgraded.</Text>
-          </View>
-
           <Text style={s.heroHead}>
             Where elite brands{'\n'}meet verified creators.
           </Text>
@@ -145,15 +134,6 @@ export const LandingScreen = () => {
           >
             <Text style={s.btnSecondaryText}>I am a Creator</Text>
           </Pressable>
-        </Animated.View>
-
-        {/* Stats row */}
-        <Animated.View style={[s.statsRow, { opacity: fade3, transform: [{ translateY: slide3 }] }]}>
-          <Stat value="₹2.4Cr+" label="Creator Payouts" />
-          <View style={s.statDivider} />
-          <Stat value="1,200+" label="Verified Creators" />
-          <View style={s.statDivider} />
-          <Stat value="98%" label="On-Time Delivery" />
         </Animated.View>
       </View>
 
@@ -255,13 +235,7 @@ const s = StyleSheet.create({
     paddingTop: IS_WEB ? 80 : 60, paddingBottom: 40,
     backgroundColor: '#FFFFFF',
   },
-  heroPill: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: 'transparent', borderRadius: 100, paddingVertical: 6, paddingHorizontal: 14,
-    borderWidth: 1, borderColor: '#E5E7EB',
-    marginBottom: 24,
-  },
-  heroPillText: { fontSize: 13, fontWeight: '600', color: '#374151' },
+
   heroHead: {
     fontSize: IS_WEB ? 64 : 40, fontWeight: '900', color: '#000',
     textAlign: 'center', letterSpacing: -2, lineHeight: IS_WEB ? 72 : 46, marginBottom: 20,
@@ -280,14 +254,7 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: '#E5E7EB', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 100,
   },
   btnSecondaryText: { fontSize: 16, fontWeight: '600', color: '#000' },
-  statsRow: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: IS_WEB ? 60 : 30, marginTop: 10,
-  },
-  statItem: { alignItems: 'center' },
-  statValue: { fontSize: 24, fontWeight: '800', color: '#000', letterSpacing: -0.5 },
-  statLabel: { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 4 },
-  statDivider: { width: 1, height: 30, backgroundColor: '#E5E7EB' },
+
 
 
 
