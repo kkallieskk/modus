@@ -269,11 +269,18 @@ const s = StyleSheet.create({
 
   // NAV
   nav: {
-    ...(IS_WEB ? { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, backdropFilter: 'blur(16px)' } : {}),
+    ...(IS_WEB ? { 
+      position: 'fixed', top: 24, left: '50%', transform: [{ translateX: '-50%' }] as any,
+      width: '90%', maxWidth: 1100, zIndex: 100, 
+      backdropFilter: 'blur(30px) saturate(150%)' 
+    } : {}),
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 16,
-    backgroundColor: IS_WEB ? 'rgba(255, 255, 255, 0.7)' : '#FFFFFF', 
-    borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)',
+    paddingHorizontal: IS_WEB ? 32 : 24, paddingVertical: 14,
+    backgroundColor: IS_WEB ? 'rgba(255, 255, 255, 0.6)' : '#FFFFFF', 
+    borderWidth: IS_WEB ? 1 : 0, 
+    borderColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: IS_WEB ? 100 : 0,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 24 }, shadowOpacity: 0.06, shadowRadius: 40,
   },
   logo: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
   navCenter: { flexDirection: 'row', gap: 32, alignItems: 'center' },
@@ -293,24 +300,24 @@ const s = StyleSheet.create({
   },
   bgGlowWrap: { ...StyleSheet.absoluteFillObject, overflow: 'hidden', pointerEvents: 'none' },
   bgGlow1: {
-    position: 'absolute', top: -100, left: -50, width: 600, height: 600,
-    backgroundColor: 'rgba(59, 130, 246, 0.12)', borderRadius: 300, // Blue
-    filter: 'blur(120px)' as any,
+    position: 'absolute', top: -100, left: -50, width: 700, height: 700,
+    backgroundColor: 'rgba(59, 130, 246, 0.18)', borderRadius: 350, // Blue
+    filter: 'blur(140px)' as any,
   },
   bgGlow2: {
-    position: 'absolute', top: -100, right: -50, width: 600, height: 600,
-    backgroundColor: 'rgba(168, 85, 247, 0.12)', borderRadius: 300, // Purple
-    filter: 'blur(120px)' as any,
+    position: 'absolute', top: -100, right: -50, width: 700, height: 700,
+    backgroundColor: 'rgba(168, 85, 247, 0.18)', borderRadius: 350, // Purple
+    filter: 'blur(140px)' as any,
   },
   bgGlow3: {
-    position: 'absolute', bottom: -150, left: -100, width: 500, height: 500,
-    backgroundColor: 'rgba(236, 72, 153, 0.12)', borderRadius: 250, // Pink
-    filter: 'blur(100px)' as any,
+    position: 'absolute', bottom: -150, left: -100, width: 600, height: 600,
+    backgroundColor: 'rgba(236, 72, 153, 0.18)', borderRadius: 300, // Pink
+    filter: 'blur(120px)' as any,
   },
   bgGlow4: {
-    position: 'absolute', bottom: -150, right: -100, width: 500, height: 500,
-    backgroundColor: 'rgba(16, 185, 129, 0.12)', borderRadius: 250, // Green
-    filter: 'blur(100px)' as any,
+    position: 'absolute', bottom: -150, right: -100, width: 600, height: 600,
+    backgroundColor: 'rgba(16, 185, 129, 0.18)', borderRadius: 300, // Green
+    filter: 'blur(120px)' as any,
   },
 
   heroHead: {
