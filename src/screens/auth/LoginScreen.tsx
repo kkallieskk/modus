@@ -48,7 +48,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
     try {
       setGoogleLoading(true);
       setError(null);
-      await signInWithGoogle();
+      await signInWithGoogle(role);
       // RootNavigator will pick up the session
     } catch (err: any) {
       if (!err.message?.includes('cancelled')) {

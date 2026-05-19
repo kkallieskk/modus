@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
+  Alert,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '@/lib/supabase';
@@ -22,13 +23,41 @@ export const RoleSelectionScreen = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // Update role in profiles
-      const { error } = await supabase
+      // Update role in profiles and return details to verify if row exists
+      const { data, error } = await supabase
         .from('profiles')
         .update({ role })
-        .eq('id', user.id);
+        .eq('id', user.id)
+        .select();
 
       if (error) throw error;
+
+      // Self-healing: if the profile row is missing from profiles table, the update affects 0 rows
+      if (!data || data.length === 0) {
+        console.warn('[RoleSelectionScreen] Profile row was missing from the database. Triggering automatic self-healing...');
+        
+        // Purge the out-of-sync auth record using SECURITY DEFINER rpc
+        const { error: rpcError } = await supabase.rpc('delete_user_account');
+        if (rpcError) console.error('[RoleSelectionScreen] RPC delete error:', rpcError);
+        
+        // Clear auth session
+        await supabase.auth.signOut();
+        
+        const message = "Account Synced. Since you logged in with an existing account whose database profile was not properly initialized, we have automatically reset your session.\n\nPlease register a clean, fully-functioning profile to continue.";
+        
+        if (Platform.OS === 'web') {
+          window.alert(message);
+        } else {
+          Alert.alert("Account Synced", message);
+        }
+        
+        // Reset navigation to Auth Stack
+        navigation.reset({
+          index: 0,
+          routes: [{ name: 'Auth' }],
+        });
+        return;
+      }
 
       if (role === 'brand') {
         navigation.navigate('BrandSetup');

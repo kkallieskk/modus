@@ -36,9 +36,11 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
         return;
       }
 
+      let pendingRole: string | null = null;
+
       // Check for pending role from Web OAuth redirect
       if (typeof window !== 'undefined' && window.localStorage) {
-        const pendingRole = window.localStorage.getItem('pending_oauth_role');
+        pendingRole = window.localStorage.getItem('pending_oauth_role');
         if (pendingRole) {
           console.log('[ProfileContext] Applying pending OAuth role:', pendingRole);
           window.localStorage.removeItem('pending_oauth_role');
@@ -66,7 +68,24 @@ export const ProfileProvider: React.FC<{ children: React.ReactNode }> = ({ child
           await new Promise(resolve => setTimeout(resolve, 500));
           return fetchProfile(retryCount + 1);
         }
-        throw error;
+        
+        // If the profile row is completely missing, create a resilient fallback profile in memory
+        const metadataRole = user.user_metadata?.role || pendingRole || 'brand';
+        console.warn(`[ProfileContext] Profile row not found for user ${user.id}. Creating resilient fallback profile with role: ${metadataRole}`);
+        
+        setProfile({
+          id: user.id,
+          role: metadataRole,
+          display_name: user.user_metadata?.full_name || user.user_metadata?.name || '',
+          avatar_url: user.user_metadata?.avatar_url || user.user_metadata?.picture || '',
+          brand_color: '#8B5CF6',
+          onboarding_completed: false,
+          industry: '',
+          bio: '',
+          website_url: '',
+          social_link: ''
+        });
+        return;
       }
       
       setProfile(data);
