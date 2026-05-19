@@ -115,17 +115,21 @@ export const LandingScreen = () => {
   }, []);
 
   return (
-    <ScrollView 
-      style={s.page} 
-      contentContainerStyle={s.pageContent} 
-      showsVerticalScrollIndicator={false}
-      onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
-      scrollEventThrottle={16}
-    >
-
-      {/* ── NAV ── */}
+    <View style={s.pageWrapper}>
+      {/* ── STICKY NAV ── */}
       <View style={s.nav}>
         <Text style={s.logo}>Modus.</Text>
+        
+        {IS_WEB && (
+          <View style={s.navCenter}>
+            {['For Brands', 'For Creators', 'Pricing', 'Resources'].map((link) => (
+              <Pressable key={link} style={s.navLink}>
+                <Text style={s.navLinkText}>{link}</Text>
+              </Pressable>
+            ))}
+          </View>
+        )}
+
         <View style={s.navRight}>
           <Pressable onPress={() => nav.navigate('Login')} style={s.navLogin}>
             <Text style={s.navLoginText}>Log in</Text>
@@ -136,13 +140,23 @@ export const LandingScreen = () => {
         </View>
       </View>
 
-      {/* ── HERO ── */}
-      <View style={[s.hero, { minHeight: Math.min(H * 0.75, 800), justifyContent: 'center' }]}>
-        <View style={s.bgGlowWrap}>
-          <View style={s.bgGlow1} />
-          <View style={s.bgGlow2} />
-        </View>
-        <HeroIllustrations />
+      <ScrollView 
+        style={s.page} 
+        contentContainerStyle={s.pageContent} 
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+        scrollEventThrottle={16}
+      >
+
+        {/* ── HERO ── */}
+        <View style={[s.hero, { minHeight: Math.min(H * 0.75, 800), justifyContent: 'center' }]}>
+          <View style={s.bgGlowWrap}>
+            <View style={s.bgGlow1} />
+            <View style={s.bgGlow2} />
+            <View style={s.bgGlow3} />
+            <View style={s.bgGlow4} />
+          </View>
+          <HeroIllustrations />
 
         <Animated.View style={{ opacity: fade1, transform: [{ translateY: slide1 }], alignItems: 'center', zIndex: 10 }}>
           <Text style={s.heroHead}>
@@ -242,22 +256,29 @@ export const LandingScreen = () => {
       </View>
 
       </Animated.View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#FFFFFF' },
-  pageContent: { paddingBottom: 40 },
+  pageWrapper: { flex: 1, backgroundColor: '#FFFFFF' },
+  page: { flex: 1, backgroundColor: 'transparent' },
+  pageContent: { paddingBottom: 40, paddingTop: IS_WEB ? 80 : 0 }, // compensate for fixed nav
 
   // NAV
   nav: {
+    ...(IS_WEB ? { position: 'fixed', top: 0, left: 0, right: 0, zIndex: 50, backdropFilter: 'blur(16px)' } : {}),
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 20,
-    backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: 'transparent',
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 16,
+    backgroundColor: IS_WEB ? 'rgba(255, 255, 255, 0.7)' : '#FFFFFF', 
+    borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.05)',
   },
   logo: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
+  navCenter: { flexDirection: 'row', gap: 32, alignItems: 'center' },
+  navLink: { paddingVertical: 8 },
+  navLinkText: { fontSize: 14, fontWeight: '600', color: '#4B5563', transition: 'color 0.2s' as any },
   navRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   navLogin: { paddingVertical: 10, paddingHorizontal: 16 },
   navLoginText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
@@ -266,20 +287,30 @@ const s = StyleSheet.create({
 
   hero: {
     alignItems: 'center', paddingHorizontal: 24,
-    paddingTop: IS_WEB ? 80 : 60, paddingBottom: 40,
-    backgroundColor: '#FFFFFF',
+    paddingTop: IS_WEB ? 20 : 60, paddingBottom: 40,
+    backgroundColor: 'transparent',
     position: 'relative', overflow: 'hidden'
   },
   bgGlowWrap: { ...StyleSheet.absoluteFillObject, overflow: 'hidden', pointerEvents: 'none' },
   bgGlow1: {
-    position: 'absolute', top: -100, left: -100, width: 500, height: 500,
-    backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: 250,
-    filter: 'blur(100px)' as any,
+    position: 'absolute', top: -100, left: -50, width: 600, height: 600,
+    backgroundColor: 'rgba(59, 130, 246, 0.12)', borderRadius: 300, // Blue
+    filter: 'blur(120px)' as any,
   },
   bgGlow2: {
-    position: 'absolute', bottom: -150, right: -150, width: 600, height: 600,
-    backgroundColor: 'rgba(16, 185, 129, 0.04)', borderRadius: 300,
+    position: 'absolute', top: -100, right: -50, width: 600, height: 600,
+    backgroundColor: 'rgba(168, 85, 247, 0.12)', borderRadius: 300, // Purple
     filter: 'blur(120px)' as any,
+  },
+  bgGlow3: {
+    position: 'absolute', bottom: -150, left: -100, width: 500, height: 500,
+    backgroundColor: 'rgba(236, 72, 153, 0.12)', borderRadius: 250, // Pink
+    filter: 'blur(100px)' as any,
+  },
+  bgGlow4: {
+    position: 'absolute', bottom: -150, right: -100, width: 500, height: 500,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)', borderRadius: 250, // Green
+    filter: 'blur(100px)' as any,
   },
 
   heroHead: {
