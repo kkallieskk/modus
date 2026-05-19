@@ -39,79 +39,6 @@ const Marquee = () => {
   );
 };
 
-// ─── Fake App UI Mockup (Brand Dashboard card) ────────────────────────────────
-const BrandMockup = () => (
-  <View style={s.mockCard}>
-    {/* Header row */}
-    <View style={s.mockHeader}>
-      <Text style={s.mockTitle}>Creator Pitch Inbox</Text>
-      <View style={s.mockBadge}><Text style={s.mockBadgeText}>3 New</Text></View>
-    </View>
-    {/* Creator rows */}
-    {[
-      { name: 'Sarah Jenkins', niche: 'Lifestyle & Wellness', followers: '148.2K', verified: true },
-      { name: 'David Chen', niche: 'Productivity & Tech', followers: '82.5K', verified: true },
-    ].map((c, i) => (
-      <View key={i} style={s.mockRow}>
-        <View style={s.mockAvatar}>
-          <Text style={s.mockAvatarText}>{c.name[0]}</Text>
-        </View>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <Text style={s.mockName}>{c.name}</Text>
-            {c.verified && <CheckCircle2 size={13} color="#3B82F6" fill="#3B82F6" />}
-          </View>
-          <Text style={s.mockNiche}>{c.niche} · {c.followers}</Text>
-        </View>
-        <View style={s.mockHireBtn}><Text style={s.mockHireTxt}>Hire</Text></View>
-      </View>
-    ))}
-    {/* Metrics bar */}
-    <View style={s.mockMetrics}>
-      {[['₹12.4L', 'Escrowed'], ['98%', 'On-Time'], ['6', 'Active']].map(([v, l]) => (
-        <View key={l} style={s.mockMetricItem}>
-          <Text style={s.mockMetricVal}>{v}</Text>
-          <Text style={s.mockMetricLabel}>{l}</Text>
-        </View>
-      ))}
-    </View>
-  </View>
-);
-
-// ─── Fake App UI Mockup (Creator pipeline card) ───────────────────────────────
-const CreatorMockup = () => (
-  <View style={s.mockCard}>
-    <View style={s.mockHeader}>
-      <Text style={s.mockTitle}>My Deals</Text>
-      <View style={[s.mockBadge, { backgroundColor: '#DCFCE7' }]}>
-        <Text style={[s.mockBadgeText, { color: '#166534' }]}>₹5K Secured</Text>
-      </View>
-    </View>
-    {[
-      { brand: 'Glow Recipe', campaign: 'Watermelon Launch', status: 'In Progress', color: '#FEF3C7' },
-      { brand: 'Rhode Skin', campaign: 'Summer Glaze', status: 'Draft Approved', color: '#DCFCE7' },
-    ].map((d, i) => (
-      <View key={i} style={s.mockRow}>
-        <View style={[s.mockAvatar, { backgroundColor: '#F3F4F6' }]}>
-          <Text style={[s.mockAvatarText, { color: '#000' }]}>{d.brand[0]}</Text>
-        </View>
-        <View style={{ flex: 1, marginLeft: 12 }}>
-          <Text style={s.mockName}>{d.brand}</Text>
-          <Text style={s.mockNiche}>{d.campaign}</Text>
-        </View>
-        <View style={[s.mockStatusBadge, { backgroundColor: d.color }]}>
-          <Text style={s.mockStatusText}>{d.status}</Text>
-        </View>
-      </View>
-    ))}
-    <View style={[s.mockMetrics, { backgroundColor: '#F0FDF4', borderRadius: 14, padding: 12, marginTop: 12 }]}>
-      <ShieldCheck size={16} color="#059669" />
-      <Text style={{ fontSize: 13, color: '#166534', fontWeight: '700', marginLeft: 8 }}>
-        Funds secured in Modus Escrow Vault
-      </Text>
-    </View>
-  </View>
-);
 
 // ─── Stat pill ────────────────────────────────────────────────────────────────
 const Stat = ({ value, label }: { value: string; label: string }) => (
@@ -227,16 +154,6 @@ export const LandingScreen = () => {
           <Stat value="1,200+" label="Verified Creators" />
           <View style={s.statDivider} />
           <Stat value="98%" label="On-Time Delivery" />
-        </Animated.View>
-      </View>
-
-      {/* ── MOCKUPS ── */}
-      <View style={s.mockupsSection}>
-        <Animated.View style={[s.mockupLeft, { opacity: fade3, transform: [{ translateY: floatY }] }]}>
-          <BrandMockup />
-        </Animated.View>
-        <Animated.View style={[s.mockupRight, { opacity: fade3, transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }] }]}>
-          <CreatorMockup />
         </Animated.View>
       </View>
 
@@ -372,45 +289,7 @@ const s = StyleSheet.create({
   statLabel: { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 4 },
   statDivider: { width: 1, height: 30, backgroundColor: '#E5E7EB' },
 
-  // MOCKUPS
-  mockupsSection: {
-    flexDirection: IS_WEB && W > 768 ? 'row' : 'column',
-    gap: 32, paddingHorizontal: IS_WEB ? 60 : 20, paddingVertical: 40,
-    justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF'
-  },
-  mockupLeft: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 440 },
-  mockupRight: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 440 },
 
-  // MOCK CARD
-  mockCard: {
-    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
-    borderWidth: 1, borderColor: '#E5E7EB',
-  },
-  mockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  mockTitle: { fontSize: 15, fontWeight: '800', color: '#000' },
-  mockBadge: { backgroundColor: '#F3F4F6', borderRadius: 100, paddingVertical: 4, paddingHorizontal: 10 },
-  mockBadgeText: { fontSize: 12, fontWeight: '700', color: '#374151' },
-  mockRow: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
-    borderTopWidth: 1, borderTopColor: '#F9FAFB',
-  },
-  mockAvatar: {
-    width: 40, height: 40, borderRadius: 14, backgroundColor: '#000',
-    alignItems: 'center', justifyContent: 'center',
-  },
-  mockAvatarText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
-  mockName: { fontSize: 14, fontWeight: '800', color: '#000' },
-  mockNiche: { fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 2 },
-  mockHireBtn: {
-    backgroundColor: '#000', borderRadius: 10, paddingVertical: 6, paddingHorizontal: 14,
-  },
-  mockHireTxt: { fontSize: 12, fontWeight: '800', color: '#FFF' },
-  mockStatusBadge: { borderRadius: 10, paddingVertical: 5, paddingHorizontal: 10 },
-  mockStatusText: { fontSize: 11, fontWeight: '800', color: '#374151' },
-  mockMetrics: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
-  mockMetricItem: { alignItems: 'center' },
-  mockMetricVal: { fontSize: 18, fontWeight: '900', color: '#000' },
-  mockMetricLabel: { fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 2 },
 
   // MARQUEE
   marqueeWrap: {
