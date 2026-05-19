@@ -10,13 +10,95 @@ import {
   ScrollView,
   useWindowDimensions,
   Animated,
-  Image,
   StyleSheet
 } from 'react-native';
 import { supabase } from '@/lib/supabase';
 import { signInWithGoogle } from '@/lib/socialAuth';
-import { Mail, Lock, User, Briefcase, ArrowLeft } from 'lucide-react-native';
+import { Mail, Lock, User, Briefcase, ArrowLeft, CheckCircle2, ShieldCheck, Clock } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// ─── Subtle Light-Themed UI Mockup for Brand Role ──────────────────────────────
+const BrandMockup = () => (
+  <View style={s.mockCard}>
+    <View style={s.mockHeader}>
+      <Text style={s.mockTitle}>Creator Pitch Inbox</Text>
+      <View style={s.mockBadge}>
+        <Text style={s.mockBadgeText}>3 New</Text>
+      </View>
+    </View>
+    
+    {[
+      { name: 'Sarah Jenkins', niche: 'Lifestyle & Wellness', followers: '148.2K', verified: true },
+      { name: 'David Chen', niche: 'Productivity & Tech', followers: '82.5K', verified: true },
+    ].map((c, i) => (
+      <View key={i} style={s.mockRow}>
+        <View style={s.mockAvatar}>
+          <Text style={s.mockAvatarText}>{c.name[0]}</Text>
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+            <Text style={s.mockName}>{c.name}</Text>
+            {c.verified && <CheckCircle2 size={12} color="#3B82F6" fill="#3B82F6" />}
+          </View>
+          <Text style={s.mockNiche}>{c.niche} · {c.followers}</Text>
+        </View>
+        <View style={s.mockActionBtn}>
+          <Text style={s.mockActionTxt}>Hire</Text>
+        </View>
+      </View>
+    ))}
+    
+    <View style={s.mockMetrics}>
+      {[
+        { val: '₹12.4L', lbl: 'Escrowed' },
+        { val: '98%', lbl: 'On-Time' },
+        { val: '6', lbl: 'Active' }
+      ].map((item, idx) => (
+        <View key={idx} style={s.mockMetricItem}>
+          <Text style={s.mockMetricVal}>{item.val}</Text>
+          <Text style={s.mockMetricLabel}>{item.lbl}</Text>
+        </View>
+      ))}
+    </View>
+  </View>
+);
+
+// ─── Subtle Light-Themed UI Mockup for Creator Role ────────────────────────────
+const CreatorMockup = () => (
+  <View style={s.mockCard}>
+    <View style={s.mockHeader}>
+      <Text style={s.mockTitle}>My Deals</Text>
+      <View style={[s.mockBadge, { backgroundColor: '#E8F5E9' }]}>
+        <Text style={[s.mockBadgeText, { color: '#2E7D32' }]}>₹5K Secured</Text>
+      </View>
+    </View>
+    
+    {[
+      { brand: 'Glow Recipe', campaign: 'Watermelon Launch', status: 'In Progress', color: '#FFF8E1', text: '#F57F17' },
+      { brand: 'Rhode Skin', campaign: 'Summer Glaze', status: 'Draft Approved', color: '#E8F5E9', text: '#2E7D32' },
+    ].map((d, i) => (
+      <View key={i} style={s.mockRow}>
+        <View style={[s.mockAvatar, { backgroundColor: '#F3F4F6' }]}>
+          <Text style={[s.mockAvatarText, { color: '#374151' }]}>{d.brand[0]}</Text>
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={s.mockName}>{d.brand}</Text>
+          <Text style={s.mockNiche}>{d.campaign}</Text>
+        </View>
+        <View style={[s.mockStatusBadge, { backgroundColor: d.color }]}>
+          <Text style={[s.mockStatusText, { color: d.text }]}>{d.status}</Text>
+        </View>
+      </View>
+    ))}
+    
+    <View style={s.mockEscrowBanner}>
+      <ShieldCheck size={14} color="#2E7D32" />
+      <Text style={s.mockEscrowText}>
+        Funds secured in Modus Escrow Vault
+      </Text>
+    </View>
+  </View>
+);
 
 export const SignUpScreen = ({ route, navigation }: any) => {
   const initialRole = route.params?.role || 'influencer';
@@ -37,12 +119,12 @@ export const SignUpScreen = ({ route, navigation }: any) => {
       Animated.sequence([
         Animated.timing(floatAnim, {
           toValue: 1,
-          duration: 3000,
+          duration: 4000,
           useNativeDriver: true,
         }),
         Animated.timing(floatAnim, {
           toValue: 0,
-          duration: 3000,
+          duration: 4000,
           useNativeDriver: true,
         })
       ])
@@ -81,7 +163,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
     try {
       setGoogleLoading(true);
       setError(null);
-      const sessionData = await signInWithGoogle(role);
+      await signInWithGoogle(role);
     } catch (err: any) {
       if (!err.message?.includes('cancelled')) {
         setError(err.message || 'Google sign-in failed');
@@ -93,7 +175,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
 
   const floatingTransform = floatAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, -20]
+    outputRange: [0, -12]
   });
 
   return (
@@ -101,25 +183,30 @@ export const SignUpScreen = ({ route, navigation }: any) => {
       {isLargeScreen && (
         <View style={styles.leftPane}>
           <LinearGradient
-            colors={['#0A0A0A', '#1F2937']}
+            colors={['#FFFFFF', '#F9FAFB']}
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.leftContent}>
-            <Text style={styles.leftTitle}>
-              {role === 'brand' ? 'Scale your campaigns with elite talent.' : 'Monetize your audience securely.'}
-            </Text>
-            <Text style={styles.leftSubtitle}>
-              Join the fastest growing creator economy marketplace.
-            </Text>
+            <View style={styles.brandingHeader}>
+              <Text style={styles.brandingLogo}>Modus.</Text>
+            </View>
             
-            <Animated.View style={[styles.mockupContainer, { transform: [{ translateY: floatingTransform }] }]}>
-              <View style={styles.glassMockup}>
-                <Image 
-                  source={{ uri: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070' }}
-                  style={styles.mockupImage}
-                />
-              </View>
-            </Animated.View>
+            <View style={styles.visualContainer}>
+              <Text style={styles.leftTitle}>
+                {role === 'brand' ? 'Scale campaigns with verified elite talent.' : 'Monetize your audience with full escrow safety.'}
+              </Text>
+              <Text style={styles.leftSubtitle}>
+                {role === 'brand' 
+                  ? 'Access audited metrics directly from social APIs. Pay only when deliverables match your brief.' 
+                  : 'Never chase an invoice again. Funds are deposited securely in escrow before you begin creating.'}
+              </Text>
+              
+              <Animated.View style={[styles.mockupWrapper, { transform: [{ translateY: floatingTransform }] }]}>
+                <View style={styles.glassContainer}>
+                  {role === 'brand' ? <BrandMockup /> : <CreatorMockup />}
+                </View>
+              </Animated.View>
+            </View>
           </View>
         </View>
       )}
@@ -129,18 +216,20 @@ export const SignUpScreen = ({ route, navigation }: any) => {
         style={styles.rightPane}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <TouchableOpacity 
-            onPress={() => navigation.goBack()}
-            style={styles.backButton}
-          >
-            <ArrowLeft size={24} color="#000" />
-          </TouchableOpacity>
+          <View style={styles.topBar}>
+            <TouchableOpacity 
+              onPress={() => navigation.goBack()}
+              style={styles.backButton}
+            >
+              <ArrowLeft size={20} color="#374151" />
+            </TouchableOpacity>
+          </View>
 
           <View style={styles.formContainer}>
             <View style={styles.header}>
               <Text style={styles.title}>Create Account</Text>
               <Text style={styles.subtitle}>
-                {role === 'brand' ? 'Set up your brand profile.' : 'Join as a creator.'}
+                {role === 'brand' ? 'Join as a partner brand.' : 'Join as a verified creator.'}
               </Text>
             </View>
 
@@ -150,7 +239,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
                 onPress={() => setRole('influencer')}
                 style={[styles.roleOption, role === 'influencer' && styles.roleOptionActive]}
               >
-                <User size={16} color={role === 'influencer' ? '#000' : '#6B7280'} style={{ marginRight: 8 }} />
+                <User size={15} color={role === 'influencer' ? '#000' : '#6B7280'} style={{ marginRight: 6 }} />
                 <Text style={[styles.roleText, role === 'influencer' && styles.roleTextActive]}>Creator</Text>
               </TouchableOpacity>
 
@@ -158,7 +247,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
                 onPress={() => setRole('brand')}
                 style={[styles.roleOption, role === 'brand' && styles.roleOptionActive]}
               >
-                <Briefcase size={16} color={role === 'brand' ? '#000' : '#6B7280'} style={{ marginRight: 8 }} />
+                <Briefcase size={15} color={role === 'brand' ? '#000' : '#6B7280'} style={{ marginRight: 6 }} />
                 <Text style={[styles.roleText, role === 'brand' && styles.roleTextActive]}>Brand</Text>
               </TouchableOpacity>
             </View>
@@ -191,7 +280,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
               <View>
                 <Text style={styles.inputLabel}>Email Address</Text>
                 <View style={styles.inputContainer}>
-                  <Mail size={20} color="#9CA3AF" />
+                  <Mail size={18} color="#9CA3AF" />
                   <TextInput
                     style={styles.input}
                     placeholder="you@example.com"
@@ -199,6 +288,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
                     onChangeText={setEmail}
                     autoCapitalize="none"
                     keyboardType="email-address"
+                    placeholderTextColor="#9CA3AF"
                   />
                 </View>
               </View>
@@ -206,13 +296,14 @@ export const SignUpScreen = ({ route, navigation }: any) => {
               <View style={{ marginTop: 16 }}>
                 <Text style={styles.inputLabel}>Create Password</Text>
                 <View style={styles.inputContainer}>
-                  <Lock size={20} color="#9CA3AF" />
+                  <Lock size={18} color="#9CA3AF" />
                   <TextInput
                     style={styles.input}
                     placeholder="••••••••"
                     value={password}
                     onChangeText={setPassword}
                     secureTextEntry
+                    placeholderTextColor="#9CA3AF"
                   />
                 </View>
               </View>
@@ -230,7 +321,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
               style={styles.submitButton}
             >
               {loading ? (
-                <ActivityIndicator color="black" />
+                <ActivityIndicator color="#FFF" />
               ) : (
                 <Text style={styles.submitButtonText}>Create Account</Text>
               )}
@@ -251,6 +342,130 @@ export const SignUpScreen = ({ route, navigation }: any) => {
   );
 };
 
+// ─── Shared Mockup Components styles ──────────────────────────────────────────
+const s = StyleSheet.create({
+  mockCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+  },
+  mockHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  mockTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  mockBadge: {
+    backgroundColor: '#EFF6FF',
+    borderRadius: 100,
+    paddingVertical: 3,
+    paddingHorizontal: 8,
+  },
+  mockBadgeText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#1E40AF',
+  },
+  mockRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 10,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  mockAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mockAvatarText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  mockName: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  mockNiche: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  mockActionBtn: {
+    backgroundColor: '#111827',
+    borderRadius: 8,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+  },
+  mockActionTxt: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  mockStatusBadge: {
+    borderRadius: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+  },
+  mockStatusText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  mockMetrics: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  mockMetricItem: {
+    alignItems: 'center',
+  },
+  mockMetricVal: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  mockMetricLabel: {
+    fontSize: 10,
+    color: '#9CA3AF',
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  mockEscrowBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E8F5E9',
+    borderRadius: 10,
+    padding: 8,
+    marginTop: 10,
+    gap: 6,
+  },
+  mockEscrowText: {
+    fontSize: 11,
+    color: '#2E7D32',
+    fontWeight: '700',
+  },
+});
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -258,61 +473,82 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   leftPane: {
-    flex: 1,
+    flex: 0.75, // Decreased size from 1 to make the visual container smaller
     overflow: 'hidden',
+    borderRightWidth: 1,
+    borderColor: '#F3F4F6',
   },
   leftContent: {
     flex: 1,
-    padding: 60,
-    justifyContent: 'center',
+    padding: 48,
+    justifyContent: 'space-between',
     zIndex: 10,
   },
-  leftTitle: {
-    fontSize: 48,
+  brandingHeader: {
+    alignSelf: 'flex-start',
+  },
+  brandingLogo: {
+    fontSize: 20,
     fontWeight: '900',
-    color: '#FFF',
-    letterSpacing: -1,
-    marginBottom: 16,
+    color: '#000000',
+    letterSpacing: -0.5,
+  },
+  visualContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    marginTop: 20,
+  },
+  leftTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#111827',
+    letterSpacing: -0.75,
+    lineHeight: 38,
+    marginBottom: 12,
   },
   leftSubtitle: {
-    fontSize: 20,
-    color: '#9CA3AF',
-    marginBottom: 60,
+    fontSize: 15,
+    color: '#4B5563',
+    lineHeight: 22,
+    fontWeight: '500',
+    marginBottom: 36,
   },
-  mockupContainer: {
+  mockupWrapper: {
     width: '100%',
-    aspectRatio: 16/9,
+    maxWidth: 380,
+    alignSelf: 'center',
   },
-  glassMockup: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+  glassContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.4)', // Soft glassmorphism background
     borderRadius: 24,
+    padding: 10,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
-    padding: 8,
-  },
-  mockupImage: {
-    flex: 1,
-    borderRadius: 16,
-    opacity: 0.9,
+    borderColor: 'rgba(243, 244, 246, 0.8)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.04, // Low, subtle opacity for visual element focus
+    shadowRadius: 24,
+    elevation: 3,
+    opacity: 0.85, // Keeping visual subtle and not main focus
   },
   rightPane: {
-    flex: 1,
-    maxWidth: 600,
-    width: '100%',
+    flex: 1.25, // Enlarged right pane modal form to be more prominent
     backgroundColor: '#FFFFFF',
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 40,
-    paddingVertical: 40,
+    paddingHorizontal: 48,
+    paddingVertical: 32,
+  },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
   },
   backButton: {
-    marginBottom: 40,
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
@@ -320,29 +556,30 @@ const styles = StyleSheet.create({
   formContainer: {
     flex: 1,
     justifyContent: 'center',
-    maxWidth: 400,
+    maxWidth: 440, // Expanded modal width to be larger and highly readable
     width: '100%',
     alignSelf: 'center',
   },
   header: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   title: {
-    fontSize: 36,
+    fontSize: 32,
     fontWeight: '900',
-    color: '#000',
-    marginBottom: 8,
-    letterSpacing: -1,
+    color: '#111827',
+    marginBottom: 6,
+    letterSpacing: -0.75,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: '#6B7280',
+    fontWeight: '500',
   },
   roleSelector: {
     flexDirection: 'row',
     backgroundColor: '#F3F4F6',
-    borderRadius: 16,
-    padding: 4,
+    borderRadius: 14,
+    padding: 3,
     marginBottom: 24,
   },
   roleOption: {
@@ -350,11 +587,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 12,
-    borderRadius: 12,
+    paddingVertical: 10,
+    borderRadius: 11,
   },
   roleOptionActive: {
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -362,39 +599,39 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   roleText: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '700',
     color: '#6B7280',
   },
   roleTextActive: {
-    color: '#000',
+    color: '#000000',
   },
   googleButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    height: 56,
-    borderRadius: 16,
-    borderWidth: 1.5,
+    height: 52,
+    borderRadius: 14,
+    borderWidth: 1,
     borderColor: '#E5E7EB',
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
     marginBottom: 16,
   },
   googleIcon: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginRight: 10,
-    color: '#000',
+    fontSize: 18,
+    fontWeight: '800',
+    marginRight: 8,
+    color: '#000000',
   },
   googleText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#000',
+    color: '#374151',
   },
   dividerContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 24,
+    marginVertical: 18,
   },
   dividerLine: {
     flex: 1,
@@ -402,8 +639,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6',
   },
   dividerText: {
-    marginHorizontal: 16,
-    fontSize: 13,
+    marginHorizontal: 12,
+    fontSize: 12,
     color: '#9CA3AF',
     fontWeight: '600',
     textTransform: 'uppercase',
@@ -412,63 +649,65 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   inputLabel: {
-    color: '#9CA3AF',
-    fontSize: 12,
+    color: '#4B5563',
+    fontSize: 11,
     fontWeight: '700',
     textTransform: 'uppercase',
-    marginBottom: 8,
-    marginLeft: 4,
+    marginBottom: 6,
+    marginLeft: 2,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    height: 56,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    height: 52,
   },
   input: {
     flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#000',
+    marginLeft: 10,
+    fontSize: 15,
+    color: '#111827',
   },
   errorContainer: {
     backgroundColor: '#FEF2F2',
-    padding: 16,
+    padding: 14,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: '#FEE2E2',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   errorText: {
     color: '#DC2626',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '500',
   },
   submitButton: {
-    backgroundColor: '#A3E635',
-    height: 56,
-    borderRadius: 16,
+    backgroundColor: '#000000', // Changed to premium black button to match new homepage design style
+    height: 52,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   submitButtonText: {
-    color: '#000',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '800',
   },
   loginLink: {
-    marginTop: 24,
+    marginTop: 20,
     alignItems: 'center',
   },
   loginLinkText: {
     color: '#6B7280',
-    fontSize: 15,
+    fontSize: 14,
+    fontWeight: '500',
   },
   loginLinkHighlight: {
-    color: '#000',
-    fontWeight: '800',
+    color: '#000000',
+    fontWeight: '700',
   },
 });
