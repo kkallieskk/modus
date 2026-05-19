@@ -136,15 +136,41 @@ export const LandingScreen = () => {
 
   // subtle float for mockups
   const float = useRef(new Animated.Value(0)).current;
+  
+  // entrance animations
+  const fade1 = useRef(new Animated.Value(0)).current;
+  const fade2 = useRef(new Animated.Value(0)).current;
+  const fade3 = useRef(new Animated.Value(0)).current;
+  const slide1 = useRef(new Animated.Value(30)).current;
+  const slide2 = useRef(new Animated.Value(30)).current;
+  const slide3 = useRef(new Animated.Value(30)).current;
+
   useEffect(() => {
     Animated.loop(
       Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 3000, useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 3000, useNativeDriver: true }),
+        Animated.timing(float, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(float, { toValue: 0, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
       ])
     ).start();
+
+    // Staggered entrance
+    Animated.stagger(150, [
+      Animated.parallel([
+        Animated.timing(fade1, { toValue: 1, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(slide1, { toValue: 0, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(fade2, { toValue: 1, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(slide2, { toValue: 0, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+      Animated.parallel([
+        Animated.timing(fade3, { toValue: 1, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+        Animated.timing(slide3, { toValue: 0, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
+      ]),
+    ]).start();
   }, []);
-  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
+  
+  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -12] });
 
   return (
     <ScrollView style={s.page} contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
@@ -164,19 +190,21 @@ export const LandingScreen = () => {
 
       {/* ── HERO ── */}
       <View style={s.hero}>
-        <View style={s.heroPill}>
-          <Zap size={12} color="#000" />
-          <Text style={s.heroPillText}>The creator economy, upgraded.</Text>
-        </View>
+        <Animated.View style={{ opacity: fade1, transform: [{ translateY: slide1 }], alignItems: 'center' }}>
+          <View style={s.heroPill}>
+            <Zap size={12} color="#000" />
+            <Text style={s.heroPillText}>The creator economy, upgraded.</Text>
+          </View>
 
-        <Text style={s.heroHead}>
-          Where elite brands{'\n'}meet verified creators.
-        </Text>
-        <Text style={s.heroSub}>
-          No inflated metrics. No middlemen. Modus connects you to real, audited talent — and keeps payments secure with built-in escrow.
-        </Text>
+          <Text style={s.heroHead}>
+            Where elite brands{'\n'}meet verified creators.
+          </Text>
+          <Text style={s.heroSub}>
+            No inflated metrics. No middlemen. Modus connects you to real, audited talent — and keeps payments secure with built-in escrow.
+          </Text>
+        </Animated.View>
 
-        <View style={s.heroBtns}>
+        <Animated.View style={[s.heroBtns, { opacity: fade2, transform: [{ translateY: slide2 }] }]}>
           <Pressable
             style={({ pressed }) => [s.btnPrimary, pressed && { opacity: 0.8 }]}
             onPress={() => nav.navigate('SignUp', { role: 'brand' })}
@@ -190,24 +218,24 @@ export const LandingScreen = () => {
           >
             <Text style={s.btnSecondaryText}>I am a Creator</Text>
           </Pressable>
-        </View>
+        </Animated.View>
 
         {/* Stats row */}
-        <View style={s.statsRow}>
+        <Animated.View style={[s.statsRow, { opacity: fade3, transform: [{ translateY: slide3 }] }]}>
           <Stat value="₹2.4Cr+" label="Creator Payouts" />
           <View style={s.statDivider} />
           <Stat value="1,200+" label="Verified Creators" />
           <View style={s.statDivider} />
           <Stat value="98%" label="On-Time Delivery" />
-        </View>
+        </Animated.View>
       </View>
 
       {/* ── MOCKUPS ── */}
       <View style={s.mockupsSection}>
-        <Animated.View style={[s.mockupLeft, { transform: [{ translateY: floatY }] }]}>
+        <Animated.View style={[s.mockupLeft, { opacity: fade3, transform: [{ translateY: floatY }] }]}>
           <BrandMockup />
         </Animated.View>
-        <Animated.View style={[s.mockupRight, { transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }] }]}>
+        <Animated.View style={[s.mockupRight, { opacity: fade3, transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [-12, 0] }) }] }]}>
           <CreatorMockup />
         </Animated.View>
       </View>
