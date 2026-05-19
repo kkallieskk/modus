@@ -42,6 +42,32 @@ const Marquee = () => {
 
 
 
+// ─── Hero Abstract Background Illustrations ─────────────────────────────────────
+const HeroIllustrations = () => {
+  const float = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(float, { toValue: 1, duration: 6000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(float, { toValue: 0, duration: 6000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  const y1 = float.interpolate({ inputRange: [0, 1], outputRange: [0, -25] });
+  const y2 = float.interpolate({ inputRange: [0, 1], outputRange: [0, 25] });
+
+  return (
+    <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+      <Animated.View style={{ position: 'absolute', top: '20%', left: '10%', opacity: 0.02, transform: [{ translateY: y1 }, { rotate: '-15deg' }] }}>
+        <Zap size={220} color="#000" strokeWidth={1} />
+      </Animated.View>
+      <Animated.View style={{ position: 'absolute', bottom: '15%', right: '12%', opacity: 0.02, transform: [{ translateY: y2 }, { rotate: '15deg' }] }}>
+        <Star size={280} color="#000" strokeWidth={1} />
+      </Animated.View>
+    </View>
+  );
+};
+
 // ─── Feature block ────────────────────────────────────────────────────────────
 const Feature = ({ icon: Icon, title, body }: any) => (
   <View style={s.featureCard}>
@@ -58,13 +84,13 @@ export const LandingScreen = () => {
   // scroll animation
   const scrollY = useRef(new Animated.Value(0)).current;
   const lowerOpacity = scrollY.interpolate({
-    inputRange: [0, H * 0.4],
-    outputRange: [0.08, 1],
+    inputRange: [0, H * 0.6],
+    outputRange: [0.35, 1], // Start much higher so it doesn't look like a sudden rigid fade
     extrapolate: 'clamp'
   });
   const lowerTranslateY = scrollY.interpolate({
-    inputRange: [0, H * 0.4],
-    outputRange: [60, 0],
+    inputRange: [0, H * 0.6],
+    outputRange: [20, 0], // Move just 20px instead of 60px to feel less rigid
     extrapolate: 'clamp'
   });
   
@@ -111,11 +137,12 @@ export const LandingScreen = () => {
       </View>
 
       {/* ── HERO ── */}
-      <View style={[s.hero, { minHeight: H * 0.85, justifyContent: 'center' }]}>
+      <View style={[s.hero, { minHeight: Math.min(H * 0.75, 800), justifyContent: 'center' }]}>
         <View style={s.bgGlowWrap}>
           <View style={s.bgGlow1} />
           <View style={s.bgGlow2} />
         </View>
+        <HeroIllustrations />
 
         <Animated.View style={{ opacity: fade1, transform: [{ translateY: slide1 }], alignItems: 'center', zIndex: 10 }}>
           <Text style={s.heroHead}>
