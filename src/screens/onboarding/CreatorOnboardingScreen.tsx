@@ -59,6 +59,20 @@ interface LinkedProfile {
   isVerified?: boolean;
 }
 
+
+// ── Floating orb ─────────────────────────────────────────────────────────────
+const Orb = ({ style: os, color, size, delay = 0 }: any) => {
+  const y = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    Animated.loop(Animated.sequence([
+      Animated.timing(y, { toValue: -18, duration: 3400 + delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(y, { toValue: 0,   duration: 3400 + delay, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+    ])).start();
+  }, []);
+  const IS_WEB = Platform.OS === 'web';
+  return <Animated.View style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color, transform: [{ translateY: y }], ...(IS_WEB ? { filter: 'blur(90px)' } : {}) }, os]} />;
+};
+
 export const CreatorOnboardingScreen = () => {
   const navigation = useNavigation<any>();
   const { refreshProfile } = useProfile();
@@ -1108,7 +1122,7 @@ const styles = StyleSheet.create({
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
   },
   containerDesktop: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAFAFA',
     paddingTop: 0,
     justifyContent: 'center',
     alignItems: 'center',
@@ -1135,7 +1149,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#ECEEF1',
+    borderColor: 'rgba(0,0,0,0.06)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -1164,13 +1178,20 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   cardDesktop: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.92)',
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#ECEEF1',
+    borderColor: 'rgba(0,0,0,0.06)',
     overflow: 'hidden',
-    shadowColor: '#0F172A',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.05,
+    shadowRadius: 40,
+    elevation: 8,
+    maxHeight: 700,
+    width: '100%',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(24px)' } : {})
+  },
     shadowOpacity: 0.05,
     shadowRadius: 30,
     elevation: 8,
