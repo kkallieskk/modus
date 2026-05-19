@@ -95,8 +95,7 @@ export const LandingScreen = () => {
             <View style={s.heroBadge}><Sparkles size={12} color="#6366F1" /><Text style={s.heroBadgeText}>Invite-only marketplace</Text></View>
           </Animated.View>
           <Animated.View style={{ opacity: heroOp, transform: [{ translateY: heroY }], alignItems: "center" }}>
-            <Text style={s.heroHead}>Where elite brands{"
-"}meet verified creators.</Text>
+            <Text style={s.heroHead}>Where elite brands{'\n'}meet verified creators.</Text>
             <Text style={s.heroSub}>No inflated metrics. No middlemen. Modus connects real, audited talent with brands that mean business.</Text>
           </Animated.View>
           <Animated.View style={[s.heroBtns, { opacity: btnsOp, transform: [{ translateY: btnsY }] }]}>
@@ -134,8 +133,7 @@ export const LandingScreen = () => {
         <FadeInSection scrollY={scrollY} triggerAt={420}>
           <View style={s.sectionHeader}>
             <Text style={s.sectionLabel}>THE MODUS STANDARD</Text>
-            <Text style={s.sectionHead}>Marketplace integrity,{"
-"}engineered.</Text>
+            <Text style={s.sectionHead}>Marketplace integrity,{'\n'}engineered.</Text>
             <Text style={s.sectionSub}>Every metric verified. Every payment protected. Every collaboration built on trust.</Text>
           </View>
         </FadeInSection>
@@ -157,8 +155,7 @@ export const LandingScreen = () => {
         <FadeInSection scrollY={scrollY} triggerAt={1200}>
           <View style={s.sectionHeader}>
             <Text style={s.sectionLabel}>WHAT THEY SAY</Text>
-            <Text style={s.sectionHead}>Built for both{"
-"}sides of the table.</Text>
+            <Text style={s.sectionHead}>Built for both{'\n'}sides of the table.</Text>
           </View>
         </FadeInSection>
         <View style={s.testimonialGrid}>
@@ -175,8 +172,7 @@ export const LandingScreen = () => {
           <View style={s.ctaSection}>
             <View style={s.ctaCard}>
               <View style={s.ctaOrb1} /><View style={s.ctaOrb2} />
-              <Text style={s.ctaHead}>Ready to build{"
-"}something real?</Text>
+              <Text style={s.ctaHead}>Ready to build{'\n'}something real?</Text>
               <Text style={s.ctaSub}>Join elite brands and verified creators already on Modus.</Text>
               <Pressable style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.85 }]} onPress={() => nav.navigate("Welcome")}>
                 <Text style={s.ctaBtnText}>Start for free</Text><ArrowRight size={17} color="#FFF" />
