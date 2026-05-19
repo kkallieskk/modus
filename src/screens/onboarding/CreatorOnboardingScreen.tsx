@@ -116,7 +116,7 @@ export const CreatorOnboardingScreen = () => {
   };
 
   // Link Social Modal / Overlay State
-  const [activePlatform, setActivePlatform] = useState<'instagram' | 'tiktok' | 'youtube' | 'twitter' | null>(null);
+  const [activePlatform, setActivePlatform] = useState<'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'linkedin' | null>(null);
   const [socialHandle, setSocialHandle] = useState('');
   const [linkStep, setLinkStep] = useState<'input' | 'loading' | 'preview'>('input');
   const [showInstagramInterception, setShowInstagramInterception] = useState(false);
@@ -237,7 +237,7 @@ export const CreatorOnboardingScreen = () => {
     }
   };
 
-  const startLinking = async (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter') => {
+  const startLinking = async (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'linkedin') => {
     if (platform === 'instagram') {
       setActivePlatform('instagram');
       setShowInstagramInterception(true);
@@ -591,7 +591,7 @@ export const CreatorOnboardingScreen = () => {
 
         {/* LinkedIn Card */}
         <TouchableOpacity 
-          onPress={() => startLinking('linkedin' as any)}
+          onPress={() => startLinking('linkedin')}
           style={[styles.socialButton, connectedProfiles.linkedin && styles.socialButtonActive]}
         >
           <View style={[styles.instagramIconBg, { backgroundColor: '#0077B5' }]}>
