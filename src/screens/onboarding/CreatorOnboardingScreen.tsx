@@ -23,6 +23,7 @@ import {
   Image as ImageIcon, 
   Plus, 
   ArrowRight,
+  ArrowLeft,
   ShieldCheck,
   Star,
   X,
@@ -527,7 +528,7 @@ export const CreatorOnboardingScreen = () => {
     <View style={styles.stepContainer}>
       <View style={styles.header}>
         <Text style={styles.stepTitle}>Connect Social Handles</Text>
-        <Text style={styles.stepSubtitle}>Verify your real influence using our 1-Click AI Auditing engine.</Text>
+        <Text style={styles.stepSubtitle}>Securely connect your primary account.</Text>
       </View>
 
       <View style={styles.socialContainer}>
@@ -536,7 +537,14 @@ export const CreatorOnboardingScreen = () => {
           onPress={() => startLinking('instagram')}
           style={[styles.socialButton, connectedProfiles.instagram && styles.socialButtonActive]}
         >
-          <Instagram size={26} color={connectedProfiles.instagram ? '#E1306C' : '#000'} />
+          <LinearGradient
+            colors={['#f09433', '#e6683c', '#dc2743', '#cc2366', '#bc1888']}
+            style={styles.instagramIconBg}
+            start={{ x: 0, y: 1 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <Instagram size={24} color="#FFF" />
+          </LinearGradient>
           <View style={styles.socialContent}>
             <Text style={styles.socialLabel}>Instagram Business</Text>
             {connectedProfiles.instagram ? (
@@ -1078,9 +1086,9 @@ export const CreatorOnboardingScreen = () => {
               <TouchableOpacity 
                 onPress={handleBackToRoleSelection}
                 disabled={loading}
-                style={styles.backButton}
+                style={[styles.backButton, { width: 48, paddingHorizontal: 0, justifyContent: 'center', alignItems: 'center' }]}
               >
-                {loading ? <ActivityIndicator size="small" color="#6B7280" /> : <Text style={styles.backText}>Change Role</Text>}
+                {loading ? <ActivityIndicator size="small" color="#6B7280" /> : <ArrowLeft size={24} color="#6B7280" />}
               </TouchableOpacity>
             )}
             
@@ -1262,15 +1270,27 @@ const styles = StyleSheet.create({
   socialButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
-    backgroundColor: '#F9FAFB',
+    padding: 16,
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
-    borderWidth: 1.5,
-    borderColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
   },
   socialButtonActive: {
-    borderColor: '#000',
-    backgroundColor: '#FFFFFF',
+    borderColor: '#E1306C',
+    backgroundColor: '#FFF0F5',
+  },
+  instagramIconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   socialContent: {
     flex: 1,
