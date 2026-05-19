@@ -9,7 +9,7 @@ import {
   CheckCircle2, Star, Zap, TrendingUp,
 } from 'lucide-react-native';
 
-const { width: W } = Dimensions.get('window');
+const { width: W, height: H } = Dimensions.get('window');
 const IS_WEB = Platform.OS === 'web';
 
 // ─── Animated marquee ─────────────────────────────────────────────────────────
@@ -55,25 +55,26 @@ const Feature = ({ icon: Icon, title, body }: any) => (
 export const LandingScreen = () => {
   const nav = useNavigation<any>();
 
-  // subtle float for mockups
-  const float = useRef(new Animated.Value(0)).current;
+  // scroll animation
+  const scrollY = useRef(new Animated.Value(0)).current;
+  const lowerOpacity = scrollY.interpolate({
+    inputRange: [0, H * 0.4],
+    outputRange: [0.08, 1],
+    extrapolate: 'clamp'
+  });
+  const lowerTranslateY = scrollY.interpolate({
+    inputRange: [0, H * 0.4],
+    outputRange: [60, 0],
+    extrapolate: 'clamp'
+  });
   
   // entrance animations
   const fade1 = useRef(new Animated.Value(0)).current;
   const fade2 = useRef(new Animated.Value(0)).current;
-  const fade3 = useRef(new Animated.Value(0)).current;
   const slide1 = useRef(new Animated.Value(30)).current;
   const slide2 = useRef(new Animated.Value(30)).current;
-  const slide3 = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      ])
-    ).start();
-
     // Staggered entrance
     Animated.stagger(150, [
       Animated.parallel([
@@ -84,17 +85,17 @@ export const LandingScreen = () => {
         Animated.timing(fade2, { toValue: 1, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
         Animated.timing(slide2, { toValue: 0, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
       ]),
-      Animated.parallel([
-        Animated.timing(fade3, { toValue: 1, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-        Animated.timing(slide3, { toValue: 0, duration: 800, easing: Easing.out(Easing.cubic), useNativeDriver: true }),
-      ]),
     ]).start();
   }, []);
-  
-  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -12] });
 
   return (
-    <ScrollView style={s.page} contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={s.page} 
+      contentContainerStyle={s.pageContent} 
+      showsVerticalScrollIndicator={false}
+      onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
+      scrollEventThrottle={16}
+    >
 
       {/* ── NAV ── */}
       <View style={s.nav}>
@@ -110,8 +111,13 @@ export const LandingScreen = () => {
       </View>
 
       {/* ── HERO ── */}
-      <View style={s.hero}>
-        <Animated.View style={{ opacity: fade1, transform: [{ translateY: slide1 }], alignItems: 'center' }}>
+      <View style={[s.hero, { minHeight: H * 0.85, justifyContent: 'center' }]}>
+        <View style={s.bgGlowWrap}>
+          <View style={s.bgGlow1} />
+          <View style={s.bgGlow2} />
+        </View>
+
+        <Animated.View style={{ opacity: fade1, transform: [{ translateY: slide1 }], alignItems: 'center', zIndex: 10 }}>
           <Text style={s.heroHead}>
             Where elite brands{'\n'}meet verified creators.
           </Text>
@@ -137,8 +143,9 @@ export const LandingScreen = () => {
         </Animated.View>
       </View>
 
-      {/* ── MARQUEE ── */}
-      <Marquee />
+      <Animated.View style={{ opacity: lowerOpacity, transform: [{ translateY: lowerTranslateY }] }}>
+        {/* ── MARQUEE ── */}
+        <Marquee />
 
       {/* ── FEATURES ── */}
       <View style={s.section}>
@@ -207,6 +214,7 @@ export const LandingScreen = () => {
         <Text style={s.copyright}>© 2026 Modus, Inc. All rights reserved.</Text>
       </View>
 
+      </Animated.View>
     </ScrollView>
   );
 };
@@ -229,11 +237,22 @@ const s = StyleSheet.create({
   navCta: { backgroundColor: '#000', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 100 },
   navCtaText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
 
-  // HERO
   hero: {
     alignItems: 'center', paddingHorizontal: 24,
     paddingTop: IS_WEB ? 80 : 60, paddingBottom: 40,
     backgroundColor: '#FFFFFF',
+    position: 'relative', overflow: 'hidden'
+  },
+  bgGlowWrap: { ...StyleSheet.absoluteFillObject, overflow: 'hidden', pointerEvents: 'none' },
+  bgGlow1: {
+    position: 'absolute', top: -100, left: -100, width: 500, height: 500,
+    backgroundColor: 'rgba(59, 130, 246, 0.05)', borderRadius: 250,
+    filter: 'blur(100px)' as any,
+  },
+  bgGlow2: {
+    position: 'absolute', bottom: -150, right: -150, width: 600, height: 600,
+    backgroundColor: 'rgba(16, 185, 129, 0.04)', borderRadius: 300,
+    filter: 'blur(120px)' as any,
   },
 
   heroHead: {
