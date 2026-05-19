@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   TextInput,
   Animated,
+  Easing,
   useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -58,7 +59,6 @@ interface LinkedProfile {
   avatarUrl?: string;
   isVerified?: boolean;
 }
-
 
 // ── Floating orb ─────────────────────────────────────────────────────────────
 const Orb = ({ style: os, color, size, delay = 0 }: any) => {
@@ -1007,6 +1007,8 @@ export const CreatorOnboardingScreen = () => {
 
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]}>
+      <Orb os={{ top: '10%', left: '15%' }} color="rgba(5,150,105,0.18)" size={460} delay={0} />
+      <Orb os={{ bottom: '10%', right: '15%' }} color="rgba(52,211,153,0.14)" size={380} delay={600} />
       {/* Branded Watermark (Only visible on Desktop to elevate UI aesthetic) */}
       {isDesktop && (
         <View style={styles.watermarkContainer}>
@@ -1118,14 +1120,17 @@ export const CreatorOnboardingScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#FAFAFA',
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    overflow: 'hidden',
   },
   containerDesktop: {
     backgroundColor: '#FAFAFA',
     paddingTop: 0,
     justifyContent: 'center',
     alignItems: 'center',
+    flex: 1,
+    overflow: 'hidden',
   },
   watermarkContainer: {
     position: 'absolute',
@@ -1149,7 +1154,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.06)',
+    borderColor: '#ECEEF1',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.04,
@@ -1175,7 +1180,7 @@ const styles = StyleSheet.create({
   },
   card: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255,255,255,0.92)',
   },
   cardDesktop: {
     backgroundColor: 'rgba(255,255,255,0.92)',
@@ -1190,13 +1195,7 @@ const styles = StyleSheet.create({
     elevation: 8,
     maxHeight: 700,
     width: '100%',
-    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(24px)' } : {})
-  },
-    shadowOpacity: 0.05,
-    shadowRadius: 30,
-    elevation: 8,
-    maxHeight: 700,
-    width: '100%',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(24px)' } as any : {})
   },
   progressContainer: {
     paddingHorizontal: 24,
