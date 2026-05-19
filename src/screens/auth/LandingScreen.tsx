@@ -1,48 +1,37 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  ScrollView,
-  Pressable,
-  Animated,
-  Easing,
-  Platform,
-  Image,
+  View, Text, StyleSheet, ScrollView, Pressable,
+  Animated, Easing, Dimensions, Platform,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { ChevronRight, Sparkles, ShieldCheck, Banknote, ArrowRight } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import {
+  ArrowRight, ShieldCheck, Banknote, Users,
+  CheckCircle2, Star, Zap, TrendingUp,
+} from 'lucide-react-native';
 
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
+const { width: W } = Dimensions.get('window');
+const IS_WEB = Platform.OS === 'web';
+
+// ─── Animated marquee ─────────────────────────────────────────────────────────
+const MARQUEE_ITEMS = [
+  'VERIFIED CREATORS', 'ESCROWED PAYMENTS', 'AI-AUDITED METRICS',
+  'INSTAGRAM API', 'ZERO AGENCIES', 'REAL-TIME DATA',
+];
 
 const Marquee = () => {
-  const scrollX = useRef(new Animated.Value(0)).current;
-
+  const x = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
-      Animated.timing(scrollX, {
-        toValue: -SCREEN_WIDTH,
-        duration: 15000,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      })
+      Animated.timing(x, { toValue: -W, duration: 18000, easing: Easing.linear, useNativeDriver: true })
     ).start();
   }, []);
-
-  const items = [
-    'META INTEGRATED', 'INSTAGRAM VERIFIED', 'TIKTOK CREATORS',
-    '$2.4M+ PAYOUTS', '1-CLICK AUDITS', 'NO AGENCIES',
-  ];
-
   return (
-    <View style={styles.marqueeContainer}>
-      <Animated.View style={[styles.marqueeContent, { transform: [{ translateX: scrollX }] }]}>
-        {[...items, ...items, ...items].map((text, i) => (
-          <View key={i} style={styles.marqueeItem}>
-            <Text style={styles.marqueeText}>{text}</Text>
-            <View style={styles.marqueeDot} />
+    <View style={s.marqueeWrap}>
+      <Animated.View style={[s.marqueeRow, { transform: [{ translateX: x }] }]}>
+        {[...MARQUEE_ITEMS, ...MARQUEE_ITEMS, ...MARQUEE_ITEMS].map((t, i) => (
+          <View key={i} style={s.marqueeItem}>
+            <View style={s.marqueeDot} />
+            <Text style={s.marqueeText}>{t}</Text>
           </View>
         ))}
       </Animated.View>
@@ -50,413 +39,435 @@ const Marquee = () => {
   );
 };
 
-const FeatureBlock = ({ reverse, title, subtitle, imageUrl, icon: Icon }: any) => {
-  return (
-    <View style={[styles.featureBlock, reverse && styles.featureBlockReverse]}>
-      <View style={styles.featureTextContainer}>
-        <View style={styles.featureIconContainer}>
-          <Icon size={24} color="#A3E635" />
+// ─── Fake App UI Mockup (Brand Dashboard card) ────────────────────────────────
+const BrandMockup = () => (
+  <View style={s.mockCard}>
+    {/* Header row */}
+    <View style={s.mockHeader}>
+      <Text style={s.mockTitle}>Creator Pitch Inbox</Text>
+      <View style={s.mockBadge}><Text style={s.mockBadgeText}>3 New</Text></View>
+    </View>
+    {/* Creator rows */}
+    {[
+      { name: 'Sarah Jenkins', niche: 'Lifestyle & Wellness', followers: '148.2K', verified: true },
+      { name: 'David Chen', niche: 'Productivity & Tech', followers: '82.5K', verified: true },
+    ].map((c, i) => (
+      <View key={i} style={s.mockRow}>
+        <View style={s.mockAvatar}>
+          <Text style={s.mockAvatarText}>{c.name[0]}</Text>
         </View>
-        <Text style={styles.featureTitle}>{title}</Text>
-        <Text style={styles.featureSubtitle}>{subtitle}</Text>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={s.mockName}>{c.name}</Text>
+            {c.verified && <CheckCircle2 size={13} color="#3B82F6" fill="#3B82F6" />}
+          </View>
+          <Text style={s.mockNiche}>{c.niche} · {c.followers}</Text>
+        </View>
+        <View style={s.mockHireBtn}><Text style={s.mockHireTxt}>Hire</Text></View>
       </View>
-      <View style={styles.featureImageContainer}>
-        <View style={styles.glassCard}>
-          <Image 
-            source={{ uri: imageUrl }} 
-            style={styles.featureImage} 
-            resizeMode="cover"
-          />
+    ))}
+    {/* Metrics bar */}
+    <View style={s.mockMetrics}>
+      {[['₹12.4L', 'Escrowed'], ['98%', 'On-Time'], ['6', 'Active']].map(([v, l]) => (
+        <View key={l} style={s.mockMetricItem}>
+          <Text style={s.mockMetricVal}>{v}</Text>
+          <Text style={s.mockMetricLabel}>{l}</Text>
         </View>
+      ))}
+    </View>
+  </View>
+);
+
+// ─── Fake App UI Mockup (Creator pipeline card) ───────────────────────────────
+const CreatorMockup = () => (
+  <View style={s.mockCard}>
+    <View style={s.mockHeader}>
+      <Text style={s.mockTitle}>My Deals</Text>
+      <View style={[s.mockBadge, { backgroundColor: '#DCFCE7' }]}>
+        <Text style={[s.mockBadgeText, { color: '#166534' }]}>₹5K Secured</Text>
       </View>
     </View>
-  );
-};
+    {[
+      { brand: 'Glow Recipe', campaign: 'Watermelon Launch', status: 'In Progress', color: '#FEF3C7' },
+      { brand: 'Rhode Skin', campaign: 'Summer Glaze', status: 'Draft Approved', color: '#DCFCE7' },
+    ].map((d, i) => (
+      <View key={i} style={s.mockRow}>
+        <View style={[s.mockAvatar, { backgroundColor: '#F3F4F6' }]}>
+          <Text style={[s.mockAvatarText, { color: '#000' }]}>{d.brand[0]}</Text>
+        </View>
+        <View style={{ flex: 1, marginLeft: 12 }}>
+          <Text style={s.mockName}>{d.brand}</Text>
+          <Text style={s.mockNiche}>{d.campaign}</Text>
+        </View>
+        <View style={[s.mockStatusBadge, { backgroundColor: d.color }]}>
+          <Text style={s.mockStatusText}>{d.status}</Text>
+        </View>
+      </View>
+    ))}
+    <View style={[s.mockMetrics, { backgroundColor: '#F0FDF4', borderRadius: 14, padding: 12, marginTop: 12 }]}>
+      <ShieldCheck size={16} color="#059669" />
+      <Text style={{ fontSize: 13, color: '#166534', fontWeight: '700', marginLeft: 8 }}>
+        Funds secured in Modus Escrow Vault
+      </Text>
+    </View>
+  </View>
+);
 
+// ─── Stat pill ────────────────────────────────────────────────────────────────
+const Stat = ({ value, label }: { value: string; label: string }) => (
+  <View style={s.statItem}>
+    <Text style={s.statValue}>{value}</Text>
+    <Text style={s.statLabel}>{label}</Text>
+  </View>
+);
+
+// ─── Feature block ────────────────────────────────────────────────────────────
+const Feature = ({ icon: Icon, title, body }: any) => (
+  <View style={s.featureCard}>
+    <View style={s.featureIcon}><Icon size={22} color="#000" /></View>
+    <Text style={s.featureTitle}>{title}</Text>
+    <Text style={s.featureBody}>{body}</Text>
+  </View>
+);
+
+// ─── Main screen ──────────────────────────────────────────────────────────────
 export const LandingScreen = () => {
-  const navigation = useNavigation<any>();
-  const [heroHovered, setHeroHovered] = useState(false);
-  const heroTilt = useRef(new Animated.Value(0)).current;
+  const nav = useNavigation<any>();
 
+  // subtle float for mockups
+  const float = useRef(new Animated.Value(0)).current;
   useEffect(() => {
-    Animated.spring(heroTilt, {
-      toValue: heroHovered ? 1 : 0,
-      friction: 5,
-      useNativeDriver: true,
-    }).start();
-  }, [heroHovered]);
-
-  const dashboardRotateX = heroTilt.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '5deg'],
-  });
-  const dashboardRotateY = heroTilt.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '-5deg'],
-  });
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(float, { toValue: 1, duration: 3000, useNativeDriver: true }),
+        Animated.timing(float, { toValue: 0, duration: 3000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -8] });
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-      
-      {/* SECTION 1: HERO */}
-      <View style={styles.heroSection}>
-        <View style={styles.heroHeader}>
-          <Text style={styles.logo}>Modus.</Text>
-          <Pressable onPress={() => navigation.navigate('Login')}>
-            <Text style={styles.loginText}>Log In</Text>
+    <ScrollView style={s.page} contentContainerStyle={s.pageContent} showsVerticalScrollIndicator={false}>
+
+      {/* ── NAV ── */}
+      <View style={s.nav}>
+        <Text style={s.logo}>Modus.</Text>
+        <View style={s.navRight}>
+          <Pressable onPress={() => nav.navigate('Login')} style={s.navLogin}>
+            <Text style={s.navLoginText}>Log in</Text>
+          </Pressable>
+          <Pressable onPress={() => nav.navigate('Welcome')} style={s.navCta}>
+            <Text style={s.navCtaText}>Get Started</Text>
+          </Pressable>
+        </View>
+      </View>
+
+      {/* ── HERO ── */}
+      <View style={s.hero}>
+        <View style={s.heroPill}>
+          <Zap size={12} color="#000" />
+          <Text style={s.heroPillText}>The creator economy, upgraded.</Text>
+        </View>
+
+        <Text style={s.heroHead}>
+          Where elite brands{'\n'}meet verified creators.
+        </Text>
+        <Text style={s.heroSub}>
+          No inflated metrics. No middlemen. Modus connects you to real, audited talent — and keeps payments secure with built-in escrow.
+        </Text>
+
+        <View style={s.heroBtns}>
+          <Pressable
+            style={({ pressed }) => [s.btnPrimary, pressed && { opacity: 0.8 }]}
+            onPress={() => nav.navigate('SignUp', { role: 'brand' })}
+          >
+            <Text style={s.btnPrimaryText}>I am a Brand</Text>
+            <ArrowRight size={18} color="#FFF" />
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [s.btnSecondary, pressed && { opacity: 0.8 }]}
+            onPress={() => nav.navigate('SignUp', { role: 'influencer' })}
+          >
+            <Text style={s.btnSecondaryText}>I am a Creator</Text>
           </Pressable>
         </View>
 
-        <View style={styles.heroContent}>
-          <Text style={styles.heroHeadline}>The new standard for creator commerce.</Text>
-          <Text style={styles.heroSubheadline}>
-            Modus connects elite brands with verified creators. No agencies. No inflated metrics. Just pure performance.
-          </Text>
-
-          <View style={styles.heroButtons}>
-            <Pressable 
-              style={({ pressed }) => [styles.primaryButton, pressed && { opacity: 0.8 }]}
-              onPress={() => navigation.navigate('SignUp', { role: 'brand' })}
-            >
-              <Text style={styles.primaryButtonText}>I am a Brand</Text>
-              <ChevronRight size={20} color="#000" />
-            </Pressable>
-
-            <Pressable 
-              style={({ pressed }) => [styles.secondaryButton, pressed && { opacity: 0.8 }]}
-              onPress={() => navigation.navigate('SignUp', { role: 'influencer' })}
-            >
-              <Text style={styles.secondaryButtonText}>I am a Creator</Text>
-              <ChevronRight size={20} color="#FFF" />
-            </Pressable>
-          </View>
+        {/* Stats row */}
+        <View style={s.statsRow}>
+          <Stat value="₹2.4Cr+" label="Creator Payouts" />
+          <View style={s.statDivider} />
+          <Stat value="1,200+" label="Verified Creators" />
+          <View style={s.statDivider} />
+          <Stat value="98%" label="On-Time Delivery" />
         </View>
-
-        {/* Dashboard 3D Mockup */}
-        <Pressable
-          onHoverIn={() => setHeroHovered(true)}
-          onHoverOut={() => setHeroHovered(false)}
-          onPressIn={() => setHeroHovered(true)}
-          onPressOut={() => setHeroHovered(false)}
-          style={styles.heroMockupContainer}
-        >
-          <Animated.View style={[
-            styles.heroMockupWrapper,
-            { transform: [{ perspective: 1000 }, { rotateX: dashboardRotateX }, { rotateY: dashboardRotateY }] }
-          ]}>
-            <Image 
-              source={{ uri: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070' }} 
-              style={styles.heroDashboardImage} 
-            />
-            <LinearGradient
-              colors={['transparent', '#0A0A0A']}
-              style={StyleSheet.absoluteFillObject}
-            />
-          </Animated.View>
-        </Pressable>
       </View>
 
-      {/* SECTION 2: SOCIAL PROOF MARQUEE */}
+      {/* ── MOCKUPS ── */}
+      <View style={s.mockupsSection}>
+        <Animated.View style={[s.mockupLeft, { transform: [{ translateY: floatY }] }]}>
+          <BrandMockup />
+        </Animated.View>
+        <Animated.View style={[s.mockupRight, { transform: [{ translateY: float.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }] }]}>
+          <CreatorMockup />
+        </Animated.View>
+      </View>
+
+      {/* ── MARQUEE ── */}
       <Marquee />
 
-      {/* SECTION 3: DUAL ENGINE FEATURES */}
-      <View style={styles.featuresSection}>
-        <FeatureBlock 
-          title="Hire on verified data, not vibes."
-          subtitle="Our 1-Click AI Auditing Engine pulls real Instagram API follower counts and engagement metrics. Say goodbye to fake influence."
-          icon={ShieldCheck}
-          imageUrl="https://images.unsplash.com/photo-1618761714954-0b8cd0026356?q=80&w=2070"
-          reverse={false}
-        />
-        <FeatureBlock 
-          title="Stop chasing invoices. Get Escrowed."
-          subtitle="Funds are secured upfront. Once deliverables are met, the smart contract pays out instantly. Zero payment anxiety."
-          icon={Banknote}
-          imageUrl="https://images.unsplash.com/photo-1563013544-824ae1b704d3?q=80&w=2070"
-          reverse={true}
-        />
+      {/* ── FEATURES ── */}
+      <View style={s.section}>
+        <Text style={s.sectionLabel}>Why Modus</Text>
+        <Text style={s.sectionHead}>Everything a marketplace{'\n'}should be.</Text>
+        <View style={s.featureGrid}>
+          <Feature
+            icon={ShieldCheck}
+            title="Hire on real data"
+            body="Our AI auditing engine pulls live Instagram follower counts and engagement directly from the official API. Zero faking."
+          />
+          <Feature
+            icon={Banknote}
+            title="Escrowed payments"
+            body="Funds are locked before work starts. Creators get paid the moment deliverables are approved. No chasing invoices."
+          />
+          <Feature
+            icon={TrendingUp}
+            title="1-click campaigns"
+            body="Publish a brief, review pitches, hire, and track — all in one clean workspace designed for speed."
+          />
+          <Feature
+            icon={Users}
+            title="Curated talent"
+            body="Every creator is manually reviewed and must connect their social account for verified audience demographics."
+          />
+        </View>
       </View>
 
-      {/* SECTION 4: KINETIC FOOTER */}
-      <View style={styles.footerSection}>
-        <Text style={styles.footerHeadline}>Ready to scale?</Text>
-        <Pressable 
-          style={({ pressed }) => [styles.glowingButton, pressed && { opacity: 0.8 }]}
-          onPress={() => navigation.navigate('Welcome')}
-        >
-          <Text style={styles.glowingButtonText}>Start Building</Text>
-          <ArrowRight size={24} color="#000" style={{ marginLeft: 8 }} />
-        </Pressable>
-        
-        <View style={styles.footerLinks}>
-          <Text style={styles.footerLink}>Privacy Policy</Text>
-          <Text style={styles.footerLink}>Terms of Service</Text>
-          <Text style={styles.footerLink}>Contact</Text>
-          <Text style={styles.footerLink}>Twitter / X</Text>
-          <Text style={styles.footerLink}>Instagram</Text>
+      {/* ── SOCIAL PROOF ── */}
+      <View style={s.proofSection}>
+        <Text style={s.proofHead}>"The only platform where the data actually matches reality."</Text>
+        <View style={s.proofAuthor}>
+          <View style={s.proofAvatar}><Text style={{ color: '#FFF', fontWeight: '800' }}>R</Text></View>
+          <View>
+            <Text style={s.proofName}>Riya S.</Text>
+            <Text style={s.proofRole}>Head of Influencer, Glow Recipe IN</Text>
+          </View>
+          <View style={s.stars}>
+            {[1,2,3,4,5].map(i => <Star key={i} size={14} color="#F59E0B" fill="#F59E0B" />)}
+          </View>
         </View>
-        <Text style={styles.copyright}>© 2026 Modus, Inc.</Text>
+      </View>
+
+      {/* ── CTA FOOTER ── */}
+      <View style={s.ctaSection}>
+        <Text style={s.ctaHead}>Ready to grow?</Text>
+        <Text style={s.ctaSub}>Join brands and creators already building on Modus.</Text>
+        <Pressable
+          style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.85 }]}
+          onPress={() => nav.navigate('Welcome')}
+        >
+          <Text style={s.ctaBtnText}>Start for free</Text>
+          <ArrowRight size={20} color="#FFF" />
+        </Pressable>
+      </View>
+
+      {/* ── FOOTER LINKS ── */}
+      <View style={s.footer}>
+        <Text style={s.footerLogo}>Modus.</Text>
+        <View style={s.footerLinks}>
+          {['Privacy', 'Terms', 'Contact', 'Twitter / X', 'Instagram'].map(l => (
+            <Text key={l} style={s.footerLink}>{l}</Text>
+          ))}
+        </View>
+        <Text style={s.copyright}>© 2026 Modus, Inc. All rights reserved.</Text>
       </View>
 
     </ScrollView>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0A0A0A',
+// ─── Styles ───────────────────────────────────────────────────────────────────
+const s = StyleSheet.create({
+  page: { flex: 1, backgroundColor: '#FAFAFA' },
+  pageContent: { paddingBottom: 40 },
+
+  // NAV
+  nav: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 20,
+    backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
-  contentContainer: {
-    paddingBottom: 40,
-  },
+  logo: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
+  navRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  navLogin: { paddingVertical: 10, paddingHorizontal: 16 },
+  navLoginText: { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  navCta: { backgroundColor: '#000', paddingVertical: 10, paddingHorizontal: 20, borderRadius: 100 },
+  navCtaText: { fontSize: 15, fontWeight: '700', color: '#FFF' },
+
   // HERO
-  heroSection: {
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    alignItems: 'center',
-    minHeight: SCREEN_HEIGHT * 0.9,
+  hero: {
+    alignItems: 'center', paddingHorizontal: 24,
+    paddingTop: IS_WEB ? 80 : 60, paddingBottom: 40,
+    backgroundColor: '#FFF',
   },
-  heroHeader: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 60,
-    maxWidth: 1200,
-  },
-  logo: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#FFF',
-    letterSpacing: -1,
-  },
-  loginText: {
-    color: '#A3E635',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  heroContent: {
-    alignItems: 'center',
-    maxWidth: 800,
-    zIndex: 10,
-  },
-  heroHeadline: {
-    fontSize: Platform.OS === 'web' ? 72 : 48,
-    fontWeight: '900',
-    color: '#FFF',
-    textAlign: 'center',
-    letterSpacing: -2,
-    lineHeight: Platform.OS === 'web' ? 80 : 54,
+  heroPill: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#F3F4F6', borderRadius: 100, paddingVertical: 6, paddingHorizontal: 14,
     marginBottom: 24,
   },
-  heroSubheadline: {
-    fontSize: 18,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 28,
-    marginBottom: 40,
-    maxWidth: 600,
+  heroPillText: { fontSize: 13, fontWeight: '700', color: '#000' },
+  heroHead: {
+    fontSize: IS_WEB ? 60 : 40, fontWeight: '900', color: '#000',
+    textAlign: 'center', letterSpacing: -1.5, lineHeight: IS_WEB ? 68 : 46, marginBottom: 20,
   },
-  heroButtons: {
-    flexDirection: 'row',
-    gap: 16,
-    flexWrap: 'wrap',
-    justifyContent: 'center',
+  heroSub: {
+    fontSize: 17, color: '#6B7280', textAlign: 'center', lineHeight: 26,
+    maxWidth: 520, fontWeight: '500', marginBottom: 36,
   },
-  primaryButton: {
-    backgroundColor: '#A3E635',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 100,
+  heroBtns: { flexDirection: 'row', gap: 12, marginBottom: 48, flexWrap: 'wrap', justifyContent: 'center' },
+  btnPrimary: {
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+    backgroundColor: '#000', paddingVertical: 16, paddingHorizontal: 28, borderRadius: 100,
   },
-  primaryButtonText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '800',
-    marginRight: 8,
+  btnPrimaryText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
+  btnSecondary: {
+    borderWidth: 1.5, borderColor: '#E5E7EB', paddingVertical: 16, paddingHorizontal: 28, borderRadius: 100,
   },
-  secondaryButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 100,
+  btnSecondaryText: { fontSize: 16, fontWeight: '700', color: '#000' },
+  statsRow: {
+    flexDirection: 'row', alignItems: 'center',
+    backgroundColor: '#F9FAFB', borderRadius: 20, paddingVertical: 20, paddingHorizontal: 28,
+    borderWidth: 1, borderColor: '#F3F4F6', gap: 0,
   },
-  secondaryButtonText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginRight: 8,
+  statItem: { flex: 1, alignItems: 'center' },
+  statValue: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
+  statLabel: { fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 2 },
+  statDivider: { width: 1, height: 36, backgroundColor: '#E5E7EB' },
+
+  // MOCKUPS
+  mockupsSection: {
+    flexDirection: IS_WEB && W > 768 ? 'row' : 'column',
+    gap: 20, paddingHorizontal: IS_WEB ? 60 : 20, paddingVertical: 60,
+    justifyContent: 'center', alignItems: 'center',
   },
-  heroMockupContainer: {
-    marginTop: -40,
-    width: '100%',
-    maxWidth: 1000,
-    height: 400,
-    zIndex: 1,
-    alignItems: 'center',
+  mockupLeft: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 460 },
+  mockupRight: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 460 },
+
+  // MOCK CARD
+  mockCard: {
+    backgroundColor: '#FFF', borderRadius: 24, padding: 20,
+    borderWidth: 1, borderColor: '#F3F4F6',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4,
   },
-  heroMockupWrapper: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+  mockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  mockTitle: { fontSize: 16, fontWeight: '900', color: '#000' },
+  mockBadge: { backgroundColor: '#EFF6FF', borderRadius: 100, paddingVertical: 4, paddingHorizontal: 10 },
+  mockBadgeText: { fontSize: 12, fontWeight: '800', color: '#1D4ED8' },
+  mockRow: {
+    flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
+    borderTopWidth: 1, borderTopColor: '#F9FAFB',
   },
-  heroDashboardImage: {
-    width: '100%',
-    height: '100%',
-    opacity: 0.7,
+  mockAvatar: {
+    width: 40, height: 40, borderRadius: 14, backgroundColor: '#000',
+    alignItems: 'center', justifyContent: 'center',
   },
+  mockAvatarText: { color: '#FFF', fontWeight: '900', fontSize: 16 },
+  mockName: { fontSize: 14, fontWeight: '800', color: '#000' },
+  mockNiche: { fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 2 },
+  mockHireBtn: {
+    backgroundColor: '#000', borderRadius: 10, paddingVertical: 6, paddingHorizontal: 14,
+  },
+  mockHireTxt: { fontSize: 12, fontWeight: '800', color: '#FFF' },
+  mockStatusBadge: { borderRadius: 10, paddingVertical: 5, paddingHorizontal: 10 },
+  mockStatusText: { fontSize: 11, fontWeight: '800', color: '#374151' },
+  mockMetrics: { flexDirection: 'row', justifyContent: 'space-around', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
+  mockMetricItem: { alignItems: 'center' },
+  mockMetricVal: { fontSize: 18, fontWeight: '900', color: '#000' },
+  mockMetricLabel: { fontSize: 11, color: '#9CA3AF', fontWeight: '600', marginTop: 2 },
+
   // MARQUEE
-  marqueeContainer: {
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
-    paddingVertical: 20,
-    backgroundColor: '#0A0A0A',
-    overflow: 'hidden',
-    marginTop: 40,
+  marqueeWrap: {
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6',
+    paddingVertical: 16, overflow: 'hidden', backgroundColor: '#FAFAFA',
   },
-  marqueeContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  marqueeItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  marqueeText: {
-    color: '#4B5563',
-    fontSize: 14,
-    fontWeight: '800',
-    letterSpacing: 2,
-  },
-  marqueeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#374151',
-    marginHorizontal: 32,
-  },
+  marqueeRow: { flexDirection: 'row', alignItems: 'center' },
+  marqueeItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 24 },
+  marqueeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#D1D5DB', marginRight: 16 },
+  marqueeText: { fontSize: 12, fontWeight: '800', color: '#9CA3AF', letterSpacing: 1.5 },
+
   // FEATURES
-  featuresSection: {
-    paddingVertical: 80,
-    paddingHorizontal: 24,
-    alignItems: 'center',
+  section: {
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 60,
+    backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F3F4F6',
   },
-  featureBlock: {
-    flexDirection: Platform.OS === 'web' && SCREEN_WIDTH > 768 ? 'row' : 'column',
-    alignItems: 'center',
-    maxWidth: 1200,
-    width: '100%',
-    marginBottom: 80,
-    gap: 40,
+  sectionLabel: { fontSize: 12, fontWeight: '800', color: '#9CA3AF', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12 },
+  sectionHead: {
+    fontSize: IS_WEB ? 40 : 30, fontWeight: '900', color: '#000',
+    letterSpacing: -1, lineHeight: IS_WEB ? 48 : 36, marginBottom: 40,
   },
-  featureBlockReverse: {
-    flexDirection: Platform.OS === 'web' && SCREEN_WIDTH > 768 ? 'row-reverse' : 'column',
+  featureGrid: {
+    flexDirection: IS_WEB && W > 768 ? 'row' : 'column',
+    flexWrap: 'wrap', gap: 16,
   },
-  featureTextContainer: {
-    flex: 1,
+  featureCard: {
+    flex: IS_WEB && W > 768 ? 1 : undefined,
+    minWidth: IS_WEB && W > 768 ? 220 : undefined,
+    backgroundColor: '#FAFAFA', borderRadius: 20, padding: 24,
+    borderWidth: 1, borderColor: '#F3F4F6',
   },
-  featureIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(163, 230, 53, 0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
+  featureIcon: {
+    width: 44, height: 44, borderRadius: 14, backgroundColor: '#F3F4F6',
+    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
   },
-  featureTitle: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#FFF',
-    letterSpacing: -1,
-    marginBottom: 16,
+  featureTitle: { fontSize: 16, fontWeight: '800', color: '#000', marginBottom: 8 },
+  featureBody: { fontSize: 14, color: '#6B7280', lineHeight: 22, fontWeight: '500' },
+
+  // PROOF
+  proofSection: {
+    backgroundColor: '#F9FAFB', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6',
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 60, alignItems: 'center',
   },
-  featureSubtitle: {
-    fontSize: 16,
-    color: '#9CA3AF',
-    lineHeight: 24,
+  proofHead: {
+    fontSize: IS_WEB ? 28 : 22, fontWeight: '800', color: '#000',
+    textAlign: 'center', letterSpacing: -0.5, lineHeight: IS_WEB ? 36 : 30,
+    maxWidth: 600, marginBottom: 32,
   },
-  featureImageContainer: {
-    flex: 1,
-    width: '100%',
-    aspectRatio: 4/3,
+  proofAuthor: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  proofAvatar: {
+    width: 44, height: 44, borderRadius: 22, backgroundColor: '#000',
+    alignItems: 'center', justifyContent: 'center',
   },
-  glassCard: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    overflow: 'hidden',
-    padding: 8,
+  proofName: { fontSize: 15, fontWeight: '800', color: '#000' },
+  proofRole: { fontSize: 13, color: '#6B7280', fontWeight: '500', marginTop: 2 },
+  stars: { flexDirection: 'row', gap: 2, marginLeft: 8 },
+
+  // CTA SECTION
+  ctaSection: {
+    alignItems: 'center', paddingHorizontal: 24, paddingVertical: 80,
+    backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F3F4F6',
   },
-  featureImage: {
-    flex: 1,
-    borderRadius: 16,
-    opacity: 0.8,
+  ctaHead: {
+    fontSize: IS_WEB ? 56 : 40, fontWeight: '900', color: '#000',
+    letterSpacing: -1.5, marginBottom: 16, textAlign: 'center',
   },
+  ctaSub: {
+    fontSize: 17, color: '#6B7280', textAlign: 'center', marginBottom: 36,
+    fontWeight: '500', maxWidth: 420,
+  },
+  ctaBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#000', paddingVertical: 18, paddingHorizontal: 40, borderRadius: 100,
+  },
+  ctaBtnText: { fontSize: 17, fontWeight: '800', color: '#FFF' },
+
   // FOOTER
-  footerSection: {
-    minHeight: SCREEN_HEIGHT * 0.6,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    backgroundColor: '#050505',
-    borderTopWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.05)',
+  footer: {
+    backgroundColor: '#FAFAFA', borderTopWidth: 1, borderTopColor: '#F3F4F6',
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 40,
+    alignItems: IS_WEB ? undefined : 'center',
   },
-  footerHeadline: {
-    fontSize: Platform.OS === 'web' ? 80 : 48,
-    fontWeight: '900',
-    color: '#FFF',
-    letterSpacing: -2,
-    marginBottom: 40,
-    textAlign: 'center',
-  },
-  glowingButton: {
-    backgroundColor: '#A3E635',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 48,
-    borderRadius: 100,
-    shadowColor: '#A3E635',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 10,
-    marginBottom: 80,
-  },
-  glowingButtonText: {
-    color: '#000',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  footerLinks: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 24,
-    marginBottom: 32,
-  },
-  footerLink: {
-    color: '#9CA3AF',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  copyright: {
-    color: '#4B5563',
-    fontSize: 12,
-  },
+  footerLogo: { fontSize: 20, fontWeight: '900', color: '#000', marginBottom: 20 },
+  footerLinks: { flexDirection: 'row', flexWrap: 'wrap', gap: 20, marginBottom: 20 },
+  footerLink: { fontSize: 14, color: '#9CA3AF', fontWeight: '600' },
+  copyright: { fontSize: 13, color: '#D1D5DB', fontWeight: '500' },
 });
