@@ -19,19 +19,18 @@ const Orb = ({ style: os, color, size, delay = 0 }: any) => {
 };
 
 export const LoginScreen = ({ route, navigation }: any) => {
-  const initialRole = route.params?.role || 'influencer';
+  const fallbackRole = route.params?.role || 'influencer';
 
   const [email, setEmail]         = useState('');
   const [password, setPassword]   = useState('');
-  const [role, setRole]           = useState<'brand' | 'influencer'>(initialRole);
   const [loading, setLoading]     = useState(false);
   const [gLoading, setGLoading]   = useState(false);
   const [error, setError]         = useState<string | null>(null);
   const [focused, setFocused]     = useState<'email' | 'password' | null>(null);
 
-  const accentColor  = role === 'brand' ? '#7C3AED' : '#059669';
-  const orb1Color    = role === 'brand' ? 'rgba(124,58,237,0.18)' : 'rgba(5,150,105,0.18)';
-  const orb2Color    = role === 'brand' ? 'rgba(167,139,250,0.14)' : 'rgba(52,211,153,0.14)';
+  const accentColor  = '#09090B';
+  const orb1Color    = 'rgba(5,150,105,0.18)';
+  const orb2Color    = 'rgba(124,58,237,0.18)';
 
   const handleLogin = async () => {
     if (!email || !password) { setError('Please fill in all fields'); return; }
@@ -44,7 +43,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
   };
 
   const handleGoogle = async () => {
-    try { setGLoading(true); setError(null); await signInWithGoogle(role);
+    try { setGLoading(true); setError(null); await signInWithGoogle(fallbackRole);
     } catch (err: any) { if (!err.message?.includes('cancelled')) setError(err.message || 'Google sign-in failed');
     } finally { setGLoading(false); }
   };
@@ -54,7 +53,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
 
   return (
     <View style={st.root}>
-      {/* Global background orbs */}
+      {/* Global background orbs: Both Green and Purple */}
       <Orb os={{ top: '10%', left: '15%' }} color={orb1Color} size={460} delay={0} />
       <Orb os={{ bottom: '10%', right: '15%' }} color={orb2Color} size={380} delay={600} />
 
@@ -71,22 +70,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
             </TouchableOpacity>
 
             <Text style={st.formTitle}>Welcome Back</Text>
-            <Text style={st.formSub}>{role === 'brand' ? 'Sign in as partner brand.' : 'Sign in as verified creator.'}</Text>
-
-            {/* Role toggle */}
-            <View style={st.roleToggle}>
-              {(['influencer', 'brand'] as const).map(r => {
-                const active = role === r;
-                const rc = r === 'brand' ? '#7C3AED' : '#059669';
-                return (
-                  <TouchableOpacity key={r} onPress={() => setRole(r)}
-                    style={[st.roleBtn, active && { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOffset: {width:0,height:2}, shadowOpacity:0.08, shadowRadius:8 }]}>
-                    {r === 'influencer' ? <User size={13} color={active ? rc : '#9CA3AF'} /> : <Briefcase size={13} color={active ? rc : '#9CA3AF'} />}
-                    <Text style={[st.roleBtnText, active && { color: rc, fontWeight: '800' }]}>{r === 'influencer' ? 'Creator' : 'Brand'}</Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+            <Text style={st.formSub}>Sign in to your Modus account.</Text>
 
             {/* Google */}
             <TouchableOpacity onPress={handleGoogle} disabled={gLoading} style={st.googleBtn}>
@@ -101,7 +85,7 @@ export const LoginScreen = ({ route, navigation }: any) => {
 
             {/* Email */}
             <Text style={st.label}>EMAIL ADDRESS</Text>
-            <View style={[st.inputWrap, { borderColor: focusBorder, backgroundColor: focusBg }]}>
+            <View style={[st.inputWrap, { borderColor: focused === 'email' ? accentColor : '#E5E7EB', backgroundColor: focused === 'email' ? '#FFF' : '#F9FAFB' }]}>
               <Mail size={16} color={focused === 'email' ? accentColor : '#9CA3AF'} />
               <TextInput style={st.input} placeholder="you@example.com" value={email} onChangeText={setEmail}
                 autoCapitalize="none" keyboardType="email-address" placeholderTextColor="#9CA3AF"
@@ -124,8 +108,8 @@ export const LoginScreen = ({ route, navigation }: any) => {
               {loading ? <ActivityIndicator color="#FFF" /> : <Text style={st.submitText}>Sign In</Text>}
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={() => navigation.navigate('SignUp', { role })} style={{ marginTop: 20, alignItems: 'center' }}>
-              <Text style={st.loginText}>Don't have an account? <Text style={[st.loginHighlight, { color: accentColor }]}>Apply to join Modus</Text></Text>
+            <TouchableOpacity onPress={() => navigation.navigate('SignUp', { role: fallbackRole })} style={{ marginTop: 20, alignItems: 'center' }}>
+              <Text style={st.loginText}>Don't have an account? <Text style={st.loginHighlight}>Apply to join Modus</Text></Text>
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -144,9 +128,6 @@ const st = StyleSheet.create({
   backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(0,0,0,0.05)', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
   formTitle: { fontSize: 28, fontWeight: '900', color: '#09090B', letterSpacing: -0.75, marginBottom: 6 },
   formSub: { fontSize: 15, color: '#71717A', fontWeight: '400', marginBottom: 24 },
-  roleToggle: { flexDirection: 'row', backgroundColor: '#F3F4F6', borderRadius: 14, padding: 3, marginBottom: 24 },
-  roleBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 11 },
-  roleBtnText: { fontSize: 13, fontWeight: '600', color: '#9CA3AF' },
   googleBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 50, borderRadius: 14, borderWidth: 1, borderColor: '#E5E7EB', backgroundColor: '#FFFFFF', marginBottom: 16 },
   googleIcon: { fontSize: 17, fontWeight: '800', marginRight: 8, color: '#000' },
   googleText: { fontSize: 14, fontWeight: '600', color: '#374151' },
@@ -161,5 +142,5 @@ const st = StyleSheet.create({
   submitBtn: { height: 52, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginTop: 22, shadowOffset: {width:0,height:8}, shadowOpacity: 0.3, shadowRadius: 20 },
   submitText: { color: '#FFF', fontSize: 15, fontWeight: '800' },
   loginText: { color: '#71717A', fontSize: 14, fontWeight: '400' },
-  loginHighlight: { fontWeight: '700' },
+  loginHighlight: { fontWeight: '700', color: '#09090B' },
 });
