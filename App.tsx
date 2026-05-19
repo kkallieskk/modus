@@ -76,7 +76,6 @@ const linking = {
           Welcome: 'welcome',
           Login: 'login',
           SignUp: 'signup',
-          AuthCallback: 'auth/callback',
         },
       },
       RoleSelection: 'role-selection',

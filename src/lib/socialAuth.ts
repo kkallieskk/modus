@@ -11,7 +11,6 @@ export async function signInWithGoogle(role?: 'brand' | 'influencer') {
 
   const redirectTo = AuthSession.makeRedirectUri({
     scheme: 'modus',
-    path: 'auth/callback',
   });
 
   console.log('Google Auth Redirect URI:', redirectTo);

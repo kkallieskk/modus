@@ -4,7 +4,6 @@ import { LandingScreen } from '@/screens/auth/LandingScreen';
 import { WelcomeScreen } from '@/screens/auth/WelcomeScreen';
 import { LoginScreen } from '@/screens/auth/LoginScreen';
 import { SignUpScreen } from '@/screens/auth/SignUpScreen';
-import { AuthCallbackScreen } from '@/screens/auth/AuthCallbackScreen';
 import { BrandOnboardingScreen } from '@/screens/brand/BrandOnboardingScreen';
 
 const Stack = createNativeStackNavigator();
@@ -16,7 +15,6 @@ export const AuthStack = () => {
       <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
-      <Stack.Screen name="AuthCallback" component={AuthCallbackScreen} />
       <Stack.Screen name="BrandSetup" component={BrandOnboardingScreen} />
     </Stack.Navigator>
   );
