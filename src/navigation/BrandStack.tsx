@@ -108,10 +108,10 @@ const CustomTabBar = ({ state, descriptors, navigation }: any) => {
     return (
       <View style={styles.webSidebar}>
         <View>
-          <View style={styles.webSidebarHeader}>
+          <TouchableOpacity style={styles.webSidebarHeader} onPress={() => navigation.navigate('RosterTab')}>
             <Text style={styles.webSidebarLogo}>MODUS</Text>
             <Text style={styles.webSidebarRole}>Brand Portal</Text>
-          </View>
+          </TouchableOpacity>
 
           <View style={styles.webSidebarMenu}>
             {state.routes.map((route: any, index: number) => {

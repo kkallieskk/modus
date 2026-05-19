@@ -190,9 +190,9 @@ export const RoleSelectionScreen = () => {
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.leftContent}>
-            <View style={styles.brandingHeader}>
+            <TouchableOpacity style={styles.brandingHeader} onPress={() => navigation.navigate('Auth', { screen: 'Landing' })}>
               <Text style={styles.brandingLogo}>Modus.</Text>
-            </View>
+            </TouchableOpacity>
             
             <View style={styles.visualContainer}>
               <Text style={styles.leftTitle}>

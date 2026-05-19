@@ -78,9 +78,9 @@ export const WelcomeScreen = () => {
       <Orb os={{ top: '10%', left: '15%' }} color={orb1Color} size={460} delay={0} />
       <Orb os={{ bottom: '10%', right: '15%' }} color={orb2Color} size={380} delay={600} />
 
-      <View style={st.navBar}>
+      <TouchableOpacity style={st.navBar} onPress={() => navigation.navigate('Landing')}>
         <Text style={st.logo}>Modus.</Text>
-      </View>
+      </TouchableOpacity>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={st.container}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>

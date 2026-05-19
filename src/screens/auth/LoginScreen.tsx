@@ -58,9 +58,9 @@ export const LoginScreen = ({ route, navigation }: any) => {
       <Orb os={{ bottom: '10%', right: '15%' }} color={orb2Color} size={380} delay={600} />
 
       {/* Top Left Logo */}
-      <View style={st.navBar}>
+      <TouchableOpacity style={st.navBar} onPress={() => navigation.navigate('Landing')}>
         <Text style={st.logo}>Modus.</Text>
-      </View>
+      </TouchableOpacity>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={st.container}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>
