@@ -287,6 +287,42 @@ Return ONLY a valid JSON object matching this exact schema, with no markdown for
           console.log("[InstagramOAuth] ⚠️ Skipping Groq AI analysis (Missing GROQ_API_KEY or insufficient captions).");
         }
 
+        // STEP 5.5: Fetch Verified Audience Demographics (Age, Gender, Location)
+        console.log("[InstagramOAuth] Step 5.5: Fetching Audience Insights...");
+        let audienceDemographics: any = null;
+        
+        try {
+          // Insights API requires instagram_business_manage_insights permission
+          // The creator must have at least 100 followers for this data to be returned by Meta.
+          const insightsUrl = `https://graph.instagram.com/v21.0/me/insights?metric=audience_city,audience_country,audience_gender_age&period=lifetime&access_token=${accessToken}`;
+          const insightsRes = await fetch(insightsUrl);
+          const insightsData = await insightsRes.json();
+          
+          if (!insightsData.error && insightsData.data) {
+            audienceDemographics = {};
+            insightsData.data.forEach((metric: any) => {
+              audienceDemographics[metric.name] = metric.values[0].value;
+            });
+            console.log(`[InstagramOAuth] ✅ Insights API success. Fetched demographics.`);
+          } else {
+            console.warn(`[InstagramOAuth] Insights API blocked or no data (e.g., <100 followers): ${JSON.stringify(insightsData.error || 'No data array')}`);
+          }
+        } catch (insightsErr: any) {
+          console.warn(`[InstagramOAuth] Insights API exception: ${insightsErr.message}`);
+        }
+
+        const verifiedInstagramStats = {
+          handle: username,
+          displayName: displayName,
+          followersCount: followerCount,
+          engagementRate: calculatedEngagementRate,
+          profilePictureUrl: profilePictureUrl,
+          niche: niche,
+          contentStyle: contentStyle,
+          recentPostThemes: recentPostThemes,
+          audienceDemographics: audienceDemographics, // Will be null if < 100 followers
+        };
+
         // STEP 6: Save the verified account to Supabase profiles table
         if (creatorId) {
           // Sync profiles.social_link JSON blob
@@ -316,6 +352,7 @@ Return ONLY a valid JSON object matching this exact schema, with no markdown for
             niche,
             contentStyle,
             recentPostThemes,
+            audienceDemographics,
             linkedAt: new Date().toISOString(),
           };
 
