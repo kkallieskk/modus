@@ -179,6 +179,9 @@ export const SignUpScreen = ({ route, navigation }: any) => {
     outputRange: [0, -12]
   });
 
+  const glowColor1 = role === 'brand' ? 'rgba(139, 92, 246, 0.09)' : 'rgba(16, 185, 129, 0.09)';
+  const glowColor2 = role === 'brand' ? 'rgba(139, 92, 246, 0.06)' : 'rgba(16, 185, 129, 0.08)';
+
   return (
     <View style={styles.container}>
       {isLargeScreen && (
@@ -188,8 +191,8 @@ export const SignUpScreen = ({ route, navigation }: any) => {
             style={StyleSheet.absoluteFillObject}
           />
           <View style={styles.leftBgGlowWrap}>
-            <View style={styles.leftBgGlow1} />
-            <View style={styles.leftBgGlow2} />
+            <View style={[styles.leftBgGlow1, { backgroundColor: glowColor1 }]} />
+            <View style={[styles.leftBgGlow2, { backgroundColor: glowColor2 }]} />
           </View>
           <View style={styles.leftContent}>
             <View style={styles.brandingHeader}>
