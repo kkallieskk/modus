@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   TextInput,
   Animated,
+  useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '@/lib/supabase';
@@ -63,6 +64,9 @@ export const CreatorOnboardingScreen = () => {
   const { refreshProfile } = useProfile();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
+
+  const { width: windowWidth } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && windowWidth > 640;
 
   // Connected Social profiles state
   const [connectedProfiles, setConnectedProfiles] = useState<Record<string, LinkedProfile>>({});
@@ -988,76 +992,106 @@ export const CreatorOnboardingScreen = () => {
   };
 
   return (
-    <View style={styles.container}>
-      {/* Progress Bar */}
-      <View style={styles.progressContainer}>
-        <View style={styles.progressBarBg}>
-          <View 
-            style={[
-              styles.progressBarFill, 
-              { width: `${(step / totalSteps) * 100}%` }
-            ]} 
-          />
+    <View style={[styles.container, isDesktop && styles.containerDesktop]}>
+      {/* Branded Watermark (Only visible on Desktop to elevate UI aesthetic) */}
+      {isDesktop && (
+        <View style={styles.watermarkContainer}>
+          <Text style={styles.watermarkText}>Modus.</Text>
         </View>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-          <Text style={styles.progressText}>Step {step} of {totalSteps}</Text>
-          <TouchableOpacity 
-            onPress={async () => {
-              await supabase.auth.signOut();
-            }}
-          >
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#9CA3AF' }}>Sign Out</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
+      )}
 
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        {step === 1 && renderStep1()}
-        {step === 2 && renderStep2()}
-        {step === 3 && renderStep3()}
-      </ScrollView>
-
-      {/* Footer Navigation */}
-      <View style={styles.navigation}>
-        {step > 1 ? (
-          <TouchableOpacity 
-            onPress={() => setStep(step - 1)}
-            style={styles.backButton}
-          >
-            <Text style={styles.backText}>Back</Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity 
-            onPress={handleBackToRoleSelection}
-            disabled={loading}
-            style={styles.backButton}
-          >
-            {loading ? <ActivityIndicator size="small" color="#6B7280" /> : <Text style={styles.backText}>Change Role</Text>}
-          </TouchableOpacity>
-        )}
-        
+      {/* Top Sign Out Button (positioned fixed in the viewport background) */}
+      {isDesktop && (
         <TouchableOpacity 
-          onPress={() => {
-            if (step < totalSteps) {
-              setStep(step + 1);
-            } else {
-              handleFinish();
-            }
+          onPress={async () => {
+            await supabase.auth.signOut();
           }}
-          disabled={isFinishing}
-          style={[styles.nextButton, step === 1 && { marginLeft: 'auto' }]}
+          style={styles.signOutBtn}
         >
-          {isFinishing ? (
-            <ActivityIndicator color="#FFF" />
-          ) : (
-            <>
-              <Text style={styles.nextText}>
-                {step === totalSteps ? 'Launch My Profile' : 'Next Step'}
-              </Text>
-              <ArrowRight size={20} color="#FFF" style={{ marginLeft: 8 }} />
-            </>
-          )}
+          <Text style={styles.signOutBtnText}>Sign Out</Text>
         </TouchableOpacity>
+      )}
+
+      {/* Onboarding Glassmorphic Modal Box */}
+      <View style={isDesktop ? styles.centerCardWrapperDesktop : styles.centerCardWrapper}>
+        <View style={isDesktop ? styles.cardDesktop : styles.card}>
+          {/* Progress Bar */}
+          <View style={[styles.progressContainer, isDesktop && styles.progressContainerDesktop]}>
+            <View style={styles.progressBarBg}>
+              <View 
+                style={[
+                  styles.progressBarFill, 
+                  { width: `${(step / totalSteps) * 100}%` }
+                ]} 
+              />
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+              <Text style={styles.progressText}>Step {step} of {totalSteps}</Text>
+              {!isDesktop && (
+                <TouchableOpacity 
+                  onPress={async () => {
+                    await supabase.auth.signOut();
+                  }}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#9CA3AF' }}>Sign Out</Text>
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          <ScrollView 
+            contentContainerStyle={[{ flexGrow: 1 }, isDesktop && styles.scrollContentDesktop]}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+          >
+            {step === 1 && renderStep1()}
+            {step === 2 && renderStep2()}
+            {step === 3 && renderStep3()}
+          </ScrollView>
+
+          {/* Footer Navigation */}
+          <View style={[styles.navigation, isDesktop && styles.navigationDesktop]}>
+            {step > 1 ? (
+              <TouchableOpacity 
+                onPress={() => setStep(step - 1)}
+                style={styles.backButton}
+              >
+                <Text style={styles.backText}>Back</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                onPress={handleBackToRoleSelection}
+                disabled={loading}
+                style={styles.backButton}
+              >
+                {loading ? <ActivityIndicator size="small" color="#6B7280" /> : <Text style={styles.backText}>Change Role</Text>}
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity 
+              onPress={() => {
+                if (step < totalSteps) {
+                  setStep(step + 1);
+                } else {
+                  handleFinish();
+                }
+              }}
+              disabled={isFinishing}
+              style={[styles.nextButton, step === 1 && { marginLeft: 'auto' }]}
+            >
+              {isFinishing ? (
+                <ActivityIndicator color="#FFF" />
+              ) : (
+                <>
+                  <Text style={styles.nextText}>
+                    {step === totalSteps ? 'Launch My Profile' : 'Next Step'}
+                  </Text>
+                  <ArrowRight size={20} color="#FFF" style={{ marginLeft: 8 }} />
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
       </View>
 
       {/* Linking Modal Overlay */}
@@ -1073,9 +1107,96 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
   },
+  containerDesktop: {
+    backgroundColor: '#F8FAFC',
+    paddingTop: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  watermarkContainer: {
+    position: 'absolute',
+    top: 40,
+    left: 40,
+    zIndex: 5,
+  },
+  watermarkText: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -1,
+  },
+  signOutBtn: {
+    position: 'absolute',
+    top: 40,
+    right: 40,
+    zIndex: 10,
+    backgroundColor: '#FFFFFF',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#ECEEF1',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  signOutBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
+  },
+  centerCardWrapper: {
+    flex: 1,
+    width: '100%',
+  },
+  centerCardWrapperDesktop: {
+    width: '100%',
+    maxWidth: 550,
+    alignSelf: 'center',
+    marginVertical: 40,
+    paddingHorizontal: 16,
+    zIndex: 5,
+  },
+  card: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
+  cardDesktop: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#ECEEF1',
+    overflow: 'hidden',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.05,
+    shadowRadius: 30,
+    elevation: 8,
+    maxHeight: 700,
+    width: '100%',
+  },
   progressContainer: {
     paddingHorizontal: 24,
     marginBottom: 32,
+  },
+  progressContainerDesktop: {
+    paddingTop: 36,
+    paddingHorizontal: 32,
+    marginBottom: 20,
+  },
+  scrollContentDesktop: {
+    paddingHorizontal: 32,
+    paddingTop: 8,
+    paddingBottom: 24,
+  },
+  navigationDesktop: {
+    paddingHorizontal: 32,
+    paddingBottom: 28,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
   },
   progressBarBg: {
     height: 6,
