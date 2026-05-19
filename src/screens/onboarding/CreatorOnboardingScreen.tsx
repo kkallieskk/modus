@@ -78,7 +78,7 @@ const Orb = ({ style: os, color, size, delay = 0 }: any) => {
 
 export const CreatorOnboardingScreen = () => {
   const navigation = useNavigation<any>();
-  const { refreshProfile } = useProfile();
+  const { profile, refreshProfile } = useProfile();
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
