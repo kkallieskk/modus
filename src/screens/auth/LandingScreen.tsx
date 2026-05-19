@@ -69,11 +69,29 @@ const HeroIllustrations = () => {
 };
 
 // ─── Feature block ────────────────────────────────────────────────────────────
-const Feature = ({ icon: Icon, title, body }: any) => (
-  <View style={s.featureCard}>
-    <View style={s.featureIcon}><Icon size={22} color="#000" /></View>
+const Feature = ({ icon: Icon, stat, title, accentColor }: any) => (
+  <View style={[s.featureCard, { borderColor: accentColor + '30' }]}>
+    <View style={[s.featureIcon, { backgroundColor: accentColor + '10' }]}>
+      <Icon size={20} color={accentColor} />
+    </View>
+    <Text style={[s.featureStat, { color: accentColor }]}>{stat}</Text>
     <Text style={s.featureTitle}>{title}</Text>
-    <Text style={s.featureBody}>{body}</Text>
+  </View>
+);
+
+// ─── Testimonial block ────────────────────────────────────────────────────────
+const TestimonialCard = ({ quote, author, role, accentColor, initials }: any) => (
+  <View style={[s.testimonialCard, { borderColor: accentColor + '20' }]}>
+    <Text style={s.quoteText}>“{quote}”</Text>
+    <View style={s.quoteAuthorWrap}>
+      <View style={[s.avatar, { backgroundColor: accentColor }]}>
+        <Text style={s.avatarInitials}>{initials}</Text>
+      </View>
+      <View>
+        <Text style={s.authorName}>{author}</Text>
+        <Text style={s.authorRole}>{role}</Text>
+      </View>
+    </View>
   </View>
 );
 
@@ -192,58 +210,67 @@ export const LandingScreen = () => {
 
       {/* ── FEATURES ── */}
       <View style={s.section}>
-        <Text style={s.sectionLabel}>Why Modus</Text>
-        <Text style={s.sectionHead}>Everything a marketplace{'\n'}should be.</Text>
+        <Text style={s.sectionLabel}>The Modus Standard</Text>
+        <Text style={s.sectionHead}>Marketplace integrity,{'\n'}by the numbers.</Text>
         <View style={s.featureGrid}>
           <Feature
             icon={ShieldCheck}
-            title="Hire on real data"
-            body="Our AI auditing engine pulls live Instagram follower counts and engagement directly from the official API. Zero faking."
+            stat="99.2%"
+            title="Audited Follower Authenticity"
+            accentColor="#4F46E5"
           />
           <Feature
             icon={Banknote}
-            title="Escrowed payments"
-            body="Funds are locked before work starts. Creators get paid the moment deliverables are approved. No chasing invoices."
+            stat="0"
+            title="Payment Chasing or Invoice Delays"
+            accentColor="#10B981"
           />
           <Feature
             icon={TrendingUp}
-            title="1-click campaigns"
-            body="Publish a brief, review pitches, hire, and track — all in one clean workspace designed for speed."
-          />
-          <Feature
-            icon={Users}
-            title="Curated talent"
-            body="Every creator is manually reviewed and must connect their social account for verified audience demographics."
+            stat="10s"
+            title="To Publish Brief & Match Creators"
+            accentColor="#8B5CF6"
           />
         </View>
       </View>
 
       {/* ── SOCIAL PROOF ── */}
       <View style={s.proofSection}>
-        <Text style={s.proofHead}>"The only platform where the data actually matches reality."</Text>
-        <View style={s.proofAuthor}>
-          <View style={s.proofAvatar}><Text style={{ color: '#FFF', fontWeight: '800' }}>R</Text></View>
-          <View>
-            <Text style={s.proofName}>Riya S.</Text>
-            <Text style={s.proofRole}>Head of Influencer, Glow Recipe IN</Text>
-          </View>
-          <View style={s.stars}>
-            {[1,2,3,4,5].map(i => <Star key={i} size={14} color="#F59E0B" fill="#F59E0B" />)}
-          </View>
+        <Text style={s.proofLabel}>What they're saying</Text>
+        <Text style={s.proofHead}>Built for both sides of the table.</Text>
+        <View style={s.testimonialGrid}>
+          <TestimonialCard
+            quote="Audited audience data changed how we recruit talent. No more wasted budget."
+            author="Riya S."
+            role="Head of Influencer, Glow Recipe"
+            accentColor="#4F46E5"
+            initials="R"
+          />
+          <TestimonialCard
+            quote="Escrow payments mean I never worry about getting paid. I focus entirely on my content."
+            author="Alex M."
+            role="Tech & Lifestyle Creator (180k+)"
+            accentColor="#10B981"
+            initials="A"
+          />
         </View>
       </View>
 
       {/* ── CTA FOOTER ── */}
       <View style={s.ctaSection}>
-        <Text style={s.ctaHead}>Ready to grow?</Text>
-        <Text style={s.ctaSub}>Join brands and creators already building on Modus.</Text>
-        <Pressable
-          style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.85 }]}
-          onPress={() => nav.navigate('Welcome')}
-        >
-          <Text style={s.ctaBtnText}>Start for free</Text>
-          <ArrowRight size={20} color="#FFF" />
-        </Pressable>
+        <View style={s.ctaCard}>
+          {/* Subtle colored glow inside dark card */}
+          <View style={s.ctaCardGlow} />
+          <Text style={s.ctaHead}>Ready to grow?</Text>
+          <Text style={s.ctaSub}>Join elite brands and verified creators building the future of commerce.</Text>
+          <Pressable
+            style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.85 }]}
+            onPress={() => nav.navigate('Welcome')}
+          >
+            <Text style={s.ctaBtnText}>Start for free</Text>
+            <ArrowRight size={20} color="#000" />
+          </Pressable>
+        </View>
       </View>
 
       {/* ── FOOTER LINKS ── */}
@@ -371,54 +398,74 @@ const s = StyleSheet.create({
   },
   featureCard: {
     flex: IS_WEB && W > 768 ? 1 : undefined,
-    minWidth: IS_WEB && W > 768 ? 220 : undefined,
-    backgroundColor: '#FAFAFA', borderRadius: 20, padding: 24,
-    borderWidth: 1, borderColor: '#F3F4F6',
+    minWidth: IS_WEB && W > 768 ? 260 : undefined,
+    backgroundColor: '#FAFAFA', borderRadius: 24, padding: 32,
+    borderWidth: 1.5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 10,
   },
   featureIcon: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: '#F3F4F6',
-    alignItems: 'center', justifyContent: 'center', marginBottom: 16,
+    width: 44, height: 44, borderRadius: 14,
+    alignItems: 'center', justifyContent: 'center', marginBottom: 24,
   },
-  featureTitle: { fontSize: 16, fontWeight: '800', color: '#000', marginBottom: 8 },
-  featureBody: { fontSize: 14, color: '#6B7280', lineHeight: 22, fontWeight: '500' },
+  featureStat: { fontSize: 44, fontWeight: '900', letterSpacing: -1.5, marginBottom: 8 },
+  featureTitle: { fontSize: 16, fontWeight: '700', color: '#111827', lineHeight: 22 },
 
   // PROOF
   proofSection: {
-    backgroundColor: '#F9FAFB', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6',
-    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 60, alignItems: 'center',
+    backgroundColor: '#FAFAFA', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6',
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 80, alignItems: 'center',
   },
+  proofLabel: { fontSize: 12, fontWeight: '800', color: '#9CA3AF', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12 },
   proofHead: {
-    fontSize: IS_WEB ? 28 : 22, fontWeight: '800', color: '#000',
-    textAlign: 'center', letterSpacing: -0.5, lineHeight: IS_WEB ? 36 : 30,
-    maxWidth: 600, marginBottom: 32,
+    fontSize: IS_WEB ? 36 : 28, fontWeight: '900', color: '#000',
+    textAlign: 'center', letterSpacing: -1, lineHeight: IS_WEB ? 44 : 34,
+    maxWidth: 600, marginBottom: 48,
   },
-  proofAuthor: { flexDirection: 'row', alignItems: 'center', gap: 14 },
-  proofAvatar: {
-    width: 44, height: 44, borderRadius: 22, backgroundColor: '#000',
-    alignItems: 'center', justifyContent: 'center',
+  testimonialGrid: {
+    flexDirection: IS_WEB && W > 768 ? 'row' : 'column',
+    width: '100%', maxWidth: 1100, gap: 24,
   },
-  proofName: { fontSize: 15, fontWeight: '800', color: '#000' },
-  proofRole: { fontSize: 13, color: '#6B7280', fontWeight: '500', marginTop: 2 },
-  stars: { flexDirection: 'row', gap: 2, marginLeft: 8 },
+  testimonialCard: {
+    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 32,
+    borderWidth: 1.5,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.03, shadowRadius: 20,
+  },
+  quoteText: { fontSize: 17, color: '#374151', lineHeight: 28, fontWeight: '500', marginBottom: 24, fontStyle: 'italic' },
+  quoteAuthorWrap: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  avatarInitials: { color: '#FFF', fontWeight: '800', fontSize: 14 },
+  authorName: { fontSize: 15, fontWeight: '800', color: '#111827' },
+  authorRole: { fontSize: 13, color: '#6B7280', fontWeight: '500', marginTop: 2 },
 
   // CTA SECTION
   ctaSection: {
-    alignItems: 'center', paddingHorizontal: 24, paddingVertical: 80,
-    backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F3F4F6',
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 80,
+    backgroundColor: '#FFF', alignItems: 'center',
+  },
+  ctaCard: {
+    width: '100%', maxWidth: 1100, backgroundColor: '#09090B', borderRadius: 32,
+    paddingVertical: 80, paddingHorizontal: 24, alignItems: 'center', position: 'relative', overflow: 'hidden',
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)'
+  },
+  ctaCardGlow: {
+    position: 'absolute', top: -150, width: 400, height: 400,
+    backgroundColor: 'rgba(168, 85, 247, 0.15)', borderRadius: 200,
+    filter: 'blur(80px)' as any, pointerEvents: 'none'
   },
   ctaHead: {
-    fontSize: IS_WEB ? 56 : 40, fontWeight: '900', color: '#000',
-    letterSpacing: -1.5, marginBottom: 16, textAlign: 'center',
+    fontSize: IS_WEB ? 56 : 38, fontWeight: '900', color: '#FFF',
+    letterSpacing: -1.5, marginBottom: 16, textAlign: 'center', zIndex: 2
   },
   ctaSub: {
-    fontSize: 17, color: '#6B7280', textAlign: 'center', marginBottom: 36,
-    fontWeight: '500', maxWidth: 420,
+    fontSize: 18, color: '#9CA3AF', textAlign: 'center', marginBottom: 40,
+    fontWeight: '500', maxWidth: 480, lineHeight: 28, zIndex: 2
   },
   ctaBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 10,
-    backgroundColor: '#000', paddingVertical: 18, paddingHorizontal: 40, borderRadius: 100,
+    flexDirection: 'row', alignItems: 'center', gap: 10, zIndex: 2,
+    backgroundColor: '#FFF', paddingVertical: 18, paddingHorizontal: 40, borderRadius: 100,
+    shadowColor: '#FFF', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 10,
   },
-  ctaBtnText: { fontSize: 17, fontWeight: '800', color: '#FFF' },
+  ctaBtnText: { fontSize: 17, fontWeight: '800', color: '#000' },
 
   // FOOTER
   footer: {
