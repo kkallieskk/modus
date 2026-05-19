@@ -374,8 +374,8 @@ const s = StyleSheet.create({
 
   // MARQUEE
   marqueeWrap: {
-    borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6',
-    paddingVertical: 16, overflow: 'hidden', backgroundColor: '#FAFAFA',
+    borderTopWidth: 1, borderBottomWidth: 1, borderColor: 'rgba(0,0,0,0.03)',
+    paddingVertical: 16, overflow: 'hidden', backgroundColor: 'transparent',
   },
   marqueeRow: { flexDirection: 'row', alignItems: 'center' },
   marqueeItem: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 24 },
@@ -384,8 +384,8 @@ const s = StyleSheet.create({
 
   // FEATURES
   section: {
-    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 60,
-    backgroundColor: '#FFF', borderTopWidth: 1, borderTopColor: '#F3F4F6',
+    paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 80,
+    backgroundColor: 'transparent',
   },
   sectionLabel: { fontSize: 12, fontWeight: '800', color: '#9CA3AF', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12 },
   sectionHead: {
@@ -399,9 +399,10 @@ const s = StyleSheet.create({
   featureCard: {
     flex: IS_WEB && W > 768 ? 1 : undefined,
     minWidth: IS_WEB && W > 768 ? 260 : undefined,
-    backgroundColor: '#FAFAFA', borderRadius: 24, padding: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 24, padding: 32,
     borderWidth: 1.5,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.02, shadowRadius: 10,
+    ...(IS_WEB ? { backdropFilter: 'blur(16px)' } : {}),
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.01, shadowRadius: 10,
   },
   featureIcon: {
     width: 44, height: 44, borderRadius: 14,
@@ -412,7 +413,7 @@ const s = StyleSheet.create({
 
   // PROOF
   proofSection: {
-    backgroundColor: '#FAFAFA', borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F3F4F6',
+    backgroundColor: 'transparent',
     paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 80, alignItems: 'center',
   },
   proofLabel: { fontSize: 12, fontWeight: '800', color: '#9CA3AF', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 12 },
@@ -426,9 +427,10 @@ const s = StyleSheet.create({
     width: '100%', maxWidth: 1100, gap: 24,
   },
   testimonialCard: {
-    flex: 1, backgroundColor: '#FFFFFF', borderRadius: 24, padding: 32,
+    flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 24, padding: 32,
     borderWidth: 1.5,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.03, shadowRadius: 20,
+    ...(IS_WEB ? { backdropFilter: 'blur(16px)' } : {}),
+    shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.02, shadowRadius: 20,
   },
   quoteText: { fontSize: 17, color: '#374151', lineHeight: 28, fontWeight: '500', marginBottom: 24, fontStyle: 'italic' },
   quoteAuthorWrap: { flexDirection: 'row', alignItems: 'center', gap: 14 },
@@ -440,7 +442,7 @@ const s = StyleSheet.create({
   // CTA SECTION
   ctaSection: {
     paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 80,
-    backgroundColor: '#FFF', alignItems: 'center',
+    backgroundColor: 'transparent', alignItems: 'center',
   },
   ctaCard: {
     width: '100%', maxWidth: 1100, backgroundColor: '#09090B', borderRadius: 32,
@@ -469,7 +471,7 @@ const s = StyleSheet.create({
 
   // FOOTER
   footer: {
-    backgroundColor: '#FAFAFA', borderTopWidth: 1, borderTopColor: '#F3F4F6',
+    backgroundColor: 'transparent',
     paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 40,
     alignItems: IS_WEB ? undefined : 'center',
   },
