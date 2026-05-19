@@ -316,14 +316,14 @@ export const LandingScreen = () => {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const s = StyleSheet.create({
-  page: { flex: 1, backgroundColor: '#FAFAFA' },
+  page: { flex: 1, backgroundColor: '#FFFFFF' },
   pageContent: { paddingBottom: 40 },
 
   // NAV
   nav: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: IS_WEB ? 60 : 24, paddingVertical: 20,
-    backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
+    backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: 'transparent',
   },
   logo: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
   navRight: { flexDirection: 'row', alignItems: 'center', gap: 12 },
@@ -336,61 +336,60 @@ const s = StyleSheet.create({
   hero: {
     alignItems: 'center', paddingHorizontal: 24,
     paddingTop: IS_WEB ? 80 : 60, paddingBottom: 40,
-    backgroundColor: '#FFF',
+    backgroundColor: '#FFFFFF',
   },
   heroPill: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#F3F4F6', borderRadius: 100, paddingVertical: 6, paddingHorizontal: 14,
+    backgroundColor: 'transparent', borderRadius: 100, paddingVertical: 6, paddingHorizontal: 14,
+    borderWidth: 1, borderColor: '#E5E7EB',
     marginBottom: 24,
   },
-  heroPillText: { fontSize: 13, fontWeight: '700', color: '#000' },
+  heroPillText: { fontSize: 13, fontWeight: '600', color: '#374151' },
   heroHead: {
-    fontSize: IS_WEB ? 60 : 40, fontWeight: '900', color: '#000',
-    textAlign: 'center', letterSpacing: -1.5, lineHeight: IS_WEB ? 68 : 46, marginBottom: 20,
+    fontSize: IS_WEB ? 64 : 40, fontWeight: '900', color: '#000',
+    textAlign: 'center', letterSpacing: -2, lineHeight: IS_WEB ? 72 : 46, marginBottom: 20,
   },
   heroSub: {
-    fontSize: 17, color: '#6B7280', textAlign: 'center', lineHeight: 26,
-    maxWidth: 520, fontWeight: '500', marginBottom: 36,
+    fontSize: 18, color: '#6B7280', textAlign: 'center', lineHeight: 28,
+    maxWidth: 560, fontWeight: '400', marginBottom: 40,
   },
-  heroBtns: { flexDirection: 'row', gap: 12, marginBottom: 48, flexWrap: 'wrap', justifyContent: 'center' },
+  heroBtns: { flexDirection: 'row', gap: 12, marginBottom: 60, flexWrap: 'wrap', justifyContent: 'center' },
   btnPrimary: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#000', paddingVertical: 16, paddingHorizontal: 28, borderRadius: 100,
+    backgroundColor: '#000', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 100,
   },
-  btnPrimaryText: { fontSize: 16, fontWeight: '800', color: '#FFF' },
+  btnPrimaryText: { fontSize: 16, fontWeight: '700', color: '#FFF' },
   btnSecondary: {
-    borderWidth: 1.5, borderColor: '#E5E7EB', paddingVertical: 16, paddingHorizontal: 28, borderRadius: 100,
+    borderWidth: 1, borderColor: '#E5E7EB', paddingVertical: 16, paddingHorizontal: 32, borderRadius: 100,
   },
-  btnSecondaryText: { fontSize: 16, fontWeight: '700', color: '#000' },
+  btnSecondaryText: { fontSize: 16, fontWeight: '600', color: '#000' },
   statsRow: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#F9FAFB', borderRadius: 20, paddingVertical: 20, paddingHorizontal: 28,
-    borderWidth: 1, borderColor: '#F3F4F6', gap: 0,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: IS_WEB ? 60 : 30, marginTop: 10,
   },
-  statItem: { flex: 1, alignItems: 'center' },
-  statValue: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
-  statLabel: { fontSize: 12, color: '#9CA3AF', fontWeight: '600', marginTop: 2 },
-  statDivider: { width: 1, height: 36, backgroundColor: '#E5E7EB' },
+  statItem: { alignItems: 'center' },
+  statValue: { fontSize: 24, fontWeight: '800', color: '#000', letterSpacing: -0.5 },
+  statLabel: { fontSize: 13, color: '#9CA3AF', fontWeight: '500', marginTop: 4 },
+  statDivider: { width: 1, height: 30, backgroundColor: '#E5E7EB' },
 
   // MOCKUPS
   mockupsSection: {
     flexDirection: IS_WEB && W > 768 ? 'row' : 'column',
-    gap: 20, paddingHorizontal: IS_WEB ? 60 : 20, paddingVertical: 60,
-    justifyContent: 'center', alignItems: 'center',
+    gap: 32, paddingHorizontal: IS_WEB ? 60 : 20, paddingVertical: 40,
+    justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF'
   },
-  mockupLeft: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 460 },
-  mockupRight: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 460 },
+  mockupLeft: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 440 },
+  mockupRight: { flex: IS_WEB && W > 768 ? 1 : undefined, width: IS_WEB && W > 768 ? undefined : '100%', maxWidth: 440 },
 
   // MOCK CARD
   mockCard: {
-    backgroundColor: '#FFF', borderRadius: 24, padding: 20,
-    borderWidth: 1, borderColor: '#F3F4F6',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4,
+    backgroundColor: '#FFFFFF', borderRadius: 24, padding: 24,
+    borderWidth: 1, borderColor: '#E5E7EB',
   },
-  mockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  mockTitle: { fontSize: 16, fontWeight: '900', color: '#000' },
-  mockBadge: { backgroundColor: '#EFF6FF', borderRadius: 100, paddingVertical: 4, paddingHorizontal: 10 },
-  mockBadgeText: { fontSize: 12, fontWeight: '800', color: '#1D4ED8' },
+  mockHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  mockTitle: { fontSize: 15, fontWeight: '800', color: '#000' },
+  mockBadge: { backgroundColor: '#F3F4F6', borderRadius: 100, paddingVertical: 4, paddingHorizontal: 10 },
+  mockBadgeText: { fontSize: 12, fontWeight: '700', color: '#374151' },
   mockRow: {
     flexDirection: 'row', alignItems: 'center', paddingVertical: 12,
     borderTopWidth: 1, borderTopColor: '#F9FAFB',
