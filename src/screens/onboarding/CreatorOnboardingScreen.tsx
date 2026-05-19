@@ -249,8 +249,11 @@ export const CreatorOnboardingScreen = () => {
     await executeOAuthFlow('instagram');
   };
 
-  const executeOAuthFlow = async (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter') => {
-    if (platform !== 'instagram') return;
+  const executeOAuthFlow = async (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'linkedin') => {
+    if (platform !== 'instagram') {
+      Alert.alert('Coming Soon', `${platform.charAt(0).toUpperCase() + platform.slice(1)} integration will be available shortly.`);
+      return;
+    }
 
     try {
       setActivePlatform('instagram');
@@ -559,6 +562,78 @@ export const CreatorOnboardingScreen = () => {
             )}
           </View>
           {connectedProfiles.instagram ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
+        </TouchableOpacity>
+
+        {/* YouTube Card */}
+        <TouchableOpacity 
+          onPress={() => startLinking('youtube')}
+          style={[styles.socialButton, connectedProfiles.youtube && styles.socialButtonActive]}
+        >
+          <View style={[styles.instagramIconBg, { backgroundColor: '#FF0000' }]}>
+            <Youtube size={24} color="#FFF" />
+          </View>
+          <View style={styles.socialContent}>
+            <Text style={styles.socialLabel}>YouTube Channel</Text>
+            {connectedProfiles.youtube ? (
+              <View style={styles.verifiedBadge}>
+                <ShieldCheck size={14} color="#059669" />
+                <Text style={styles.verifiedText}>
+                  {connectedProfiles.youtube.handle} • {connectedProfiles.youtube.followersCount.toLocaleString()} Subs
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.socialSubtext}>Tap to connect channel</Text>
+            )}
+          </View>
+          {connectedProfiles.youtube ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
+        </TouchableOpacity>
+
+        {/* LinkedIn Card */}
+        <TouchableOpacity 
+          onPress={() => startLinking('linkedin' as any)}
+          style={[styles.socialButton, connectedProfiles.linkedin && styles.socialButtonActive]}
+        >
+          <View style={[styles.instagramIconBg, { backgroundColor: '#0077B5' }]}>
+            <Linkedin size={24} color="#FFF" />
+          </View>
+          <View style={styles.socialContent}>
+            <Text style={styles.socialLabel}>LinkedIn Profile</Text>
+            {connectedProfiles.linkedin ? (
+              <View style={styles.verifiedBadge}>
+                <ShieldCheck size={14} color="#059669" />
+                <Text style={styles.verifiedText}>
+                  {connectedProfiles.linkedin.handle} • {connectedProfiles.linkedin.followersCount.toLocaleString()} Connections
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.socialSubtext}>Tap to connect profile</Text>
+            )}
+          </View>
+          {connectedProfiles.linkedin ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
+        </TouchableOpacity>
+
+        {/* X (Twitter) Card */}
+        <TouchableOpacity 
+          onPress={() => startLinking('twitter')}
+          style={[styles.socialButton, connectedProfiles.twitter && styles.socialButtonActive]}
+        >
+          <View style={[styles.instagramIconBg, { backgroundColor: '#000000' }]}>
+            <Twitter size={24} color="#FFF" />
+          </View>
+          <View style={styles.socialContent}>
+            <Text style={styles.socialLabel}>X (Twitter)</Text>
+            {connectedProfiles.twitter ? (
+              <View style={styles.verifiedBadge}>
+                <ShieldCheck size={14} color="#059669" />
+                <Text style={styles.verifiedText}>
+                  {connectedProfiles.twitter.handle} • {connectedProfiles.twitter.followersCount.toLocaleString()} Followers
+                </Text>
+              </View>
+            ) : (
+              <Text style={styles.socialSubtext}>Tap to connect account</Text>
+            )}
+          </View>
+          {connectedProfiles.twitter ? <Check size={20} color="#059669" /> : <ChevronRight size={20} color="#9CA3AF" />}
         </TouchableOpacity>
       </View>
 
