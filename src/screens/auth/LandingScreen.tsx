@@ -6,7 +6,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import {
   ArrowRight, ShieldCheck, Banknote, Users,
-  CheckCircle2, Star, Zap, TrendingUp,
+  CheckCircle2, Star, Zap, TrendingUp, Lock, Sparkles
 } from 'lucide-react-native';
 
 const { width: W, height: H } = Dimensions.get('window');
@@ -69,10 +69,17 @@ const HeroIllustrations = () => {
 };
 
 // ─── Feature block ────────────────────────────────────────────────────────────
-const Feature = ({ icon: Icon, stat, title, accentColor }: any) => (
-  <View style={[s.featureCard, { borderColor: accentColor + '30' }]}>
-    <View style={[s.featureIcon, { backgroundColor: accentColor + '10' }]}>
-      <Icon size={20} color={accentColor} />
+const Feature = ({ icon: Icon, stat, title, badgeText, accentColor }: any) => (
+  <View style={[s.featureCard, { borderColor: accentColor + '22' }]}>
+    <View style={s.featureHeaderRow}>
+      <View style={[s.featureIcon, { backgroundColor: accentColor + '10' }]}>
+        <Icon size={20} color={accentColor} />
+      </View>
+      {badgeText && (
+        <View style={[s.featureBadge, { backgroundColor: accentColor + '08', borderColor: accentColor + '15' }]}>
+          <Text style={[s.featureBadgeText, { color: accentColor }]}>{badgeText}</Text>
+        </View>
+      )}
     </View>
     <Text style={[s.featureStat, { color: accentColor }]}>{stat}</Text>
     <Text style={s.featureTitle}>{title}</Text>
@@ -81,15 +88,21 @@ const Feature = ({ icon: Icon, stat, title, accentColor }: any) => (
 
 // ─── Testimonial block ────────────────────────────────────────────────────────
 const TestimonialCard = ({ quote, author, role, accentColor, initials }: any) => (
-  <View style={[s.testimonialCard, { borderColor: accentColor + '20' }]}>
+  <View style={[s.testimonialCard, { borderColor: accentColor + '15' }]}>
+    <View style={[s.testimonialGlow, { backgroundColor: accentColor + '02' }]} />
     <Text style={s.quoteText}>“{quote}”</Text>
     <View style={s.quoteAuthorWrap}>
       <View style={[s.avatar, { backgroundColor: accentColor }]}>
         <Text style={s.avatarInitials}>{initials}</Text>
       </View>
-      <View>
+      <View style={{ flex: 1 }}>
         <Text style={s.authorName}>{author}</Text>
         <Text style={s.authorRole}>{role}</Text>
+      </View>
+      <View style={s.stars}>
+        {[1, 2, 3, 4, 5].map(i => (
+          <Star key={i} size={11} color={accentColor} fill={accentColor} style={{ opacity: 0.8 }} />
+        ))}
       </View>
     </View>
   </View>
@@ -101,14 +114,52 @@ export const LandingScreen = () => {
 
   // scroll animation
   const scrollY = useRef(new Animated.Value(0)).current;
-  const lowerOpacity = scrollY.interpolate({
-    inputRange: [0, H * 0.6],
-    outputRange: [0.35, 1], // Start much higher so it doesn't look like a sudden rigid fade
+
+  // Marquee scroll fade
+  const marqueeOpacity = scrollY.interpolate({
+    inputRange: [0, 150],
+    outputRange: [0.6, 1],
     extrapolate: 'clamp'
   });
-  const lowerTranslateY = scrollY.interpolate({
-    inputRange: [0, H * 0.6],
-    outputRange: [20, 0], // Move just 20px instead of 60px to feel less rigid
+
+  // Features scroll reveal
+  const featuresOpacity = scrollY.interpolate({
+    inputRange: [80, 380],
+    outputRange: [0, 1],
+    extrapolate: 'clamp'
+  });
+  const featuresTranslateY = scrollY.interpolate({
+    inputRange: [80, 380],
+    outputRange: [40, 0],
+    extrapolate: 'clamp'
+  });
+
+  // Testimonials scroll reveal
+  const proofOpacity = scrollY.interpolate({
+    inputRange: [320, 680],
+    outputRange: [0, 1],
+    extrapolate: 'clamp'
+  });
+  const proofTranslateY = scrollY.interpolate({
+    inputRange: [320, 680],
+    outputRange: [40, 0],
+    extrapolate: 'clamp'
+  });
+
+  // CTA Card scroll reveal
+  const ctaOpacity = scrollY.interpolate({
+    inputRange: [620, 980],
+    outputRange: [0, 1],
+    extrapolate: 'clamp'
+  });
+  const ctaScale = scrollY.interpolate({
+    inputRange: [620, 980],
+    outputRange: [0.96, 1],
+    extrapolate: 'clamp'
+  });
+  const ctaTranslateY = scrollY.interpolate({
+    inputRange: [620, 980],
+    outputRange: [30, 0],
     extrapolate: 'clamp'
   });
   
@@ -204,74 +255,84 @@ export const LandingScreen = () => {
         </Animated.View>
       </View>
 
-      <Animated.View style={{ opacity: lowerOpacity, transform: [{ translateY: lowerTranslateY }] }}>
-        {/* ── MARQUEE ── */}
+      {/* ── MARQUEE ── */}
+      <Animated.View style={{ opacity: marqueeOpacity }}>
         <Marquee />
+      </Animated.View>
 
       {/* ── FEATURES ── */}
-      <View style={s.section}>
-        <Text style={s.sectionLabel}>The Modus Standard</Text>
-        <Text style={s.sectionHead}>Marketplace integrity,{'\n'}by the numbers.</Text>
-        <View style={s.featureGrid}>
-          <Feature
-            icon={ShieldCheck}
-            stat="99.2%"
-            title="Audited Follower Authenticity"
-            accentColor="#4F46E5"
-          />
-          <Feature
-            icon={Banknote}
-            stat="0"
-            title="Payment Chasing or Invoice Delays"
-            accentColor="#10B981"
-          />
-          <Feature
-            icon={TrendingUp}
-            stat="10s"
-            title="To Publish Brief & Match Creators"
-            accentColor="#8B5CF6"
-          />
+      <Animated.View style={{ opacity: featuresOpacity, transform: [{ translateY: featuresTranslateY }] }}>
+        <View style={s.section}>
+          <Text style={s.sectionLabel}>The Modus Standard</Text>
+          <Text style={s.sectionHead}>Marketplace integrity,{'\n'}by the numbers.</Text>
+          <View style={s.featureGrid}>
+            <Feature
+              icon={ShieldCheck}
+              stat="99.2%"
+              title="Audited Follower Authenticity"
+              badgeText="Verified API"
+              accentColor="#4F46E5"
+            />
+            <Feature
+              icon={Lock}
+              stat="0"
+              title="Payment Chasing or Invoice Delays"
+              badgeText="Automated Escrow"
+              accentColor="#10B981"
+            />
+            <Feature
+              icon={Sparkles}
+              stat="10s"
+              title="To Publish Brief & Match Creators"
+              badgeText="Instant Match"
+              accentColor="#8B5CF6"
+            />
+          </View>
         </View>
-      </View>
+      </Animated.View>
 
       {/* ── SOCIAL PROOF ── */}
-      <View style={s.proofSection}>
-        <Text style={s.proofLabel}>What they're saying</Text>
-        <Text style={s.proofHead}>Built for both sides of the table.</Text>
-        <View style={s.testimonialGrid}>
-          <TestimonialCard
-            quote="Audited audience data changed how we recruit talent. No more wasted budget."
-            author="Riya S."
-            role="Head of Influencer, Glow Recipe"
-            accentColor="#4F46E5"
-            initials="R"
-          />
-          <TestimonialCard
-            quote="Escrow payments mean I never worry about getting paid. I focus entirely on my content."
-            author="Alex M."
-            role="Tech & Lifestyle Creator (180k+)"
-            accentColor="#10B981"
-            initials="A"
-          />
+      <Animated.View style={{ opacity: proofOpacity, transform: [{ translateY: proofTranslateY }] }}>
+        <View style={s.proofSection}>
+          <Text style={s.proofLabel}>What they're saying</Text>
+          <Text style={s.proofHead}>Built for both sides of the table.</Text>
+          <View style={s.testimonialGrid}>
+            <TestimonialCard
+              quote="Audited audience data changed how we recruit talent. No more wasted budget."
+              author="Riya S."
+              role="Head of Influencer, Glow Recipe"
+              accentColor="#4F46E5"
+              initials="R"
+            />
+            <TestimonialCard
+              quote="Escrow payments mean I never worry about getting paid. I focus entirely on my content."
+              author="Alex M."
+              role="Tech & Lifestyle Creator (180k+)"
+              accentColor="#10B981"
+              initials="A"
+            />
+          </View>
         </View>
-      </View>
+      </Animated.View>
 
       {/* ── CTA FOOTER ── */}
-      <View style={s.ctaSection}>
-        <View style={s.ctaCard}>
-          {/* Subtle colored glow inside dark card */}
-          <View style={s.ctaCardGlow} />
-          <Text style={s.ctaHead}>Ready to grow?</Text>
-          <Text style={s.ctaSub}>Join elite brands and verified creators building the future of commerce.</Text>
-          <Pressable
-            style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.85 }]}
-            onPress={() => nav.navigate('Welcome')}
-          >
-            <Text style={s.ctaBtnText}>Start for free</Text>
-            <ArrowRight size={20} color="#000" />
-          </Pressable>
+      <Animated.View style={{ opacity: ctaOpacity, transform: [{ translateY: ctaTranslateY }, { scale: ctaScale }] }}>
+        <View style={s.ctaSection}>
+          <View style={s.ctaCard}>
+            {/* Subtle colored glow inside dark card */}
+            <View style={s.ctaCardGlow} />
+            <Text style={s.ctaHead}>Ready to grow?</Text>
+            <Text style={s.ctaSub}>Join elite brands and verified creators building the future of commerce.</Text>
+            <Pressable
+              style={({ pressed }) => [s.ctaBtn, pressed && { opacity: 0.85 }]}
+              onPress={() => nav.navigate('Welcome')}
+            >
+              <Text style={s.ctaBtnText}>Start for free</Text>
+              <ArrowRight size={20} color="#000" />
+            </Pressable>
+          </View>
         </View>
-      </View>
+      </Animated.View>
 
       {/* ── FOOTER LINKS ── */}
       <View style={s.footer}>
@@ -283,8 +344,6 @@ export const LandingScreen = () => {
         </View>
         <Text style={s.copyright}>© 2026 Modus, Inc. All rights reserved.</Text>
       </View>
-
-      </Animated.View>
       </ScrollView>
     </View>
   );
@@ -399,14 +458,24 @@ const s = StyleSheet.create({
   featureCard: {
     flex: IS_WEB && W > 768 ? 1 : undefined,
     minWidth: IS_WEB && W > 768 ? 260 : undefined,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 24, padding: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.43)', borderRadius: 24, padding: 32,
     borderWidth: 1.5,
     ...(IS_WEB ? { backdropFilter: 'blur(16px)' } : {}),
     shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.01, shadowRadius: 10,
+    position: 'relative', overflow: 'hidden',
+  },
+  featureHeaderRow: {
+    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24,
+  },
+  featureBadge: {
+    paddingHorizontal: 10, paddingVertical: 4, borderRadius: 100, borderWidth: 1,
+  },
+  featureBadgeText: {
+    fontSize: 10, fontWeight: '850', letterSpacing: 0.5, textTransform: 'uppercase',
   },
   featureIcon: {
     width: 44, height: 44, borderRadius: 14,
-    alignItems: 'center', justifyContent: 'center', marginBottom: 24,
+    alignItems: 'center', justifyContent: 'center',
   },
   featureStat: { fontSize: 44, fontWeight: '900', letterSpacing: -1.5, marginBottom: 8 },
   featureTitle: { fontSize: 16, fontWeight: '700', color: '#111827', lineHeight: 22 },
@@ -427,13 +496,17 @@ const s = StyleSheet.create({
     width: '100%', maxWidth: 1100, gap: 24,
   },
   testimonialCard: {
-    flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.4)', borderRadius: 24, padding: 32,
+    flex: 1, backgroundColor: 'rgba(255, 255, 255, 0.43)', borderRadius: 24, padding: 32,
     borderWidth: 1.5,
+    position: 'relative', overflow: 'hidden',
     ...(IS_WEB ? { backdropFilter: 'blur(16px)' } : {}),
     shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.02, shadowRadius: 20,
   },
-  quoteText: { fontSize: 17, color: '#374151', lineHeight: 28, fontWeight: '500', marginBottom: 24, fontStyle: 'italic' },
-  quoteAuthorWrap: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  testimonialGlow: {
+    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: 24,
+  },
+  quoteText: { fontSize: 17, color: '#374151', lineHeight: 28, fontWeight: '500', marginBottom: 24, fontStyle: 'italic', zIndex: 1 },
+  quoteAuthorWrap: { flexDirection: 'row', alignItems: 'center', gap: 14, zIndex: 1 },
   avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   avatarInitials: { color: '#FFF', fontWeight: '800', fontSize: 14 },
   authorName: { fontSize: 15, fontWeight: '800', color: '#111827' },
