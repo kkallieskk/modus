@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable,
-  Animated, Easing, Dimensions, Platform,
+  Animated, Easing, Dimensions, Platform, Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
@@ -38,156 +38,98 @@ const Marquee = () => {
   );
 };
 
-// ─── Camera Aperture Reveal Shutter Component ──────────────────────────────
-const CameraApertureScroll = ({ scrollY }: { scrollY: Animated.Value }) => {
-  // Shutter blade translations: slide outwards from center (0 to 180px)
-  const openProgress = scrollY.interpolate({
-    inputRange: [180, 520],
-    outputRange: [0, 190],
+// ─── 3D Parallax Scroll Reveal Component ──────────────────────────────
+const Parallax3DSection = ({ scrollY }: { scrollY: Animated.Value }) => {
+  // 3D Vault Parallax Translation and Scale
+  const vaultTranslateY = scrollY.interpolate({
+    inputRange: [150, 750],
+    outputRange: [120, -120], // Moves up as we scroll down
     extrapolate: 'clamp',
   });
 
-  // Shutter blade rotation: rotate slightly as they open
-  const bladeRotation = scrollY.interpolate({
-    inputRange: [180, 520],
-    outputRange: ['0deg', '-35deg'],
+  const vaultScale = scrollY.interpolate({
+    inputRange: [150, 600],
+    outputRange: [0.85, 1.1], // Scales up gracefully
     extrapolate: 'clamp',
   });
 
-  // Viewport content scale & opacity
-  const viewportScale = scrollY.interpolate({
-    inputRange: [220, 520],
-    outputRange: [0.88, 1],
-    extrapolate: 'clamp',
-  });
-
-  const viewportOpacity = scrollY.interpolate({
-    inputRange: [220, 460],
+  const vaultOpacity = scrollY.interpolate({
+    inputRange: [100, 300],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
 
-  // Side pointer labels reveal
-  const labelOpacity = scrollY.interpolate({
-    inputRange: [380, 560],
+  // Contextual UI cards floating in
+  const cardTranslateXLeft = scrollY.interpolate({
+    inputRange: [300, 600],
+    outputRange: [-120, 0],
+    extrapolate: 'clamp',
+  });
+  
+  const cardTranslateXRight = scrollY.interpolate({
+    inputRange: [350, 650],
+    outputRange: [120, 0],
+    extrapolate: 'clamp',
+  });
+
+  const cardsOpacity = scrollY.interpolate({
+    inputRange: [300, 500],
     outputRange: [0, 1],
     extrapolate: 'clamp',
   });
-
-  const labelTranslateX = scrollY.interpolate({
-    inputRange: [380, 560],
-    outputRange: [20, 0],
-    extrapolate: 'clamp',
-  });
-
-  // 6 blades around 360 degrees (0, 60, 120, 180, 240, 300)
-  const blades = [0, 60, 120, 180, 240, 300];
 
   return (
-    <View style={s.apertureSection}>
-      <Text style={s.apertureSub}>INSPECT THE MECHANICS</Text>
-      <Text style={s.apertureTitle}>Unveiling marketplace transparency.</Text>
-      <Text style={s.apertureDesc}>
-        Scroll down to open the lens aperture and examine a secure, real-time Modus escrow contract and creator audit feed.
+    <View style={s.parallaxSection}>
+      <Text style={s.parallaxSub}>DEEP INSPECTION</Text>
+      <Text style={s.parallaxTitle}>The Modus Escrow Vault.</Text>
+      <Text style={s.parallaxDesc}>
+        A fully transparent, automated escrow system. Funds are locked securely before creation begins and released instantly upon verified delivery.
       </Text>
 
-      <View style={s.lensContainer}>
-        {/* Behind Shutter: The Mockup Viewport */}
-        <Animated.View 
+      <View style={s.parallaxCanvas}>
+        {/* The 3D Vault Hero Image */}
+        <Animated.Image 
+          source={require('../../../assets/images/3d_escrow_vault.png')}
           style={[
-            s.lensViewport, 
-            { 
-              opacity: viewportOpacity,
-              transform: [{ scale: viewportScale }]
+            s.vaultImage,
+            {
+              opacity: vaultOpacity,
+              transform: [
+                { translateY: vaultTranslateY },
+                { scale: vaultScale }
+              ]
             }
           ]}
-        >
-          {/* Beautiful Mockup: Creator Deal with Escrow Vault */}
-          <View style={s.dealMockupCard}>
-            <View style={s.dealMockupHeader}>
-              <View style={s.brandLogoPlaceholder}>
-                <Text style={s.brandLogoPlaceholderText}>M</Text>
-              </View>
-              <View>
-                <Text style={s.dealBrandName}>Glow Recipe Campaign</Text>
-                <Text style={s.dealCreatorName}>with Alex M. (Creator)</Text>
-              </View>
-              <View style={s.escrowStatusBadge}>
-                <View style={s.statusDot} />
-                <Text style={s.statusText}>Escrow Secured</Text>
-              </View>
-            </View>
+          resizeMode="contain"
+        />
 
-            <View style={s.dealMetricsRow}>
-              <View style={s.dealMetric}>
-                <Text style={s.metricLabel}>CONTRACT VALUE</Text>
-                <Text style={s.metricVal}>$4,800.00</Text>
-              </View>
-              <View style={s.dealMetric}>
-                <Text style={s.metricLabel}>VERIFIED FOLLOWER AUTH</Text>
-                <Text style={s.metricVal}>99.2%</Text>
-              </View>
-              <View style={s.dealMetric}>
-                <Text style={s.metricLabel}>DELIVERABLES</Text>
-                <Text style={s.metricVal}>2x Reels, 1x Story</Text>
-              </View>
-            </View>
-
-            <View style={s.escrowSealContainer}>
-              <Lock size={14} color="#059669" />
-              <Text style={s.escrowSealText}>Funds locked in Modus Vault. Release on verified match of brief.</Text>
-            </View>
+        {/* Floating Contextual UI Cards */}
+        <Animated.View style={[
+          s.floatingCardLeft, 
+          { 
+            opacity: cardsOpacity, 
+            transform: [{ translateX: cardTranslateXLeft }, { translateY: -60 }] 
+          }
+        ]}>
+          <View style={s.floatingCardIcon}><Lock size={16} color="#10B981" /></View>
+          <View>
+            <Text style={s.floatingCardTitle}>Funds Secured</Text>
+            <Text style={s.floatingCardDesc}>100% upfront escrow locking</Text>
           </View>
         </Animated.View>
 
-        {/* Shutter Blades Layer */}
-        <View style={s.shutterContainer} pointerEvents="none">
-          {blades.map((angle, index) => (
-            <Animated.View
-              key={index}
-              style={[
-                s.bladeWrapper,
-                {
-                  transform: [
-                    { rotate: `${angle}deg` },
-                  ]
-                }
-              ]}
-            >
-              {/* Each blade slides outwards along its X-axis */}
-              <Animated.View
-                style={[
-                  s.shutterBlade,
-                  {
-                    transform: [
-                      { translateX: openProgress },
-                      { rotate: bladeRotation }
-                    ]
-                  }
-                ]}
-              />
-            </Animated.View>
-          ))}
-        </View>
-
-        {/* Outer Metallic Camera Lens Bezel */}
-        <View style={s.lensBezel} pointerEvents="none">
-          <View style={s.lensBezelInner} />
-          <View style={s.lensApertureMarkings}>
-            <Text style={s.markingText}>MODUS OPTICS f/1.4</Text>
-            <Text style={s.markingText}>50MM SECURE</Text>
+        <Animated.View style={[
+          s.floatingCardRight, 
+          { 
+            opacity: cardsOpacity, 
+            transform: [{ translateX: cardTranslateXRight }, { translateY: 60 }] 
+          }
+        ]}>
+          <View style={[s.floatingCardIcon, { backgroundColor: '#F3E8FF' }]}><Sparkles size={16} color="#9333EA" /></View>
+          <View>
+            <Text style={s.floatingCardTitle}>Instant Release</Text>
+            <Text style={s.floatingCardDesc}>Triggered via API verification</Text>
           </View>
-        </View>
-
-        {/* Contextual Pointer Labels floating on left/right */}
-        <Animated.View style={[s.pointerLabelLeft, { opacity: labelOpacity, transform: [{ translateX: Animated.multiply(labelTranslateX, -1) }] }]}>
-          <Text style={s.pointerTitle}>Escrow Vault Lock</Text>
-          <Text style={s.pointerDesc}>Funds are pre-funded before creation starts.</Text>
-        </Animated.View>
-
-        <Animated.View style={[s.pointerLabelRight, { opacity: labelOpacity, transform: [{ translateX: labelTranslateX }] }]}>
-          <Text style={s.pointerTitle}>Graph API Audits</Text>
-          <Text style={s.pointerDesc}>Demographics are pulled directly from social tokens.</Text>
         </Animated.View>
       </View>
     </View>
@@ -382,8 +324,8 @@ export const LandingScreen = () => {
           <Marquee />
         </Animated.View>
 
-        {/* ── CAMERA APERTURE SCROLL REVEAL ── */}
-        <CameraApertureScroll scrollY={scrollY} />
+        {/* ── 3D PARALLAX SCROLL REVEAL ── */}
+        <Parallax3DSection scrollY={scrollY} />
 
         {/* ── FEATURES ── */}
         <Animated.View style={{ opacity: featuresOpacity, transform: [{ translateY: featuresTranslateY }] }}>
@@ -550,14 +492,15 @@ const s = StyleSheet.create({
   marqueeDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#D1D5DB', marginRight: 16 },
   marqueeText: { fontSize: 11, fontWeight: '800', color: '#A1A1AA', letterSpacing: 1.5 },
 
-  // APERTURE SCROLL SECTION
-  apertureSection: {
+  // PARALLAX 3D SECTION
+  parallaxSection: {
     paddingHorizontal: IS_WEB ? 60 : 24,
     paddingVertical: 100,
     alignItems: 'center',
     backgroundColor: 'transparent',
+    overflow: 'hidden',
   },
-  apertureSub: {
+  parallaxSub: {
     fontSize: 11,
     fontWeight: '800',
     color: '#71717A',
@@ -565,7 +508,7 @@ const s = StyleSheet.create({
     textTransform: 'uppercase',
     marginBottom: 12,
   },
-  apertureTitle: {
+  parallaxTitle: {
     fontSize: IS_WEB ? 42 : 32,
     fontWeight: '900',
     color: '#09090B',
@@ -574,233 +517,83 @@ const s = StyleSheet.create({
     lineHeight: IS_WEB ? 50 : 38,
     marginBottom: 16,
   },
-  apertureDesc: {
+  parallaxDesc: {
     fontSize: 16,
     color: '#71717A',
     textAlign: 'center',
     maxWidth: 620,
     lineHeight: 26,
-    marginBottom: 60,
+    marginBottom: 40,
   },
-  lensContainer: {
-    width: 440,
-    height: 440,
-    alignItems: 'center',
-    justifyContent: 'center',
-    position: 'relative',
-    marginVertical: 40,
-  },
-  lensViewport: {
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    backgroundColor: '#FAFAFA',
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#E4E4E7',
-  },
-  shutterContainer: {
-    width: 400,
-    height: 400,
-    borderRadius: 200,
-    position: 'absolute',
-    overflow: 'hidden',
-  },
-  bladeWrapper: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: 400,
-    height: 400,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  shutterBlade: {
-    width: 290,
-    height: 190,
-    backgroundColor: '#09090B',
-    borderColor: '#18181B',
-    borderWidth: 1.5,
-    borderTopRightRadius: 130,
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    marginLeft: -145,
-    marginTop: -95,
-  },
-  lensBezel: {
-    width: 440,
-    height: 440,
-    borderRadius: 220,
-    borderWidth: 16,
-    borderColor: '#18181B',
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.08,
-    shadowRadius: 24,
-  },
-  lensBezelInner: {
-    width: 406,
-    height: 406,
-    borderRadius: 203,
-    borderWidth: 2,
-    borderColor: '#27272A',
-    position: 'absolute',
-  },
-  lensApertureMarkings: {
-    position: 'absolute',
+  parallaxCanvas: {
     width: '100%',
-    height: '100%',
+    maxWidth: 1000,
+    height: IS_WEB ? 600 : 400,
+    position: 'relative',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-    transform: [{ rotate: '45deg' }],
+    justifyContent: 'center',
   },
-  markingText: {
-    fontSize: 8,
-    fontWeight: '800',
-    color: '#52525B',
-    letterSpacing: 1.5,
+  vaultImage: {
+    width: IS_WEB ? 640 : 340,
+    height: IS_WEB ? 640 : 340,
+    position: 'absolute',
+    zIndex: 1,
   },
-  dealMockupCard: {
-    width: 320,
-    backgroundColor: '#FFFFFF',
+  floatingCardLeft: {
+    position: 'absolute',
+    left: IS_WEB ? 80 : 20,
+    top: '40%',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    padding: 16,
     borderRadius: 16,
-    padding: 20,
     borderWidth: 1,
-    borderColor: '#E4E4E7',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.03,
-    shadowRadius: 16,
-  },
-  dealMockupHeader: {
+    borderColor: 'rgba(0,0,0,0.06)',
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
     gap: 12,
+    zIndex: 2,
+    ...(IS_WEB ? { backdropFilter: 'blur(16px)' } : {}),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
   },
-  brandLogoPlaceholder: {
+  floatingCardRight: {
+    position: 'absolute',
+    right: IS_WEB ? 80 : 20,
+    top: '55%',
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.06)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    zIndex: 2,
+    ...(IS_WEB ? { backdropFilter: 'blur(16px)' } : {}),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.04,
+    shadowRadius: 24,
+  },
+  floatingCardIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: '#09090B',
+    backgroundColor: '#ECFDF5',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  brandLogoPlaceholderText: {
-    color: '#FFF',
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  dealBrandName: {
+  floatingCardTitle: {
     fontSize: 14,
     fontWeight: '800',
     color: '#09090B',
   },
-  dealCreatorName: {
+  floatingCardDesc: {
     fontSize: 12,
     color: '#71717A',
     fontWeight: '500',
-    marginTop: 1,
-  },
-  escrowStatusBadge: {
-    marginLeft: 'auto',
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 100,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  statusDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#10B981',
-  },
-  statusText: {
-    fontSize: 9,
-    fontWeight: '850',
-    color: '#065F46',
-    textTransform: 'uppercase',
-  },
-  dealMetricsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: '#F4F4F5',
-    paddingVertical: 14,
-    marginBottom: 16,
-    gap: 8,
-  },
-  dealMetric: {
-    flex: 1,
-  },
-  metricLabel: {
-    fontSize: 8,
-    fontWeight: '850',
-    color: '#A1A1AA',
-    letterSpacing: 0.5,
-    marginBottom: 4,
-  },
-  metricVal: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#09090B',
-  },
-  escrowSealContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: '#F0FDF4',
-    padding: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#DCFCE7',
-  },
-  escrowSealText: {
-    flex: 1,
-    fontSize: 11,
-    color: '#15803D',
-    fontWeight: '600',
-    lineHeight: 15,
-  },
-  pointerLabelLeft: {
-    position: 'absolute',
-    left: -180,
-    top: 140,
-    width: 160,
-    alignItems: 'flex-end',
-  },
-  pointerLabelRight: {
-    position: 'absolute',
-    right: -180,
-    top: 240,
-    width: 160,
-    alignItems: 'flex-start',
-  },
-  pointerTitle: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#09090B',
-    marginBottom: 4,
-  },
-  pointerDesc: {
-    fontSize: 11,
-    color: '#71717A',
-    lineHeight: 15,
-    textAlign: 'inherit' as any,
   },
 
   // FEATURES
