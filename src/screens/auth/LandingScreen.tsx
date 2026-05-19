@@ -275,7 +275,7 @@ const s = StyleSheet.create({
       position: 'fixed', top: 24, left: '50%', transform: [{ translateX: '-50%' }] as any,
       width: '90%', maxWidth: 1100, zIndex: 100, 
       backdropFilter: 'blur(30px) saturate(150%)',
-      boxShadow: '0 12px 40px rgba(0, 0, 0, 0.12)'
+      boxShadow: '0 4px 24px rgba(0, 0, 0, 0.04)'
     } : {}),
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     paddingHorizontal: IS_WEB ? 32 : 24, paddingVertical: 14,
@@ -283,7 +283,7 @@ const s = StyleSheet.create({
     borderWidth: IS_WEB ? 1 : 0, 
     borderColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: IS_WEB ? 100 : 0,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 24 }, shadowOpacity: 0.12, shadowRadius: 40,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.04, shadowRadius: 20,
   },
   logo: { fontSize: 22, fontWeight: '900', color: '#000', letterSpacing: -0.5 },
   navCenter: { flexDirection: 'row', gap: 32, alignItems: 'center' },
