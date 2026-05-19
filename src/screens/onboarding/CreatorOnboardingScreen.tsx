@@ -868,74 +868,279 @@ export const CreatorOnboardingScreen = () => {
   };
 
   // Step 2 Layout
-  const renderStep2 = () => (
-    <View style={styles.stepContainer}>
-      <View style={styles.header}>
-        <Text style={styles.stepTitle}>Refine Niches &amp; Vibe</Text>
-        <Text style={styles.stepSubtitle}>
-          Select up to 3 categories. Connected accounts have auto-populated matches below!
-        </Text>
-      </View>
+  const renderStep2 = () => {
+    if (isDesktop) {
+      return (
+        <View style={styles.stepContainerSplit}>
+          <View style={styles.leftColumnStep1}>
+            <View style={styles.header}>
+              <Text style={styles.stepTitle}>Refine Niches &amp; Vibe</Text>
+              <Text style={styles.stepSubtitle}>
+                Select up to 3 categories. Connected accounts have auto-populated matches below!
+              </Text>
+            </View>
 
-      <View style={styles.nichesGrid}>
-        {NICHES.map(niche => {
-          const isSelected = selectedNiches.includes(niche);
-          return (
-            <TouchableOpacity
-              key={niche}
-              onPress={() => toggleNiche(niche)}
-              activeOpacity={0.7}
-              style={[
-                styles.nichePill,
-                isSelected && styles.nichePillActive
-              ]}
-            >
-              <Text style={[
-                styles.nicheText,
-                isSelected && styles.nicheTextActive
-              ]}>{niche}</Text>
-              {isSelected && <Check size={14} color="#FFF" style={{ marginLeft: 6 }} />}
-            </TouchableOpacity>
-          );
-        })}
+            <View style={styles.nichesGrid}>
+              {NICHES.map(niche => {
+                const isSelected = selectedNiches.includes(niche);
+                return (
+                  <TouchableOpacity
+                    key={niche}
+                    onPress={() => toggleNiche(niche)}
+                    activeOpacity={0.7}
+                    style={[
+                      styles.nichePill,
+                      isSelected && styles.nichePillActive
+                    ]}
+                  >
+                    <Text style={[
+                      styles.nicheText,
+                      isSelected && styles.nicheTextActive
+                    ]}>{niche}</Text>
+                    {isSelected && <Check size={14} color="#FFF" style={{ marginLeft: 6 }} />}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={styles.verticalDivider} />
+
+          <View style={styles.rightColumnStep1}>
+            <Text style={styles.previewCardTitle}>Live Profile Preview</Text>
+            <View style={styles.previewCardBody}>
+              {/* Creator Mock Card */}
+              <View style={styles.creatorMockCard}>
+                <View style={styles.creatorMockHeader}>
+                  <LinearGradient
+                    colors={['#10B981', '#059669']}
+                    style={styles.creatorMockAvatar}
+                  >
+                    <Text style={styles.creatorMockAvatarText}>
+                      {(profile?.display_name || profile?.email || 'VC').substring(0, 2).toUpperCase()}
+                    </Text>
+                  </LinearGradient>
+                  <View style={styles.creatorMockMeta}>
+                    <Text style={styles.creatorMockName} numberOfLines={1}>
+                      {profile?.display_name || 'Verified Creator'}
+                    </Text>
+                    <Text style={styles.creatorMockHandle} numberOfLines={1}>
+                      @{profile?.username || 'modus_creator'}
+                    </Text>
+                  </View>
+                  <View style={styles.creatorMockBadge}>
+                    <Sparkles size={12} color="#10B981" />
+                    <Text style={styles.creatorMockBadgeText}>Verified</Text>
+                  </View>
+                </View>
+
+                {/* Social Badges Row */}
+                <View style={styles.creatorMockSocialsRow}>
+                  {['instagram', 'youtube', 'linkedin', 'twitter'].map((platform) => {
+                    const isConnected = !!connectedProfiles[platform];
+                    return (
+                      <View 
+                        key={platform} 
+                        style={[
+                          styles.creatorMockSocialPill,
+                          isConnected ? styles.creatorMockSocialPillActive : styles.creatorMockSocialPillInactive
+                        ]}
+                      >
+                        <Text style={[
+                          styles.creatorMockSocialText,
+                          isConnected ? styles.creatorMockSocialTextActive : styles.creatorMockSocialTextInactive
+                        ]}>
+                          {platform === 'twitter' ? 'X' : platform.charAt(0).toUpperCase() + platform.slice(1)}
+                        </Text>
+                        {isConnected && <Check size={10} color="#10B981" />}
+                      </View>
+                    );
+                  })}
+                </View>
+
+                {/* Niches Tags */}
+                <View style={styles.creatorMockNichesSection}>
+                  <Text style={styles.creatorMockSectionLabel}>Niches &amp; Categories</Text>
+                  {selectedNiches.length > 0 ? (
+                    <View style={styles.creatorMockTagsContainer}>
+                      {selectedNiches.map(niche => (
+                        <View key={niche} style={styles.creatorMockTag}>
+                          <Text style={styles.creatorMockTagText}>#{niche}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.creatorMockTagsPlaceholder}>
+                      Select niches on the left to customize your search tags...
+                    </Text>
+                  )}
+                </View>
+              </View>
+
+              {/* Mini Info banner */}
+              <View style={styles.previewInfoBanner}>
+                <Text style={styles.previewInfoBannerText}>
+                  Brands filter campaigns by these niches. Choosing accurate tags increases your match rate by up to 45%.
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // Mobile fallback (as is)
+    return (
+      <View style={styles.stepContainer}>
+        <View style={styles.header}>
+          <Text style={styles.stepTitle}>Refine Niches &amp; Vibe</Text>
+          <Text style={styles.stepSubtitle}>
+            Select up to 3 categories. Connected accounts have auto-populated matches below!
+          </Text>
+        </View>
+
+        <View style={styles.nichesGrid}>
+          {NICHES.map(niche => {
+            const isSelected = selectedNiches.includes(niche);
+            return (
+              <TouchableOpacity
+                key={niche}
+                onPress={() => toggleNiche(niche)}
+                activeOpacity={0.7}
+                style={[
+                  styles.nichePill,
+                  isSelected && styles.nichePillActive
+                ]}
+              >
+                <Text style={[
+                  styles.nicheText,
+                  isSelected && styles.nicheTextActive
+                ]}>{niche}</Text>
+                {isSelected && <Check size={14} color="#FFF" style={{ marginLeft: 6 }} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   // Step 3 Layout
-  const renderStep3 = () => (
-    <View style={styles.stepContainer}>
-      <View style={styles.header}>
-        <Text style={styles.stepTitle}>Show Us Your Best Work</Text>
-        <Text style={styles.stepSubtitle}>Link your top 3 pieces of content to showcase your verified aesthetics.</Text>
-      </View>
+  const renderStep3 = () => {
+    if (isDesktop) {
+      return (
+        <View style={styles.stepContainerSplit}>
+          <View style={styles.leftColumnStep1}>
+            <View style={styles.header}>
+              <Text style={styles.stepTitle}>Show Us Your Best Work</Text>
+              <Text style={styles.stepSubtitle}>Link your top 3 pieces of content to showcase your verified aesthetics.</Text>
+            </View>
 
-      <View style={styles.portfolioGrid}>
-        {portfolio.map((item, index) => (
-          <TouchableOpacity 
-            key={index}
-            style={styles.portfolioSlot}
-            activeOpacity={0.8}
-            onPress={() => handlePortfolioTap(index)}
-          >
-            {item ? (
-              <Image source={{ uri: item }} style={styles.portfolioImage} />
-            ) : (
-              <View style={styles.slotEmpty}>
-                <Plus size={24} color="#9CA3AF" />
-                <Text style={styles.slotText}>Link Slot {index + 1}</Text>
+            <View style={styles.portfolioGrid}>
+              {portfolio.map((item, index) => (
+                <TouchableOpacity 
+                  key={index}
+                  style={styles.portfolioSlot}
+                  activeOpacity={0.8}
+                  onPress={() => handlePortfolioTap(index)}
+                >
+                  {item ? (
+                    <Image source={{ uri: item }} style={styles.portfolioImage} />
+                  ) : (
+                    <View style={styles.slotEmpty}>
+                      <Plus size={24} color="#9CA3AF" />
+                      <Text style={styles.slotText}>Link Slot {index + 1}</Text>
+                    </View>
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            <View style={styles.tipBox}>
+              <Star size={18} color="#F59E0B" />
+              <Text style={styles.tipText}>Pro Tip: Creators with verified video slots get 3x higher premium hires.</Text>
+            </View>
+          </View>
+
+          <View style={styles.verticalDivider} />
+
+          <View style={styles.rightColumnStep1}>
+            <Text style={styles.previewCardTitle}>Showcase Grid Preview</Text>
+            <View style={styles.previewCardBody}>
+              {/* Sleek Mobile Phone Mockup */}
+              <View style={styles.phoneMockupContainer}>
+                <View style={styles.phoneMockupScreen}>
+                  <View style={styles.phoneMockupHeader}>
+                    <View style={styles.phoneMockupCamera} />
+                  </View>
+                  
+                  {/* Phone screen content */}
+                  <View style={styles.phoneScreenContent}>
+                    <Text style={styles.phoneScreenTitle}>Featured Content</Text>
+                    <View style={styles.phoneShowcaseGrid}>
+                      {portfolio.map((item, index) => (
+                        <View key={index} style={styles.phoneShowcaseItem}>
+                          {item ? (
+                            <Image source={{ uri: item }} style={styles.phoneShowcaseImage} />
+                          ) : (
+                            <View style={styles.phoneShowcaseEmpty}>
+                              <Plus size={16} color="#475569" />
+                              <Text style={styles.phoneShowcaseEmptyText}>Slot {index + 1}</Text>
+                            </View>
+                          )}
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                </View>
               </View>
-            )}
-          </TouchableOpacity>
-        ))}
-      </View>
 
-      <View style={styles.tipBox}>
-        <Star size={18} color="#F59E0B" />
-        <Text style={styles.tipText}>Pro Tip: Creators with verified video slots get 3x higher premium hires.</Text>
+              <View style={styles.previewInfoBanner}>
+                <Text style={styles.previewInfoBannerText}>
+                  Your linked content will load dynamically in a responsive feed directly on your public Media Kit.
+                </Text>
+              </View>
+            </View>
+          </View>
+        </View>
+      );
+    }
+
+    // Mobile fallback (as is)
+    return (
+      <View style={styles.stepContainer}>
+        <View style={styles.header}>
+          <Text style={styles.stepTitle}>Show Us Your Best Work</Text>
+          <Text style={styles.stepSubtitle}>Link your top 3 pieces of content to showcase your verified aesthetics.</Text>
+        </View>
+
+        <View style={styles.portfolioGrid}>
+          {portfolio.map((item, index) => (
+            <TouchableOpacity 
+              key={index}
+              style={styles.portfolioSlot}
+              activeOpacity={0.8}
+              onPress={() => handlePortfolioTap(index)}
+            >
+              {item ? (
+                <Image source={{ uri: item }} style={styles.portfolioImage} />
+              ) : (
+                <View style={styles.slotEmpty}>
+                  <Plus size={24} color="#9CA3AF" />
+                  <Text style={styles.slotText}>Link Slot {index + 1}</Text>
+                </View>
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={styles.tipBox}>
+          <Star size={18} color="#F59E0B" />
+          <Text style={styles.tipText}>Pro Tip: Creators with verified video slots get 3x higher premium hires.</Text>
+        </View>
       </View>
-    </View>
-  );
+    );
+  };
 
   // Platform Sync Drawer Overlay View
   const renderPlatformModal = () => {
@@ -1243,7 +1448,7 @@ export const CreatorOnboardingScreen = () => {
       )}
 
       {/* Onboarding Glassmorphic Modal Box */}
-      <View style={isDesktop ? [styles.centerCardWrapperDesktop, step === 1 && { maxWidth: 840 }] : styles.centerCardWrapper}>
+      <View style={isDesktop ? styles.centerCardWrapperDesktop : styles.centerCardWrapper}>
         <View style={isDesktop ? styles.cardDesktop : styles.card}>
           {/* Progress Bar */}
           <View style={[styles.progressContainer, isDesktop && styles.progressContainerDesktop]}>
@@ -1385,7 +1590,7 @@ const styles = StyleSheet.create({
   },
   centerCardWrapperDesktop: {
     width: '100%',
-    maxWidth: 550,
+    maxWidth: 840,
     alignSelf: 'center',
     marginVertical: 40,
     paddingHorizontal: 16,
@@ -1407,6 +1612,7 @@ const styles = StyleSheet.create({
     shadowRadius: 40,
     elevation: 8,
     maxHeight: 740,
+    minHeight: 560,
     width: '100%',
     ...(Platform.OS === 'web' ? { backdropFilter: 'blur(24px)' } as any : {})
   },
@@ -2160,5 +2366,232 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
     shadowOpacity: 0.08,
     shadowRadius: 10,
+  },
+  previewCardTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#475569',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+  },
+  previewCardBody: {
+    flex: 1,
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  creatorMockCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 16,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.04,
+    shadowRadius: 20,
+    elevation: 3,
+  },
+  creatorMockHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 16,
+  },
+  creatorMockAvatar: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  creatorMockAvatarText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  creatorMockMeta: {
+    flex: 1,
+  },
+  creatorMockName: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  creatorMockHandle: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '500',
+    marginTop: 1,
+  },
+  creatorMockBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+  },
+  creatorMockBadgeText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#047857',
+  },
+  creatorMockSocialsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 16,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  creatorMockSocialPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  creatorMockSocialPillActive: {
+    backgroundColor: '#F0FDF4',
+    borderColor: '#BBF7D0',
+  },
+  creatorMockSocialPillInactive: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    opacity: 0.6,
+  },
+  creatorMockSocialText: {
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  creatorMockSocialTextActive: {
+    color: '#15803D',
+  },
+  creatorMockSocialTextInactive: {
+    color: '#94A3B8',
+  },
+  creatorMockNichesSection: {
+    gap: 6,
+  },
+  creatorMockSectionLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  creatorMockTagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  creatorMockTag: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  creatorMockTagText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#4F46E5',
+  },
+  creatorMockTagsPlaceholder: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontStyle: 'italic',
+    lineHeight: 15,
+  },
+  previewInfoBanner: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    padding: 10,
+  },
+  previewInfoBannerText: {
+    fontSize: 11,
+    color: '#64748B',
+    lineHeight: 15,
+    fontWeight: '500',
+  },
+  phoneMockupContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  phoneMockupScreen: {
+    width: 200,
+    height: 200,
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    borderWidth: 6,
+    borderColor: '#334155',
+    overflow: 'hidden',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+  },
+  phoneMockupHeader: {
+    height: 14,
+    backgroundColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  phoneMockupCamera: {
+    width: 24,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: '#0F172A',
+  },
+  phoneScreenContent: {
+    flex: 1,
+    padding: 10,
+  },
+  phoneScreenTitle: {
+    color: '#FFFFFF',
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  phoneShowcaseGrid: {
+    flexDirection: 'row',
+    gap: 6,
+    height: 120,
+  },
+  phoneShowcaseItem: {
+    flex: 1,
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: 'rgba(255,255,255,0.03)',
+  },
+  phoneShowcaseImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  phoneShowcaseEmpty: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    padding: 2,
+  },
+  phoneShowcaseEmptyText: {
+    color: '#475569',
+    fontSize: 9,
+    fontWeight: '600',
   },
 });
