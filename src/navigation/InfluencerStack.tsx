@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, useWindowDimensions, Platform, StyleSheet, TouchableOpacity, Image, Text, Modal, TextInput } from 'react-native';
+import { View, useWindowDimensions, Platform, StyleSheet, TouchableOpacity, Image, Text, Modal, TextInput, Pressable } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { InfluencerDashboard } from '@/screens/influencer/InfluencerDashboard';
 import { JobDetailScreen } from '@/screens/influencer/JobDetailScreen';
@@ -15,8 +15,8 @@ import { PipelineScreen } from '@/screens/influencer/PipelineScreen';
 import { OpportunitiesScreen } from '@/screens/influencer/OpportunitiesScreen';
 import { 
   Inbox, User, Briefcase, Wallet, Search, 
-  ChevronDown, Settings, Info, Bell, LogOut, X,
-  Menu, ChevronLeft, Zap
+  Settings, Bell, LogOut, X,
+  Zap, PanelLeftClose, PanelLeftOpen
 } from 'lucide-react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useProfile } from '@/lib/ProfileContext';
@@ -35,183 +35,197 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
   const userColors = profile?.brand_color ? profile.brand_color.split(',') : ['#10B981'];
   const creatorColor = userColors[0] || '#10B981';
 
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   if (isDesktop) {
-    const sidebarWidth = isExpanded ? 260 : 80;
+    const sidebarWidth = isExpanded ? 240 : 64;
 
     return (
-      <View style={[styles.webSidebar, { width: sidebarWidth, overflow: 'hidden' }]}>
+      <View style={[styles.webSidebar, { width: sidebarWidth }]}>
         {/* Blurred Color Accents */}
         <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-          <View style={{ position: 'absolute', top: -50, left: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: creatorColor, opacity: 0.1, transform: [{ scale: 1.5 }], filter: 'blur(40px)' as any }} />
-          <View style={{ position: 'absolute', bottom: -50, right: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: userColors[1] || '#3B82F6', opacity: 0.1, transform: [{ scale: 1.5 }], filter: 'blur(40px)' as any }} />
+          <View style={{ position: 'absolute', top: -60, left: -60, width: 220, height: 220, borderRadius: 110, backgroundColor: creatorColor, opacity: 0.07, filter: 'blur(50px)' as any }} />
+          <View style={{ position: 'absolute', bottom: -60, right: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: userColors[1] || '#6366F1', opacity: 0.07, filter: 'blur(50px)' as any }} />
         </View>
 
-        <View style={{ zIndex: 10, flex: 1, justifyContent: 'space-between' }}>
+        {/* Click-outside overlay to close menu */}
+        {isMenuOpen && (
+          <Pressable
+            style={{ position: 'fixed' as any, top: 0, left: 0, right: 0, bottom: 0, zIndex: 100 }}
+            onPress={() => setIsMenuOpen(false)}
+          />
+        )}
+
+        <View style={{ zIndex: 200, flex: 1, justifyContent: 'space-between' }}>
+          {/* ─── TOP: Logo + Toggle ─── */}
           <View>
-            {/* Top Header Section */}
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: isExpanded ? 'space-between' : 'center', marginBottom: 32, paddingHorizontal: 16 }}>
-              {isExpanded && (
-                <Text style={styles.webSidebarLogo}>MODUS</Text>
+            <View style={[
+              styles.sidebarHeader,
+              !isExpanded && styles.sidebarHeaderCollapsed
+            ]}>
+              {isExpanded ? (
+                <>
+                  <Text style={styles.webSidebarLogo}>MODUS</Text>
+                  <TouchableOpacity
+                    style={styles.toggleBtn}
+                    onPress={() => { setIsExpanded(false); setIsMenuOpen(false); }}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                  >
+                    <PanelLeftClose size={20} color="#94A3B8" strokeWidth={2.5} />
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <TouchableOpacity
+                  style={styles.toggleBtnCollapsed}
+                  onPress={() => setIsExpanded(true)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <PanelLeftOpen size={20} color="#64748B" strokeWidth={2.5} />
+                </TouchableOpacity>
               )}
-              {!isExpanded && (
-                <Text style={[styles.webSidebarLogoSmall, { marginBottom: 16 }]}>M</Text>
-              )}
-              <TouchableOpacity 
-                style={styles.toggleBtn} 
-                onPress={() => { setIsExpanded(!isExpanded); setIsDropdownOpen(false); }}
-              >
-                {isExpanded ? <ChevronLeft size={16} color="#64748B" /> : <Menu size={20} color="#64748B" />}
-              </TouchableOpacity>
             </View>
 
-          {/* Navigation Menu */}
-          <View style={styles.webSidebarMenu}>
-            {/* Search (Custom Action) */}
-            <TouchableOpacity
-              onPress={() => setIsSearchOpen(true)}
-              style={[styles.webSidebarItem, !isExpanded && { justifyContent: 'center', paddingHorizontal: 0 }]}
-            >
-              <Search size={20} color="#64748B" />
-              {isExpanded && <Text style={styles.webSidebarLabel}>Search</Text>}
-            </TouchableOpacity>
+            {/* ─── Navigation Menu ─── */}
+            <View style={styles.webSidebarMenu}>
+              {/* Search */}
+              <TouchableOpacity
+                onPress={() => setIsSearchOpen(true)}
+                style={[styles.webSidebarItem, !isExpanded && styles.webSidebarItemCollapsed]}
+              >
+                <Search size={18} color="#64748B" strokeWidth={2} />
+                {isExpanded && <Text style={styles.webSidebarLabel}>Search</Text>}
+              </TouchableOpacity>
 
-            {/* Tab Routes */}
-            {state.routes.map((route: any, index: number) => {
-              const { options } = descriptors[route.key];
-              const label = options.title !== undefined ? options.title : route.name;
-              const isFocused = state.index === index;
+              {/* Tab Routes */}
+              {state.routes.map((route: any, index: number) => {
+                const { options } = descriptors[route.key];
+                const label = options.title !== undefined ? options.title : route.name;
+                const isFocused = state.index === index;
 
-              const onPress = () => {
-                const event = navigation.emit({
-                  type: 'tabPress',
-                  target: route.key,
-                  canPreventDefault: true,
-                });
+                const onPress = () => {
+                  const event = navigation.emit({
+                    type: 'tabPress',
+                    target: route.key,
+                    canPreventDefault: true,
+                  });
+                  if (!isFocused && !event.defaultPrevented) {
+                    navigation.navigate(route.name);
+                  }
+                };
 
-                if (!isFocused && !event.defaultPrevented) {
-                  navigation.navigate(route.name);
-                }
-              };
+                const renderIcon = () => {
+                  const iconColor = isFocused ? creatorColor : '#64748B';
+                  if (label === 'Dashboard') return <Briefcase size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Workspace') return <Inbox size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Earnings') return <Wallet size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  return <Zap size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                };
 
-              const renderIcon = () => {
-                const iconColor = isFocused ? creatorColor : '#64748B';
-                if (label === 'Dashboard') return <Briefcase size={20} color={iconColor} />;
-                if (label === 'Workspace') return <Inbox size={20} color={iconColor} />;
-                if (label === 'Earnings') return <Wallet size={20} color={iconColor} />;
-                return <Zap size={20} color={iconColor} />;
-              };
-
-              return (
-                <TouchableOpacity
-                  key={route.key}
-                  onPress={onPress}
-                  style={[
-                    styles.webSidebarItem,
-                    isFocused && styles.webSidebarItemActive,
-                    !isExpanded && { justifyContent: 'center', paddingHorizontal: 0 }
-                  ]}
-                >
-                  {renderIcon()}
-                  {isExpanded && (
-                    <Text
-                      style={[
+                return (
+                  <TouchableOpacity
+                    key={route.key}
+                    onPress={onPress}
+                    style={[
+                      styles.webSidebarItem,
+                      isFocused && styles.webSidebarItemActive,
+                      !isExpanded && styles.webSidebarItemCollapsed,
+                      isFocused && !isExpanded && styles.webSidebarItemActiveCollapsed,
+                    ]}
+                  >
+                    {renderIcon()}
+                    {isExpanded && (
+                      <Text style={[
                         styles.webSidebarLabel,
-                        isFocused ? { color: '#0F172A', fontWeight: '700' } : { color: '#64748B' }
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  )}
-                </TouchableOpacity>
-              );
-            })}
+                        isFocused && { color: '#0F172A', fontWeight: '700' }
+                      ]}>
+                        {label}
+                      </Text>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </View>
-        </View>
 
-        {/* Bottom Profile / Branding */}
-        <View style={[styles.webSidebarFooter, !isExpanded && { paddingHorizontal: 8, paddingBottom: 16 }]}>
-          {/* Profile Dropdown (opens upwards) */}
-          {isExpanded && isDropdownOpen && (
-            <View style={[styles.dropdownMenu, { position: 'absolute', bottom: 80, left: 16, right: 16, width: 'auto' }]}>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setIsDropdownOpen(false); navigation.navigate('Settings'); }}>
-                <Settings size={16} color="#475569" />
-                <Text style={styles.dropdownItemText}>Settings</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setIsDropdownOpen(false); navigation.navigate('Notifications'); }}>
-                <Bell size={16} color="#475569" />
-                <Text style={styles.dropdownItemText}>Notifications</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => setIsDropdownOpen(false)}>
-                <Info size={16} color="#475569" />
-                <Text style={styles.dropdownItemText}>About Modus</Text>
-              </TouchableOpacity>
-              <TouchableOpacity 
-                style={[styles.dropdownItem, { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 8, marginTop: 4 }]} 
-                onPress={() => {
-                  setIsDropdownOpen(false);
+          {/* ─── BOTTOM: Minimalist Profile + Quick Actions ─── */}
+          <View style={styles.webSidebarFooter}>
+
+            {/* Quick-action menu (slides up from footer, closes on outside click) */}
+            {isMenuOpen && isExpanded && (
+              <View style={styles.quickMenu}>
+                <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); navigation.navigate('Settings'); }}>
+                  <Settings size={15} color="#475569" strokeWidth={2} />
+                  <Text style={styles.quickMenuText}>Settings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); navigation.navigate('Notifications'); }}>
+                  <Bell size={15} color="#475569" strokeWidth={2} />
+                  <Text style={styles.quickMenuText}>Notifications</Text>
+                </TouchableOpacity>
+                <View style={styles.quickMenuDivider} />
+                <TouchableOpacity style={styles.quickMenuItem} onPress={() => {
+                  setIsMenuOpen(false);
                   const confirmed = window.confirm('Are you sure you want to log out?');
                   if (confirmed) supabase.auth.signOut();
-                }}
-              >
-                <LogOut size={16} color="#EF4444" />
-                <Text style={[styles.dropdownItemText, { color: '#EF4444' }]}>Log Out</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-
-          <TouchableOpacity 
-            style={[styles.webSidebarProfile, !isExpanded && { justifyContent: 'center', marginHorizontal: 0, paddingHorizontal: 0, paddingVertical: 12 }]}
-            onPress={() => isExpanded && setIsDropdownOpen(!isDropdownOpen)}
-          >
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.webSidebarAvatar} />
-            ) : (
-              <View style={styles.webSidebarAvatarPlaceholder}>
-                <User size={16} color="#94A3B8" />
+                }}>
+                  <LogOut size={15} color="#EF4444" strokeWidth={2} />
+                  <Text style={[styles.quickMenuText, { color: '#EF4444' }]}>Log Out</Text>
+                </TouchableOpacity>
               </View>
             )}
-            
-            {isExpanded && (
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.webSidebarName} numberOfLines={1}>
-                  {profile?.display_name || 'Creator Account'}
-                </Text>
-                <Text style={styles.webSidebarIndustry} numberOfLines={1}>
-                  {profile?.niche_industry || 'Creator'}
-                </Text>
-              </View>
-            )}
-            {isExpanded && <ChevronDown size={16} color="#64748B" />}
-          </TouchableOpacity>
-        </View>
 
+            {/* Minimalist Profile Row */}
+            <TouchableOpacity
+              style={[styles.profileRow, !isExpanded && styles.profileRowCollapsed]}
+              onPress={() => isExpanded && setIsMenuOpen(!isMenuOpen)}
+              activeOpacity={0.7}
+            >
+              {profile?.avatar_url ? (
+                <Image source={{ uri: profile.avatar_url }} style={styles.profileAvatar} />
+              ) : (
+                <View style={styles.profileAvatarPlaceholder}>
+                  <User size={14} color="#94A3B8" />
+                </View>
+              )}
+              {isExpanded && (
+                <Text style={styles.profileName} numberOfLines={1}>
+                  {profile?.display_name || 'Creator'}
+                </Text>
+              )}
+              {isExpanded && (
+                <View style={styles.profileMenuDot}>
+                  <View style={styles.profileMenuDotInner} />
+                  <View style={styles.profileMenuDotInner} />
+                  <View style={styles.profileMenuDotInner} />
+                </View>
+              )}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Search Modal */}
         <Modal visible={isSearchOpen} transparent animationType="fade">
-          <View style={styles.searchOverlay}>
-            <View style={styles.searchModal}>
+          <Pressable style={styles.searchOverlay} onPress={() => setIsSearchOpen(false)}>
+            <Pressable style={styles.searchModal} onPress={e => e.stopPropagation?.()}>
               <View style={styles.searchInputContainer}>
-                <Search size={20} color="#9CA3AF" />
+                <Search size={18} color="#9CA3AF" />
                 <TextInput 
                   placeholder="Search campaigns, brands, or help..."
                   style={styles.searchInput}
                   autoFocus
-                  {...(Platform.OS === 'web' ? { style: [styles.searchInput, { outlineWidth: 0 }] } : {})}
+                  {...(Platform.OS === 'web' ? { style: [styles.searchInput, { outlineWidth: 0 } as any] } : {})}
                 />
                 <TouchableOpacity onPress={() => setIsSearchOpen(false)}>
-                  <X size={20} color="#9CA3AF" />
+                  <X size={18} color="#9CA3AF" />
                 </TouchableOpacity>
               </View>
-            </View>
-          </View>
+            </Pressable>
+          </Pressable>
         </Modal>
       </View>
     );
   }
+
 
   // Mobile Bottom Tab Bar
   const insets = useSafeAreaInsets();
@@ -269,7 +283,7 @@ const InfluencerTabs = () => {
     <Tab.Navigator
       tabBar={props => <CustomTabBar {...props} isExpanded={isExpanded} setIsExpanded={setIsExpanded} />}
       sceneContainerStyle={{
-        paddingLeft: isDesktop ? (isExpanded ? 260 : 80) : 0,
+        paddingLeft: isDesktop ? (isExpanded ? 240 : 64) : 0,
         backgroundColor: '#FFFFFF',
       }}
       screenOptions={{
@@ -317,112 +331,155 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#FFFFFF',
     borderRightWidth: 1,
-    borderRightColor: '#E2E8F0',
-    paddingVertical: 24,
+    borderRightColor: '#F1F5F9',
+    paddingVertical: 20,
     justifyContent: 'space-between',
     zIndex: 9999,
+    overflow: 'hidden',
   },
-  webSidebarProfile: {
+  sidebarHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    marginHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    marginBottom: 8,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    marginBottom: 28,
+    height: 36,
   },
-  webSidebarAvatar: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  sidebarHeaderCollapsed: {
+    justifyContent: 'center',
+    paddingHorizontal: 0,
   },
-  webSidebarAvatarPlaceholder: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+  toggleBtn: {
+    padding: 4,
+    borderRadius: 6,
+  },
+  toggleBtnCollapsed: {
+    padding: 4,
+    borderRadius: 6,
+    alignSelf: 'center',
+  },
+  // Profile row - minimalist
+  profileRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    gap: 10,
+  },
+  profileRowCollapsed: {
+    justifyContent: 'center',
+    paddingHorizontal: 0,
+  },
+  profileAvatar: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+  },
+  profileAvatarPlaceholder: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     backgroundColor: '#E2E8F0',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  webSidebarName: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#0F172A',
+  profileName: {
+    flex: 1,
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#374151',
   },
-  webSidebarIndustry: {
-    fontSize: 12,
-    color: '#64748B',
+  profileMenuDot: {
+    flexDirection: 'row',
+    gap: 3,
+    alignItems: 'center',
   },
-  dropdownMenu: {
-    backgroundColor: '#FFF',
+  profileMenuDotInner: {
+    width: 3,
+    height: 3,
+    borderRadius: 2,
+    backgroundColor: '#CBD5E1',
+  },
+  // Quick action menu
+  quickMenu: {
+    marginHorizontal: 12,
+    marginBottom: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     borderWidth: 1,
     borderColor: '#F1F5F9',
-    borderRadius: 12,
-    marginHorizontal: 16,
-    marginBottom: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 12,
+    shadowOpacity: 0.06,
+    shadowRadius: 16,
     elevation: 4,
-    padding: 8,
+    padding: 6,
   },
-  dropdownItem: {
+  quickMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
     borderRadius: 8,
-    gap: 12,
+    gap: 10,
   },
-  dropdownItemText: {
-    fontSize: 14,
+  quickMenuText: {
+    fontSize: 13,
     fontWeight: '500',
-    color: '#475569',
+    color: '#374151',
   },
-  toggleBtn: {
-    marginLeft: 16,
-    marginBottom: 24,
-    padding: 8,
-    alignSelf: 'flex-start',
+  quickMenuDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginHorizontal: 8,
+    marginVertical: 4,
   },
   webSidebarMenu: {
-    gap: 4,
-    paddingHorizontal: 12,
+    gap: 2,
+    paddingHorizontal: 10,
   },
   webSidebarItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    gap: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 9,
+    gap: 11,
     backgroundColor: 'transparent',
+  },
+  webSidebarItemCollapsed: {
+    justifyContent: 'center',
+    paddingHorizontal: 0,
+    marginHorizontal: 8,
+    paddingVertical: 11,
   },
   webSidebarItemActive: {
     backgroundColor: '#F1F5F9',
   },
+  webSidebarItemActiveCollapsed: {
+    backgroundColor: '#F1F5F9',
+    marginHorizontal: 8,
+  },
   webSidebarLabel: {
-    fontSize: 14,
+    fontSize: 13.5,
     fontWeight: '600',
     color: '#64748B',
   },
   webSidebarFooter: {
     borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    paddingTop: 24,
-    paddingHorizontal: 24,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 12,
   },
   webSidebarLogo: {
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '900',
-    color: '#000',
-    letterSpacing: -1,
+    color: '#0F172A',
+    letterSpacing: -0.5,
   },
   webSidebarLogoSmall: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: '900',
-    color: '#000',
+    color: '#0F172A',
   },
   searchOverlay: {
     flex: 1,
