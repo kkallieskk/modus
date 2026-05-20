@@ -16,21 +16,23 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { supabase } from '@/lib/supabase';
+import { JobAlertsModal } from '@/components/JobAlertsModal';
 import { 
   Briefcase,
   ChevronRight,
   Search,
-  MapPin,
-  Clock,
-  DollarSign,
-  Lightbulb,
-  X,
   CheckCircle2,
   Send,
   Zap,
   Bookmark,
-  Heart,
-  Bell
+  Bell,
+  ChevronDown,
+  Clock,
+  ShieldCheck,
+  Building2,
+  Video,
+  X,
+  Lightbulb
 } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
@@ -63,19 +65,9 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState<'marketplace' | 'invites'>('marketplace');
   const [invites, setInvites] = useState<any[]>([]);
-
-  const PipelineHeader = () => (
-    <View style={styles.pipelineHeader}>
-      <TouchableOpacity 
-        style={styles.pipelineBtn}
-        onPress={() => navigation.navigate('Pipeline')}
-      >
-        <Briefcase size={18} color="#FFF" />
-        <Text style={styles.pipelineBtnText}>My Pipeline</Text>
-        <View style={styles.pipelineDot} />
-      </TouchableOpacity>
-    </View>
-  );
+  const [savedIds, setSavedIds] = useState<string[]>([]);
+  
+  const [isJobAlertsOpen, setIsJobAlertsOpen] = useState(false);
 
   useEffect(() => {
     fetchOpportunities();
@@ -120,7 +112,6 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Fetch public campaigns
       const { data: campaigns, error } = await supabase
         .from('campaigns')
         .select(`
@@ -138,7 +129,6 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
 
       if (error) throw error;
 
-      // 2. Fetch current user's applications to mark "already applied"
       const { data: applications } = await supabase
         .from('campaign_applications')
         .select('campaign_id')
@@ -154,10 +144,6 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
       setOpportunities(formatted);
     } catch (err: any) {
       console.error('Error fetching opportunities:', err);
-      // If table doesn't exist yet, we'll just show empty state
-      if (err.code === 'PGRST116' || err.message?.includes('campaign_applications')) {
-        // Table likely doesn't exist, ignore for now to prevent crash
-      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -228,7 +214,7 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
       );
     } catch (err: any) {
       console.error('Error submitting pitch:', err);
-      Alert.alert('Submission Failed', 'This usually happens if the application table is not ready or you have already applied.');
+      Alert.alert('Submission Failed', 'You may have already applied for this campaign.');
     } finally {
       setIsSubmitting(false);
     }
@@ -239,96 +225,91 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
     o.vibe?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const [savedIds, setSavedIds] = useState<string[]>([]);
-
   const OpportunityCard = ({ item }: { item: Opportunity }) => (
-    <View style={styles.card}>
-      <View style={styles.cardTop}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.brandName}>{item.profiles?.display_name || 'Premium Brand'}</Text>
-          <Text style={styles.campaignTitle}>{item.title}</Text>
+    <View style={styles.campaignCard}>
+      <View style={styles.cardTopRow}>
+        <View style={styles.brandInfo}>
+          <View style={styles.brandLogoPlaceholder}>
+            <Building2 size={16} color="#6B7280" />
+          </View>
+          <Text style={styles.brandNameText}>{item.profiles?.display_name || 'Premium Brand'}</Text>
         </View>
+        <View style={styles.escrowBadge}>
+          <ShieldCheck size={14} color="#10B981" />
+          <Text style={styles.escrowText}>₹{item.budget.toLocaleString()} Guaranteed</Text>
+        </View>
+      </View>
+
+      <Text style={styles.campaignTitleText}>{item.title}</Text>
+      
+      <View style={styles.cardBottomRow}>
+        <View style={styles.requirementsRow}>
+          <View style={styles.reqChip}>
+            <Video size={12} color="#4F46E5" />
+            <Text style={styles.reqChipText}>{item.deliverable_type || '1x IG Reel'}</Text>
+          </View>
+          <View style={styles.reqChip}>
+            <Briefcase size={12} color="#D97706" />
+            <Text style={styles.reqChipText}>{item.vibe || 'Tech Niche'}</Text>
+          </View>
+        </View>
+        
         <TouchableOpacity 
-          style={styles.saveBtn}
-          onPress={() => toggleSave(item.id)}
+          onPress={() => handleApply(item)}
+          disabled={item.has_applied}
+          style={[
+            styles.primaryApplyBtn,
+            item.has_applied && styles.appliedBtn
+          ]}
         >
-          <Bookmark 
-            size={22} 
-            color={savedIds.includes(item.id) ? '#000' : '#E5E7EB'} 
-            fill={savedIds.includes(item.id) ? '#000' : 'transparent'}
-          />
+          {item.has_applied ? (
+            <>
+              <CheckCircle2 size={14} color="#9CA3AF" />
+              <Text style={styles.appliedBtnText}>Applied</Text>
+            </>
+          ) : (
+            <Text style={styles.primaryApplyText}>Apply Now</Text>
+          )}
         </TouchableOpacity>
       </View>
-      <View style={styles.budgetBadge}>
-        <Text style={styles.budgetText}>₹{item.budget.toLocaleString()}</Text>
-      </View>
-
-      <View style={styles.tagContainer}>
-        <View style={styles.tag}>
-          <Briefcase size={12} color="#8B5CF6" />
-          <Text style={[styles.tagText, { color: '#8B5CF6' }]}>{item.vibe || 'Lifestyle'}</Text>
-        </View>
-        <View style={styles.tag}>
-          <Clock size={12} color="#6B7280" />
-          <Text style={styles.tagText}>Active Now</Text>
-        </View>
-      </View>
-
-      <View style={styles.deliverableRow}>
-        <Text style={styles.deliverableLabel}>Deliverables:</Text>
-        <Text style={styles.deliverableValue}>{item.deliverable_type || '1x TikTok Video'}</Text>
-      </View>
-
-      <TouchableOpacity 
-        onPress={() => handleApply(item)}
-        disabled={item.has_applied}
-        style={[
-          styles.applyButton, 
-          item.has_applied && styles.appliedButton
-        ]}
-      >
-        {item.has_applied ? (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-            <CheckCircle2 size={16} color="#9CA3AF" />
-            <Text style={styles.appliedButtonText}>Pitch Submitted</Text>
-          </View>
-        ) : (
-          <Text style={styles.applyButtonText}>Pitch Your Idea</Text>
-        )}
-      </TouchableOpacity>
     </View>
   );
 
-const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) => (
-  <TouchableOpacity 
-    style={[styles.card, styles.inviteCard]}
-    onPress={() => navigation.navigate('OfferReview', { offerId: item.id })}
-  >
-    <View style={styles.cardTop}>
-      <View style={{ flex: 1 }}>
-        <View style={styles.exclusiveBadgeRow}>
-          <Zap size={12} color="#F59E0B" fill="#F59E0B" />
-          <Text style={styles.exclusiveBadgeText}>EXCLUSIVE INVITE</Text>
+  const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) => (
+    <TouchableOpacity 
+      style={[styles.campaignCard, { borderColor: '#FDE68A', backgroundColor: '#FFFBEB' }]}
+      onPress={() => navigation.navigate('OfferReview', { offerId: item.id })}
+    >
+      <View style={styles.cardTopRow}>
+        <View style={{ flex: 1 }}>
+          <View style={styles.exclusiveBadgeRow}>
+            <Zap size={12} color="#F59E0B" fill="#F59E0B" />
+            <Text style={styles.exclusiveBadgeText}>VIP DIRECT INVITE</Text>
+          </View>
+          <Text style={styles.brandNameText}>{item.campaigns?.profiles?.display_name}</Text>
+          <Text style={styles.campaignTitleText}>{item.campaigns?.title}</Text>
         </View>
-        <Text style={styles.brandName}>{item.campaigns?.profiles?.display_name}</Text>
-        <Text style={styles.campaignTitle}>{item.campaigns?.title}</Text>
+        <View style={styles.escrowBadge}>
+          <Text style={styles.escrowText}>₹{item.campaigns?.budget?.toLocaleString()} Guaranteed</Text>
+        </View>
       </View>
-      <View style={styles.budgetBadge}>
-        <Text style={styles.budgetText}>₹{item.campaigns?.budget?.toLocaleString()}</Text>
+  
+      <View style={[styles.cardBottomRow, { marginTop: 16 }]}>
+        <View style={styles.requirementsRow}>
+          <Text style={styles.reqChipText}>Deliverable: {item.campaigns?.deliverable_type}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: '#000', marginRight: 4 }}>View Offer</Text>
+          <ChevronRight size={16} color="#000" />
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
+  );
 
-    <View style={styles.deliverableRow}>
-      <Text style={styles.deliverableLabel}>Deliverables:</Text>
-      <Text style={styles.deliverableValue}>{item.campaigns?.deliverable_type}</Text>
-    </View>
-
-    <View style={styles.inviteFooter}>
-      <Text style={styles.viewOfferText}>View Full Brief</Text>
-      <ChevronRight size={16} color="#000" />
-    </View>
-  </TouchableOpacity>
-);
+  const handleJobAlertsSubmit = (data: any) => {
+    console.log('Job alerts set:', data);
+    Alert.alert('Alerts Activated', `We'll notify you when a ${data.niche} brand posts a ${data.deliverable} brief.`);
+  };
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
@@ -341,38 +322,46 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
           alignSelf: isDesktop ? 'center' : undefined,
         }
       ]}>
-        <View className="flex-row justify-between items-end">
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
           <View>
             <Text style={styles.headerTitle}>Casting Board</Text>
-            <Text style={styles.headerSubtitle}>Discover public collaboration briefs</Text>
+            <Text style={styles.headerSubtitle}>Discover exclusive collaboration briefs</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 1 }}>
-            <View className="bg-black px-3 py-1 rounded-full">
-              <Text className="text-white text-[10px] font-black uppercase">Marketplace</Text>
-            </View>
-            <TouchableOpacity onPress={() => navigation.navigate('Notifications' as never)} style={{ backgroundColor: '#F3F4F6', padding: 8, borderRadius: 20 }}>
-              <Bell size={20} color="#000" />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Notifications' as never)} style={styles.bellIconBtn}>
+            <Bell size={20} color="#000" />
+          </TouchableOpacity>
         </View>
         
         <View style={styles.searchContainer}>
           <Search size={20} color="#9CA3AF" />
           <TextInput
-            placeholder="Search niches or campaigns..."
+            placeholder="Search campaigns by brand or keyword..."
             style={styles.searchInput}
             value={searchQuery}
             onChangeText={setSearchQuery}
             placeholderTextColor="#9CA3AF"
+            {...(Platform.OS === 'web' ? { style: [styles.searchInput, { outlineWidth: 0 } as any] } : {})}
           />
         </View>
+
+        {/* Filter Console (Only on Marketplace Tab) */}
+        {activeTab === 'marketplace' && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.filterRow}>
+            {['Platform', 'Deliverable', 'Budget', 'Industry'].map(filter => (
+              <TouchableOpacity key={filter} style={styles.filterPill}>
+                <Text style={styles.filterPillText}>{filter}</Text>
+                <ChevronDown size={14} color="#64748B" />
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        )}
 
         <View style={styles.tabContainer}>
           <TouchableOpacity 
             onPress={() => setActiveTab('marketplace')}
             style={[styles.tab, activeTab === 'marketplace' && styles.activeTab]}
           >
-            <Text style={[styles.tabText, activeTab === 'marketplace' && styles.activeTabText]}>Casting Board</Text>
+            <Text style={[styles.tabText, activeTab === 'marketplace' && styles.activeTabText]}>Marketplace</Text>
           </TouchableOpacity>
           <TouchableOpacity 
             onPress={() => setActiveTab('invites')}
@@ -405,20 +394,75 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
           filteredOpportunities.length > 0 ? (
             filteredOpportunities.map(o => <OpportunityCard key={o.id} item={o} />)
           ) : (
-            <View style={styles.emptyState}>
-              <Briefcase size={48} color="#E5E7EB" />
-              <Text style={styles.emptyTitle}>No Casting Calls Found</Text>
-              <Text style={styles.emptySubtitle}>Check back later for new brand collaboration briefs.</Text>
+            <View style={styles.emptyStateContainer}>
+              <View style={styles.emptyAlertBox}>
+                <Zap size={32} color="#8B5CF6" />
+                <Text style={styles.emptyAlertTitle}>No exact matches right now, but deals move fast.</Text>
+                <Text style={styles.emptyAlertSub}>
+                  Top brands post briefs daily. Don't miss out on lucrative collaborations that fit your niche.
+                </Text>
+                <TouchableOpacity 
+                  style={styles.jobAlertsBtn}
+                  onPress={() => setIsJobAlertsOpen(true)}
+                >
+                  <Bell size={16} color="#FFF" />
+                  <Text style={styles.jobAlertsBtnText}>Set up Job Alerts</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.recentlyClosedTitle}>Recently Closed Deals</Text>
+              
+              {/* Mocked Social Proof Cards */}
+              <View style={[styles.campaignCard, styles.mockCard]}>
+                <View style={styles.cardTopRow}>
+                  <View style={styles.brandInfo}>
+                    <Building2 size={14} color="#9CA3AF" />
+                    <Text style={[styles.brandNameText, { color: '#9CA3AF' }]}>Fintify App</Text>
+                  </View>
+                  <View style={[styles.escrowBadge, { backgroundColor: '#F3F4F6' }]}>
+                    <Text style={[styles.escrowText, { color: '#6B7280' }]}>₹65,000 Payout</Text>
+                  </View>
+                </View>
+                <Text style={[styles.campaignTitleText, { color: '#9CA3AF' }]}>Personal Finance App Promo</Text>
+                <View style={[styles.cardBottomRow, { opacity: 0.5 }]}>
+                  <View style={styles.requirementsRow}>
+                    <Text style={styles.reqChipText}>1x YouTube Short</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#9CA3AF' }}>Filled in 2 hours</Text>
+                </View>
+              </View>
+
+              <View style={[styles.campaignCard, styles.mockCard]}>
+                <View style={styles.cardTopRow}>
+                  <View style={styles.brandInfo}>
+                    <Building2 size={14} color="#9CA3AF" />
+                    <Text style={[styles.brandNameText, { color: '#9CA3AF' }]}>Luxe Apparel</Text>
+                  </View>
+                  <View style={[styles.escrowBadge, { backgroundColor: '#F3F4F6' }]}>
+                    <Text style={[styles.escrowText, { color: '#6B7280' }]}>₹30,000 Payout</Text>
+                  </View>
+                </View>
+                <Text style={[styles.campaignTitleText, { color: '#9CA3AF' }]}>Summer Collection Unboxing</Text>
+                <View style={[styles.cardBottomRow, { opacity: 0.5 }]}>
+                  <View style={styles.requirementsRow}>
+                    <Text style={styles.reqChipText}>1x IG Reel</Text>
+                  </View>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#9CA3AF' }}>Filled in 45 mins</Text>
+                </View>
+              </View>
+
             </View>
           )
         ) : (
           invites.length > 0 ? (
             invites.map(i => <DirectInviteCard key={i.id} item={i} navigation={useNavigation()} />)
           ) : (
-            <View style={styles.emptyState}>
-              <Zap size={48} color="#E5E7EB" />
-              <Text style={styles.emptyTitle}>No Direct Invites</Text>
-              <Text style={styles.emptySubtitle}>When a brand hand-picks you for a campaign, it will appear here.</Text>
+            <View style={styles.vipEmptyState}>
+              <View style={styles.vipIconCircle}>
+                <Zap size={32} color="#F59E0B" fill="#F59E0B" />
+              </View>
+              <Text style={styles.emptyTitle}>Your VIP Inbox is empty</Text>
+              <Text style={styles.emptySubtitle}>When a brand bypasses the public board and sends an exclusive offer directly to you, it will appear here.</Text>
             </View>
           )
         )}
@@ -462,6 +506,7 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
                 value={pitch}
                 onChangeText={setPitch}
                 placeholderTextColor="#9CA3AF"
+                {...(Platform.OS === 'web' ? { style: [styles.pitchInput, { outlineWidth: 0 } as any] } : {})}
               />
 
               <View style={styles.attachedNote}>
@@ -493,6 +538,13 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      {/* Job Alerts Modal */}
+      <JobAlertsModal 
+        visible={isJobAlertsOpen}
+        onClose={() => setIsJobAlertsOpen(false)}
+        onSubmit={handleJobAlertsSubmit}
+      />
     </View>
   );
 };
@@ -503,24 +555,31 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: '#F1F5F9',
   },
   headerTitle: {
     fontSize: 28,
     fontWeight: '900',
-    color: '#000',
+    color: '#0F172A',
     letterSpacing: -0.5,
   },
   headerSubtitle: {
     fontSize: 15,
-    color: '#6B7280',
+    color: '#64748B',
     marginTop: 4,
     fontWeight: '500',
+  },
+  bellIconBtn: {
+    backgroundColor: '#F8FAFC',
+    padding: 10,
+    borderRadius: 20,
   },
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F3F4F6',
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     borderRadius: 16,
     paddingHorizontal: 16,
     marginTop: 20,
@@ -529,135 +588,310 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     marginLeft: 12,
-    fontSize: 16,
-    color: '#000',
+    fontSize: 15,
+    color: '#0F172A',
     fontWeight: '500',
   },
-  card: {
+  
+  // Filter Console
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+    paddingBottom: 4,
+  },
+  filterPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
+  },
+  filterPillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+  },
+
+  tabContainer: {
+    flexDirection: 'row',
+    marginTop: 24,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+    padding: 4,
+    gap: 4,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 12,
+  },
+  activeTab: {
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  activeTabText: {
+    color: '#0F172A',
+  },
+  badge: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#EF4444',
+    marginTop: -8,
+  },
+
+  // Campaign Cards (Lucrative Bounty Style)
+  campaignCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 20,
-    marginBottom: 20,
+    marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#F1F5F9',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 12,
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.04,
+        shadowRadius: 16,
       },
       android: {
         elevation: 3,
       },
+      web: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.04,
+        shadowRadius: 16,
+      }
     }),
   },
-  cardTop: {
+  cardTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 16,
+    alignItems: 'center',
+    marginBottom: 12,
   },
-  brandName: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#6B7280',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
+  brandInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
   },
-  campaignTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#000',
-    letterSpacing: -0.3,
+  brandLogoPlaceholder: {
+    width: 24,
+    height: 24,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  budgetBadge: {
-    backgroundColor: '#F0FDF4',
+  brandNameText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  escrowBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ECFDF5',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
-  budgetText: {
-    color: '#166534',
-    fontSize: 15,
+  escrowText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#065F46',
+  },
+  campaignTitleText: {
+    fontSize: 20,
     fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -0.5,
+    marginBottom: 20,
   },
-  tagContainer: {
+  cardBottomRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
   },
-  tag: {
+  requirementsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    flex: 1,
+    paddingRight: 16,
+  },
+  reqChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  tagText: {
+  reqChipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6B7280',
+    color: '#475569',
   },
-  deliverableRow: {
-    backgroundColor: '#F9FAFB',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 20,
-  },
-  deliverableLabel: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#9CA3AF',
-    textTransform: 'uppercase',
-    marginBottom: 4,
-  },
-  deliverableValue: {
-    fontSize: 14,
-    color: '#374151',
-    fontWeight: '600',
-  },
-  applyButton: {
-    backgroundColor: '#000',
-    height: 52,
-    borderRadius: 16,
+  primaryApplyBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#000000',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 14,
+    gap: 6,
   },
-  applyButtonText: {
-    color: '#FFF',
-    fontSize: 16,
+  primaryApplyText: {
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '800',
   },
-  appliedButton: {
-    backgroundColor: '#F3F4F6',
+  appliedBtn: {
+    backgroundColor: '#F1F5F9',
   },
-  appliedButtonText: {
+  appliedBtnText: {
     color: '#9CA3AF',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '800',
   },
-  emptyState: {
+  exclusiveBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginBottom: 8,
+  },
+  exclusiveBadgeText: {
+    fontSize: 11,
+    fontWeight: '900',
+    color: '#D97706',
+    letterSpacing: 1,
+  },
+
+  // Empty State & Job Alerts
+  emptyStateContainer: {
+    marginTop: 20,
+  },
+  emptyAlertBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#F5F3FF',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+      },
+      android: { elevation: 4 },
+      web: {
+        shadowColor: '#8B5CF6',
+        shadowOffset: { width: 0, height: 10 },
+        shadowOpacity: 0.1,
+        shadowRadius: 20,
+      }
+    }),
+  },
+  emptyAlertTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: '#0F172A',
+    textAlign: 'center',
+    marginTop: 16,
+    marginBottom: 8,
+  },
+  emptyAlertSub: {
+    fontSize: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 24,
+  },
+  jobAlertsBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 16,
+    gap: 8,
+  },
+  jobAlertsBtnText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  recentlyClosedTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#94A3B8',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 40,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  mockCard: {
+    opacity: 0.7,
+    backgroundColor: '#FAFAFA',
+  },
+
+  vipEmptyState: {
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 60,
+  },
+  vipIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#FEF3C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: '800',
     color: '#000',
-    marginTop: 16,
+    marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
     color: '#9CA3AF',
     textAlign: 'center',
-    marginTop: 8,
     lineHeight: 20,
+    maxWidth: 280,
   },
+
+  // Modal Styles
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.6)',
@@ -715,14 +949,14 @@ const styles = StyleSheet.create({
   },
   pitchInput: {
     height: 180,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: '#F8FAFC',
     borderRadius: 20,
     padding: 20,
     fontSize: 16,
-    color: '#000',
+    color: '#0F172A',
     fontWeight: '500',
     borderWidth: 1,
-    borderColor: '#F3F4F6',
+    borderColor: '#E2E8F0',
   },
   attachedNote: {
     flexDirection: 'row',
@@ -766,99 +1000,4 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginBottom: 40,
   },
-  tabContainer: {
-    flexDirection: 'row',
-    marginTop: 24,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 14,
-    padding: 4,
-    gap: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 10,
-  },
-  activeTab: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#6B7280',
-  },
-  activeTabText: {
-    color: '#000',
-  },
-  badge: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#EF4444',
-  },
-  inviteCard: {
-    borderColor: '#FEF3C7',
-    borderWidth: 1.5,
-  },
-  exclusiveBadgeRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginBottom: 6,
-  },
-  exclusiveBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-    color: '#D97706',
-  },
-  inviteFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-  },
-  viewOfferText: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#000',
-  },
-  pipelineHeader: {
-    paddingHorizontal: 20,
-    marginTop: 20,
-    marginBottom: 10,
-  },
-  pipelineBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#000',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 18,
-    gap: 12,
-  },
-  pipelineBtnText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '800',
-  },
-  pipelineDot: {
-    marginLeft: 'auto',
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#EF4444',
-  },
-  saveBtn: {
-    padding: 4,
-    marginRight: -4,
-  }
 });
