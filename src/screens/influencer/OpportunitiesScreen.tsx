@@ -29,8 +29,10 @@ import {
   Send,
   Zap,
   Bookmark,
-  Heart
+  Heart,
+  Bell
 } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
 
 type Opportunity = {
   id: string;
@@ -46,7 +48,7 @@ type Opportunity = {
   has_applied?: boolean;
 };
 
-export const OpportunitiesScreen = () => {
+export const OpportunitiesScreen = ({ navigation }: any) => {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width > 768;
@@ -344,8 +346,13 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
             <Text style={styles.headerTitle}>Casting Board</Text>
             <Text style={styles.headerSubtitle}>Discover public collaboration briefs</Text>
           </View>
-          <View className="bg-black px-3 py-1 rounded-full mb-1">
-            <Text className="text-white text-[10px] font-black uppercase">Marketplace</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 1 }}>
+            <View className="bg-black px-3 py-1 rounded-full">
+              <Text className="text-white text-[10px] font-black uppercase">Marketplace</Text>
+            </View>
+            <TouchableOpacity onPress={() => navigation.navigate('Notifications' as never)} style={{ backgroundColor: '#F3F4F6', padding: 8, borderRadius: 20 }}>
+              <Bell size={20} color="#000" />
+            </TouchableOpacity>
           </View>
         </View>
         

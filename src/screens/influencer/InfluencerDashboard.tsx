@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { supabase } from '@/lib/supabase';
-import { Inbox, CheckCircle2, XCircle, Send, Link, AlertTriangle, Upload, FileVideo, Check, ChevronRight, Clock } from 'lucide-react-native';
+import { Inbox, CheckCircle2, XCircle, Send, Link, AlertTriangle, Upload, FileVideo, Check, ChevronRight, Clock, Bell } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
 
 type Campaign = {
@@ -268,9 +268,14 @@ export const InfluencerDashboard = () => {
       width: isDesktop ? '100%' : undefined,
       alignSelf: isDesktop ? 'center' : undefined,
     }}>
-      <View className="mb-6">
-        <Text style={{ fontSize: 28, fontWeight: '900', color: '#000', letterSpacing: -0.5 }}>Collaboration Hub</Text>
-        <Text className="text-gray-500 mt-1">Manage your active campaigns and brand deals</Text>
+      <View className="flex-row justify-between items-start mb-6">
+        <View>
+          <Text style={{ fontSize: 28, fontWeight: '900', color: '#000', letterSpacing: -0.5 }}>Collaboration Hub</Text>
+          <Text className="text-gray-500 mt-1">Manage your active campaigns and brand deals</Text>
+        </View>
+        <TouchableOpacity onPress={() => navigation.navigate('Notifications' as never)} style={{ backgroundColor: '#F3F4F6', padding: 8, borderRadius: 20 }}>
+          <Bell size={20} color="#000" />
+        </TouchableOpacity>
       </View>
 
       <View className="flex-row bg-gray-200 p-1 rounded-2xl mb-6">

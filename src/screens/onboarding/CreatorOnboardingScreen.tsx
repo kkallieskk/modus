@@ -80,7 +80,7 @@ export const CreatorOnboardingScreen = () => {
   const navigation = useNavigation<any>();
   const { profile, refreshProfile } = useProfile();
   const [step, setStep] = useState(1);
-  const totalSteps = 3;
+  const totalSteps = 4;
 
   const { width: windowWidth } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && windowWidth > 640;
@@ -91,6 +91,14 @@ export const CreatorOnboardingScreen = () => {
   // Niche Selection & Portfolio Slots
   const [selectedNiches, setSelectedNiches] = useState<string[]>([]);
   const [portfolio, setPortfolio] = useState<(string | null)[]>([null, null, null]);
+  
+  // Theme Color Selection
+  const [selectedColors, setSelectedColors] = useState<string[]>([]);
+
+  const BRAND_COLORS = [
+    '#10B981', '#3B82F6', '#8B5CF6', '#EC4899', '#F43F5E', '#F59E0B', 
+    '#EAB308', '#84CC16', '#06B6D4', '#6366F1', '#D946EF', '#14B8A6'
+  ];
   const [isFinishing, setIsFinishing] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -471,7 +479,8 @@ export const CreatorOnboardingScreen = () => {
           industry: industryString,
           social_link: socialLinkJson,
           avatar_url: selectedAvatar,
-          bio: selectedBio
+          bio: selectedBio,
+          brand_color: selectedColors.length > 0 ? selectedColors.join(',') : '#10B981'
         })
         .eq('id', user.id);
 
@@ -1424,6 +1433,64 @@ export const CreatorOnboardingScreen = () => {
 
 
 
+  const renderStep4 = () => {
+    return (
+      <View style={{ flex: 1, paddingBottom: 40 }}>
+        <View style={{ marginBottom: 32 }}>
+          <Text style={{ fontSize: 32, fontWeight: '900', color: '#000', letterSpacing: -1, marginBottom: 8 }}>Personalize Your Space</Text>
+          <Text style={{ fontSize: 16, color: '#6B7280', lineHeight: 24 }}>Pick up to 3 favorite colors to give your dashboard a personal touch. These will be subtly used across your UI.</Text>
+        </View>
+
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+          {BRAND_COLORS.map(color => {
+            const isSelected = selectedColors.includes(color);
+            return (
+              <TouchableOpacity
+                key={color}
+                activeOpacity={0.7}
+                onPress={() => {
+                  if (isSelected) {
+                    setSelectedColors(prev => prev.filter(c => c !== color));
+                  } else {
+                    if (selectedColors.length < 3) {
+                      setSelectedColors(prev => [...prev, color]);
+                    } else {
+                      Alert.alert('Limit Reached', 'You can pick a maximum of 3 favorite colors.');
+                    }
+                  }
+                }}
+                style={{
+                  width: 60,
+                  height: 60,
+                  borderRadius: 30,
+                  backgroundColor: color,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  borderWidth: 4,
+                  borderColor: isSelected ? 'rgba(0,0,0,0.8)' : 'transparent',
+                  shadowColor: color,
+                  shadowOffset: { width: 0, height: 4 },
+                  shadowOpacity: 0.3,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }}
+              >
+                {isSelected && <Check size={24} color="#FFF" />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+        
+        <View style={{ marginTop: 40, backgroundColor: '#F3F4F6', padding: 16, borderRadius: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Info size={20} color="#6B7280" />
+          <Text style={{ flex: 1, color: '#4B5563', fontSize: 13, lineHeight: 18 }}>
+            Don't worry, you can always change these later in your settings. If you don't pick any, we'll use a clean minimal default.
+          </Text>
+        </View>
+      </View>
+    );
+  };
+
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]}>
       <Orb os={{ top: '10%', left: '15%' }} color="rgba(5,150,105,0.18)" size={460} delay={0} />
@@ -1482,6 +1549,7 @@ export const CreatorOnboardingScreen = () => {
             {step === 1 && renderStep1()}
             {step === 2 && renderStep2()}
             {step === 3 && renderStep3()}
+            {step === 4 && renderStep4()}
           </ScrollView>
 
           {/* Footer Navigation */}

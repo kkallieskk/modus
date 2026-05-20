@@ -23,7 +23,8 @@ import {
   PlusCircle,
   Briefcase,
   Download,
-  FileSpreadsheet
+  FileSpreadsheet,
+  Bell
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { WithdrawalModal } from '@/components/WithdrawalModal';
@@ -185,10 +186,15 @@ export const EarningsScreen = () => {
               <Text style={styles.headerTitle}>Earnings</Text>
               <Text style={styles.headerSubtitle}>Track and withdraw your revenue</Text>
             </View>
-            <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
-              <FileSpreadsheet size={20} color="#000" />
-              <Text style={styles.exportBtnText}>Export</Text>
-            </TouchableOpacity>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <TouchableOpacity style={styles.exportBtn} onPress={handleExport}>
+                <FileSpreadsheet size={20} color="#000" />
+                <Text style={styles.exportBtnText}>Export</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('Notifications' as never)} style={{ backgroundColor: '#F3F4F6', padding: 8, borderRadius: 20 }}>
+                <Bell size={20} color="#000" />
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
 
