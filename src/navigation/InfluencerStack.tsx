@@ -13,10 +13,13 @@ import { NotificationScreen } from '@/screens/influencer/NotificationScreen';
 import { PublicMediaKitScreen } from '@/screens/influencer/PublicMediaKitScreen';
 import { PipelineScreen } from '@/screens/influencer/PipelineScreen';
 import { OpportunitiesScreen } from '@/screens/influencer/OpportunitiesScreen';
+import { MessagesScreen } from '@/screens/influencer/MessagesScreen';
+import { SupportModal } from '@/components/SupportModal';
 import { 
   Inbox, User, Briefcase, Wallet, Search, 
   Settings, Bell, LogOut, X,
-  Zap, PanelLeftClose, PanelLeftOpen
+  Zap, PanelLeftClose, PanelLeftOpen,
+  Home, Star, MessageCircle, Headphones
 } from 'lucide-react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useProfile } from '@/lib/ProfileContext';
@@ -37,6 +40,7 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   if (isDesktop) {
     const sidebarWidth = isExpanded ? 240 : 64;
@@ -116,9 +120,11 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
 
                 const renderIcon = () => {
                   const iconColor = isFocused ? creatorColor : '#64748B';
-                  if (label === 'Dashboard') return <Briefcase size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
-                  if (label === 'Workspace') return <Inbox size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
-                  if (label === 'Earnings') return <Wallet size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Dashboard') return <Home size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Media Kit') return <Star size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Campaigns') return <Briefcase size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Inbox') return <MessageCircle size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Wallet') return <Wallet size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
                   return <Zap size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
                 };
 
@@ -157,6 +163,10 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
                 <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); navigation.navigate('Settings'); }}>
                   <Settings size={15} color="#475569" strokeWidth={2} />
                   <Text style={styles.quickMenuText}>Settings</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); setIsSupportOpen(true); }}>
+                  <Headphones size={15} color="#475569" strokeWidth={2} />
+                  <Text style={styles.quickMenuText}>Support</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); navigation.navigate('Notifications'); }}>
                   <Bell size={15} color="#475569" strokeWidth={2} />
@@ -222,6 +232,12 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
             </Pressable>
           </Pressable>
         </Modal>
+
+        {/* Support Modal */}
+        <SupportModal 
+          visible={isSupportOpen} 
+          onClose={() => setIsSupportOpen(false)} 
+        />
       </View>
     );
   }
@@ -251,9 +267,11 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
 
         const renderIcon = () => {
           const iconColor = isFocused ? creatorColor : '#9CA3AF';
-          if (label === 'Dashboard') return <Briefcase size={22} color={iconColor} />;
-          if (label === 'Workspace') return <Inbox size={22} color={iconColor} />;
-          if (label === 'Earnings') return <Wallet size={22} color={iconColor} />;
+          if (label === 'Dashboard') return <Home size={22} color={iconColor} />;
+          if (label === 'Media Kit') return <Star size={22} color={iconColor} />;
+          if (label === 'Campaigns') return <Briefcase size={22} color={iconColor} />;
+          if (label === 'Inbox') return <MessageCircle size={22} color={iconColor} />;
+          if (label === 'Wallet') return <Wallet size={22} color={iconColor} />;
           return <Zap size={22} color={iconColor} />;
         };
 
@@ -295,11 +313,19 @@ const InfluencerTabs = () => {
         component={InfluencerDashboard} 
       />
       <Tab.Screen 
-        name="Workspace" 
+        name="Media Kit" 
+        component={CreatorProfileScreen} 
+      />
+      <Tab.Screen 
+        name="Campaigns" 
         component={OpportunitiesScreen} 
       />
       <Tab.Screen 
-        name="Earnings" 
+        name="Inbox" 
+        component={MessagesScreen} 
+      />
+      <Tab.Screen 
+        name="Wallet" 
         component={EarningsScreen} 
       />
     </Tab.Navigator>

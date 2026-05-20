@@ -227,6 +227,25 @@ export const CreatorProfileScreen = () => {
       </View>
  
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Top Actions for Media Kit Management */}
+        <View style={styles.topActionsContainer}>
+          <TouchableOpacity 
+            style={styles.primaryActionBtn}
+            onPress={() => navigation.navigate('PublicMediaKit')}
+          >
+            <ExternalLink size={18} color="#FFF" />
+            <Text style={styles.primaryActionText}>Preview Public Profile</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={styles.secondaryActionBtn}
+            onPress={copyToClipboard}
+          >
+            <Copy size={18} color="#000" />
+            <Text style={styles.secondaryActionText}>Copy Media Kit Link</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Hero Section */}
         <View style={styles.heroSection}>
           <View style={styles.avatarOuter}>
@@ -483,6 +502,40 @@ const styles = StyleSheet.create({
     borderRadius: 14 
   },
   editBtnText: { color: '#FFF', fontSize: 13, fontWeight: '800' },
+  topActionsContainer: {
+    paddingHorizontal: 20,
+    marginTop: 10,
+    marginBottom: 20,
+    gap: 12,
+  },
+  primaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#000',
+    paddingVertical: 16,
+    borderRadius: 16,
+    gap: 10,
+  },
+  primaryActionText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  secondaryActionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 16,
+    borderRadius: 16,
+    gap: 10,
+  },
+  secondaryActionText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: '800',
+  },
   heroSection: { alignItems: 'center', paddingHorizontal: 40, marginTop: 10 },
   avatarOuter: { padding: 4, borderRadius: 54, borderWidth: 2, borderColor: '#F3F4F6', position: 'relative' },
   avatarInner: { width: 100, height: 100, borderRadius: 50, overflow: 'hidden' },
