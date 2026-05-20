@@ -41,6 +41,7 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
   if (isDesktop) {
     const sidebarWidth = isExpanded ? 260 : 80;
 
+    return (
       <View style={[styles.webSidebar, { width: sidebarWidth, overflow: 'hidden' }]}>
         {/* Blurred Color Accents */}
         <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
@@ -128,7 +129,6 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
               );
             })}
           </View>
-          </View>
         </View>
 
         {/* Bottom Profile / Branding */}
@@ -186,6 +186,8 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
             )}
             {isExpanded && <ChevronDown size={16} color="#64748B" />}
           </TouchableOpacity>
+        </View>
+
         </View>
 
         {/* Search Modal */}
