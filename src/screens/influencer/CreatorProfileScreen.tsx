@@ -11,11 +11,12 @@ import {
   Platform,
   Alert,
   Share,
-  Clipboard
 } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
+import * as Clipboard from 'expo-clipboard';
 import { supabase } from '@/lib/supabase';
 import { linkInstagramAccount } from '@/lib/socialAuth';
+import { PortfolioUploadModal } from '@/components/PortfolioUploadModal';
 import { 
   Settings, 
   Edit3, 
@@ -31,7 +32,12 @@ import {
   Copy,
   Users,
   PieChart,
-  MapPin
+  MapPin,
+  Eye,
+  Link,
+  Plus,
+  Trash2,
+  Edit2
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -42,6 +48,8 @@ export const CreatorProfileScreen = () => {
   const [profile, setProfile] = useState<any>(null);
   const [reputation, setReputation] = useState<any>(null);
   const [isLinkingInstagram, setIsLinkingInstagram] = useState(false);
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [hoveredPortfolioItem, setHoveredPortfolioItem] = useState<number | null>(null);
 
   useEffect(() => {
     if (isFocused) {
@@ -55,7 +63,6 @@ export const CreatorProfileScreen = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      // 1. Fetch Profile
       const { data: profData, error: profError } = await supabase
         .from('profiles')
         .select('*')
@@ -65,7 +72,6 @@ export const CreatorProfileScreen = () => {
       if (profError) throw profError;
       setProfile(profData);
 
-      // 2. Fetch Reputation
       const { data: reviews, error: revError } = await supabase
         .from('collab_reviews')
         .select('rating, tags')
@@ -100,22 +106,14 @@ export const CreatorProfileScreen = () => {
     }
   };
 
-  const handleShare = async () => {
-    const profileLink = `https://modus.app/u/${profile.id}`;
-    try {
-      await Share.share({
-        message: `Check out my Modus Media Kit: ${profileLink}`,
-        url: profileLink,
-      });
-    } catch (error: any) {
-      Alert.alert('Error', error.message);
+  const copyToClipboard = async () => {
+    const profileLink = `https://modus.app/${profile?.username || profile?.id}`;
+    await Clipboard.setStringAsync(profileLink);
+    if (Platform.OS === 'web') {
+      window.alert('Media Kit link copied!');
+    } else {
+      Alert.alert('Link Copied', 'Media Kit link copied to clipboard.');
     }
-  };
-
-  const copyToClipboard = () => {
-    const profileLink = `https://modus.app/u/${profile.id}`;
-    Clipboard.setString(profileLink);
-    Alert.alert('Link Copied', 'Your Media Kit link has been copied to your clipboard!');
   };
 
   const handleLinkInstagram = async () => {
@@ -124,7 +122,6 @@ export const CreatorProfileScreen = () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { Alert.alert('Error', 'Please log in first.'); return; }
 
-      // Clear stale callbacks
       if (typeof window !== 'undefined') {
         window.localStorage.removeItem('instagram_oauth_callback');
         window.localStorage.removeItem('instagram_oauth_error');
@@ -132,7 +129,6 @@ export const CreatorProfileScreen = () => {
 
       await linkInstagramAccount(user.id);
 
-      // Poll for up to 10 seconds for the DB to update
       let success = false;
       for (let i = 0; i < 10; i++) {
         await new Promise(r => setTimeout(r, 1000));
@@ -159,6 +155,11 @@ export const CreatorProfileScreen = () => {
     }
   };
 
+  const handlePortfolioUpload = (data: any) => {
+    console.log('Portfolio Item Uploaded:', data);
+    Alert.alert('Success', 'Portfolio item added successfully!');
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -167,7 +168,6 @@ export const CreatorProfileScreen = () => {
     );
   }
 
-  // 3. Parse live Instagram metrics from social_link JSON
   let followersText = '0';
   let engagementText = '0%';
   let nicheList = ['Lifestyle', 'Fashion', 'Comedy', 'Fitness'];
@@ -200,7 +200,6 @@ export const CreatorProfileScreen = () => {
     }
   }
 
-  // Niches List from database profile or falling back to default lists
   if (profile?.niche_industry) {
     nicheList = profile.niche_industry.split(',').map((s: string) => s.trim()).filter(Boolean);
   }
@@ -209,86 +208,71 @@ export const CreatorProfileScreen = () => {
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header Controls */}
-      <View style={styles.headerActions}>
-        <TouchableOpacity 
-          style={styles.iconBtn}
-          onPress={() => navigation.navigate('Settings')}
-        >
-          <Settings size={22} color="#000" />
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.editBtn}
-          onPress={() => navigation.navigate('EditProfile')}
-        >
-          <Edit3 size={18} color="#FFF" />
-          <Text style={styles.editBtnText}>Edit Profile</Text>
-        </TouchableOpacity>
-      </View>
- 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Top Actions for Media Kit Management */}
-        <View style={styles.topActionsContainer}>
+      {/* 1. The Top Action Bar (The Utilities) - Sticky Header */}
+      <View style={styles.stickyHeader}>
+        <Text style={styles.headerTitle}>Media Kit Management</Text>
+        <View style={styles.headerActionsGroup}>
           <TouchableOpacity 
-            style={styles.primaryActionBtn}
+            style={styles.pillBtn}
             onPress={() => navigation.navigate('PublicMediaKit')}
           >
-            <ExternalLink size={18} color="#FFF" />
-            <Text style={styles.primaryActionText}>Preview Public Profile</Text>
+            <Eye size={16} color="#0F172A" />
+            {Platform.OS === 'web' && <Text style={styles.pillBtnText}>Preview</Text>}
           </TouchableOpacity>
-          
           <TouchableOpacity 
-            style={styles.secondaryActionBtn}
+            style={styles.pillBtn}
             onPress={copyToClipboard}
           >
-            <Copy size={18} color="#000" />
-            <Text style={styles.secondaryActionText}>Copy Media Kit Link</Text>
+            <Link size={16} color="#0F172A" />
+            {Platform.OS === 'web' && <Text style={styles.pillBtnText}>Copy Link</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.pillBtn, styles.pillBtnPrimary]}
+            onPress={() => navigation.navigate('EditProfile')}
+          >
+            <Edit3 size={16} color="#FFF" />
+            <Text style={[styles.pillBtnText, { color: '#FFF' }]}>Edit Profile</Text>
           </TouchableOpacity>
         </View>
+      </View>
 
-        {/* Hero Section */}
-        <View style={styles.heroSection}>
-          <View style={styles.avatarOuter}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        
+        {/* 2. The Identity Header (The Core Stats) - Profile Card */}
+        <View style={styles.profileCard}>
+          <View style={styles.profileCardLeft}>
             <View style={styles.avatarInner}>
-              <Image 
-                source={{ uri: avatarUri }} 
-                style={styles.avatar} 
-              />
+              <Image source={{ uri: avatarUri }} style={styles.avatar} />
+              <View style={styles.verifiedBadge}>
+                <Award size={10} color="#FFF" />
+              </View>
             </View>
-            <View style={styles.verifiedBadge}>
-              <Award size={14} color="#FFF" />
+            <View style={styles.profileCardInfo}>
+              <Text style={styles.profileCardName}>{profile?.display_name || 'Creator'}</Text>
+              <Text style={styles.profileCardBio} numberOfLines={2}>
+                {profile?.bio || 'Creator at Modus'}
+              </Text>
             </View>
           </View>
           
-          <Text style={styles.name}>{profile?.display_name}</Text>
-          <Text style={styles.bio} numberOfLines={3}>{profile?.bio || 'Creator at Modus'}</Text>
-          
-          {/* Social Stats */}
-          <View style={styles.statsContainer}>
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{followersText}</Text>
-              <Text style={styles.statLabel}>Followers</Text>
+          <View style={styles.profileCardRight}>
+            <View style={styles.statsGrid}>
+              <View style={styles.statsGridBox}>
+                <View style={styles.statsIconRow}>
+                  <Instagram size={14} color="#E1306C" />
+                  <Text style={styles.statsGridLabel}>Total Reach</Text>
+                </View>
+                <Text style={styles.statsGridValue}>{followersText}</Text>
+              </View>
+              <View style={styles.statsDivider} />
+              <View style={styles.statsGridBox}>
+                <View style={styles.statsIconRow}>
+                  <TrendingUp size={14} color="#10B981" />
+                  <Text style={styles.statsGridLabel}>Engagement</Text>
+                </View>
+                <Text style={styles.statsGridValue}>{engagementText}</Text>
+              </View>
             </View>
-            <View style={styles.divider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{engagementText}</Text>
-              <Text style={styles.statLabel}>Engagement</Text>
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.statBox}>
-              <Text style={styles.statValue}>{reputation?.reviewCount || 0}</Text>
-              <Text style={styles.statLabel}>Collabs</Text>
-            </View>
-          </View>
-
-          <View style={styles.shareRow}>
-            <TouchableOpacity style={styles.shareBtn} onPress={handleShare}>
-              <Share2 size={18} color="#FFF" />
-              <Text style={styles.shareBtnText}>Share Media Kit</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.copyBtn} onPress={copyToClipboard}>
-              <Copy size={18} color="#000" />
-            </TouchableOpacity>
           </View>
         </View>
 
@@ -317,16 +301,19 @@ export const CreatorProfileScreen = () => {
           </View>
         )}
 
-        {/* Portfolio Section */}
+        {/* 4. The Featured Portfolio (The Proof) */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Grid size={18} color="#000" />
               <Text style={styles.sectionTitle}>Featured Portfolio</Text>
             </View>
-            <TouchableOpacity style={styles.seeAll}>
-              <Text style={styles.seeAllText}>See All</Text>
-              <ChevronRight size={14} color="#6B7280" />
+            <TouchableOpacity 
+              style={styles.addWorkBtn}
+              onPress={() => setIsUploadModalOpen(true)}
+            >
+              <Plus size={14} color="#10B981" />
+              <Text style={styles.addWorkText}>Add Past Work</Text>
             </TouchableOpacity>
           </View>
 
@@ -336,7 +323,12 @@ export const CreatorProfileScreen = () => {
             contentContainerStyle={styles.portfolioScroll}
           >
             {[1, 2, 3].map((item) => (
-              <View key={item} style={styles.portfolioItem}>
+              <View 
+                key={item} 
+                style={styles.portfolioItem}
+                onMouseEnter={() => Platform.OS === 'web' && setHoveredPortfolioItem(item)}
+                onMouseLeave={() => Platform.OS === 'web' && setHoveredPortfolioItem(null)}
+              >
                 <Image 
                   source={{ uri: `https://images.unsplash.com/photo-1611162617474-5b21e879e113?q=80&w=400` }} 
                   style={styles.portfolioImg} 
@@ -344,12 +336,24 @@ export const CreatorProfileScreen = () => {
                 <View style={styles.playOverlay}>
                   <Play size={20} color="#FFF" fill="#FFF" />
                 </View>
+
+                {/* Edit/Trash Hover State */}
+                {(Platform.OS !== 'web' || hoveredPortfolioItem === item) && (
+                  <View style={styles.portfolioActionsOverlay}>
+                    <TouchableOpacity style={styles.portfolioActionBtn}>
+                      <Edit2 size={14} color="#FFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.portfolioActionBtn, { backgroundColor: '#EF4444' }]}>
+                      <Trash2 size={14} color="#FFF" />
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             ))}
           </ScrollView>
         </View>
 
-        {/* Verified Audience Demographics */}
+        {/* 5. Audience Demographics */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -395,28 +399,13 @@ export const CreatorProfileScreen = () => {
                 </View>
               );
             })()
-          ) : parsedSocialStats?.mediaCount === 0 ? (
-            <LinearGradient
-              colors={['#F3F4F6', '#E5E7EB']}
-              style={styles.demoNudgeCard}
-            >
-              <Play size={24} color="#6B7280" />
-              <Text style={styles.demoNudgeTitle}>Start Posting Content</Text>
-              <Text style={styles.demoNudgeText}>
-                Meta cannot generate audience insights because you haven't published any posts yet. Publish your first video to start building your audience!
-              </Text>
-            </LinearGradient>
           ) : (
-            <LinearGradient
-              colors={['#F3F4F6', '#E5E7EB']}
-              style={styles.demoNudgeCard}
-            >
-              <TrendingUp size={24} color="#6B7280" />
-              <Text style={styles.demoNudgeTitle}>Grow Your Audience</Text>
-              <Text style={styles.demoNudgeText}>
-                Meta requires at least 100 followers to unlock verified audience insights. Focus on consistent posting to unlock this powerful brand magnet!
+            <View style={styles.demoCompactBanner}>
+              <Award size={18} color="#9CA3AF" />
+              <Text style={styles.demoCompactText}>
+                Unlock verified demographics by reaching 100 followers.
               </Text>
-            </LinearGradient>
+            </View>
           )}
         </View>
 
@@ -432,7 +421,7 @@ export const CreatorProfileScreen = () => {
           </View>
         </View>
 
-        {/* Instagram Link Banner — shown only if NOT linked yet */}
+        {/* Instagram Link Banner */}
         {!parsedSocialStats && (
           <View style={styles.igBanner}>
             <View style={styles.igBannerLeft}>
@@ -455,122 +444,166 @@ export const CreatorProfileScreen = () => {
           </View>
         )}
 
-        {/* Developer Settings — visible only in dev/testing phase */}
-        <View style={styles.devSection}>
-          <View style={styles.devSectionHeader}>
-            <Text style={styles.devSectionTitle}>⚙️ Developer Settings</Text>
-            <Text style={styles.devSectionSub}>Temporary testing tools</Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.devBtn, isLinkingInstagram && { opacity: 0.6 }]}
-            onPress={handleLinkInstagram}
-            disabled={isLinkingInstagram}
-          >
-            <Instagram size={18} color="#E1306C" />
-            <Text style={styles.devBtnText}>
-              {parsedSocialStats ? `Re-link Instagram (@${parsedSocialStats.handle})` : 'Link Instagram Account'}
-            </Text>
-            {isLinkingInstagram && <ActivityIndicator size="small" color="#E1306C" style={{ marginLeft: 8 }} />}
-          </TouchableOpacity>
-        </View>
-
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      {/* Portfolio Upload Modal */}
+      <PortfolioUploadModal 
+        visible={isUploadModalOpen} 
+        onClose={() => setIsUploadModalOpen(false)} 
+        onSubmit={handlePortfolioUpload} 
+      />
     </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
+  container: { flex: 1, backgroundColor: '#FAFAFA' },
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  headerActions: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    paddingHorizontal: 20, 
-    paddingVertical: 16,
-    zIndex: 10
-  },
-  iconBtn: { padding: 10, backgroundColor: '#F9FAFB', borderRadius: 12 },
-  editBtn: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 8, 
-    backgroundColor: '#000', 
-    paddingHorizontal: 16, 
-    paddingVertical: 10, 
-    borderRadius: 14 
-  },
-  editBtnText: { color: '#FFF', fontSize: 13, fontWeight: '800' },
-  topActionsContainer: {
+  stickyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: 20,
-    marginTop: 10,
-    marginBottom: 20,
-    gap: 12,
+    paddingVertical: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+    zIndex: 100,
   },
-  primaryActionBtn: {
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  headerActionsGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  pillBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#000',
-    paddingVertical: 16,
-    borderRadius: 16,
-    gap: 10,
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 6,
   },
-  primaryActionText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '800',
+  pillBtnPrimary: {
+    backgroundColor: '#0F172A',
   },
-  secondaryActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#F3F4F6',
-    paddingVertical: 16,
-    borderRadius: 16,
-    gap: 10,
+  pillBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
   },
-  secondaryActionText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  heroSection: { alignItems: 'center', paddingHorizontal: 40, marginTop: 10 },
-  avatarOuter: { padding: 4, borderRadius: 54, borderWidth: 2, borderColor: '#F3F4F6', position: 'relative' },
-  avatarInner: { width: 100, height: 100, borderRadius: 50, overflow: 'hidden' },
-  avatar: { width: '100%', height: '100%' },
-  verifiedBadge: { 
-    position: 'absolute', 
-    bottom: 0, 
-    right: 0, 
-    backgroundColor: '#000', 
-    width: 28, 
-    height: 28, 
-    borderRadius: 14, 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#FFF'
-  },
-  name: { fontSize: 28, fontWeight: '900', color: '#000', marginTop: 16, letterSpacing: -0.5 },
-  bio: { fontSize: 14, color: '#6B7280', textAlign: 'center', marginTop: 8, lineHeight: 20, fontWeight: '500' },
-  statsContainer: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    marginTop: 24, 
-    backgroundColor: '#F9FAFB', 
-    paddingVertical: 16, 
-    paddingHorizontal: 24, 
+  
+  // Profile Card
+  profileCard: {
+    flexDirection: Platform.OS === 'web' && Platform.isPad ? 'row' : 'column',
+    alignItems: Platform.OS === 'web' && Platform.isPad ? 'center' : 'flex-start',
+    justifyContent: 'space-between',
+    backgroundColor: '#FFFFFF',
+    marginHorizontal: 20,
+    marginTop: 20,
+    padding: 24,
     borderRadius: 24,
     borderWidth: 1,
-    borderColor: '#F3F4F6'
+    borderColor: '#F1F5F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 10,
+    elevation: 2,
+    gap: 24,
   },
-  statBox: { alignItems: 'center', flex: 1 },
-  statValue: { fontSize: 18, fontWeight: '900', color: '#000' },
-  statLabel: { fontSize: 10, fontWeight: '700', color: '#9CA3AF', textTransform: 'uppercase', marginTop: 2 },
-  divider: { width: 1, height: 24, backgroundColor: '#E5E7EB' },
-  reputationCard: { paddingHorizontal: 20, marginTop: 32 },
+  profileCardLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  avatarInner: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    overflow: 'hidden',
+    position: 'relative',
+    borderWidth: 2,
+    borderColor: '#F1F5F9',
+  },
+  avatar: { width: '100%', height: '100%' },
+  verifiedBadge: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#10B981',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#FFF',
+  },
+  profileCardInfo: {
+    marginLeft: 16,
+    flex: 1,
+  },
+  profileCardName: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  profileCardBio: {
+    fontSize: 14,
+    color: '#64748B',
+    marginTop: 4,
+    lineHeight: 20,
+    fontWeight: '500',
+  },
+  profileCardRight: {
+    width: Platform.OS === 'web' && Platform.isPad ? 'auto' : '100%',
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  statsGridBox: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  statsIconRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  statsGridLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+    textTransform: 'uppercase',
+  },
+  statsGridValue: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#0F172A',
+  },
+  statsDivider: {
+    width: 1,
+    height: 32,
+    backgroundColor: '#E2E8F0',
+    marginHorizontal: 16,
+  },
+
+  reputationCard: { paddingHorizontal: 20, marginTop: 24 },
   reputationGradient: { 
     flexDirection: 'row', 
     padding: 20, 
@@ -586,53 +619,107 @@ const styles = StyleSheet.create({
   repRight: { flex: 1.2, flexDirection: 'row', flexWrap: 'wrap', gap: 6, justifyContent: 'flex-end' },
   tagBadge: { backgroundColor: '#FFF', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: '#FEF3C7' },
   tagText: { fontSize: 9, fontWeight: '800', color: '#B45309', textTransform: 'uppercase' },
+  
   section: { marginTop: 40 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 },
   sectionTitle: { fontSize: 18, fontWeight: '900', color: '#000', letterSpacing: -0.3 },
-  seeAll: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  seeAllText: { fontSize: 12, fontWeight: '700', color: '#6B7280' },
+  addWorkBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ECFDF5', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
+  addWorkText: { fontSize: 13, fontWeight: '700', color: '#10B981' },
   portfolioScroll: { paddingLeft: 20, gap: 16 },
   portfolioItem: { width: 140, height: 200, borderRadius: 20, overflow: 'hidden', backgroundColor: '#F3F4F6', position: 'relative' },
   portfolioImg: { width: '100%', height: '100%' },
   playOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(0,0,0,0.1)' },
+  portfolioActionsOverlay: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    flexDirection: 'row',
+    gap: 6,
+  },
+  portfolioActionBtn: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   nicheContainer: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 20, marginTop: 4 },
-  nicheBadge: { backgroundColor: '#F3F4F6', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
-  nicheText: { fontSize: 13, fontWeight: '700', color: '#374151' },
-  shareRow: {
+  nicheBadge: { backgroundColor: '#F1F5F9', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+  nicheText: { fontSize: 13, fontWeight: '700', color: '#334155' },
+  
+  // Demographics
+  verifiedTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginTop: 24,
+    backgroundColor: '#D1FAE5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  verifiedTagText: {
+    color: '#065F46',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  demographicsCard: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 16,
+    padding: 20,
+    marginHorizontal: 20,
+  },
+  demoTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 16,
+  },
+  demoBarContainer: {
+    width: '100%',
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#F1F5F9',
+    flexDirection: 'row',
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  demoBarFemale: { backgroundColor: '#EC4899', height: '100%' },
+  demoBarMale: { backgroundColor: '#3B82F6', height: '100%' },
+  demoLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     width: '100%',
   },
-  shareBtn: {
-    flex: 1,
+  demoLabelText: {
+    fontSize: 13,
+    color: '#475569',
+    fontWeight: '600',
+  },
+  demoCompactBanner: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#000',
-    height: 54,
-    borderRadius: 18,
-    gap: 10,
+    backgroundColor: '#F8FAFC',
+    marginHorizontal: 20,
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    gap: 12,
   },
-  shareBtnText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '800',
+  demoCompactText: {
+    fontSize: 14,
+    color: '#64748B',
+    fontWeight: '500',
+    flex: 1,
   },
-  copyBtn: {
-    width: 54,
-    height: 54,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  
   // Instagram Link Banner
   igBanner: {
     marginHorizontal: 20,
-    marginTop: 8,
-    marginBottom: 4,
+    marginTop: 32,
     backgroundColor: '#FFF0F5',
     borderRadius: 16,
     borderWidth: 1,
@@ -650,18 +737,19 @@ const styles = StyleSheet.create({
   },
   igBannerTitle: {
     fontSize: 14,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#111',
   },
   igBannerSub: {
     fontSize: 12,
     color: '#6B7280',
     marginTop: 2,
+    fontWeight: '500',
   },
   igBannerBtn: {
     backgroundColor: '#E1306C',
-    borderRadius: 10,
-    paddingVertical: 8,
+    borderRadius: 12,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     minWidth: 80,
     alignItems: 'center',
@@ -669,123 +757,6 @@ const styles = StyleSheet.create({
   igBannerBtnText: {
     color: '#FFF',
     fontSize: 13,
-    fontWeight: '700',
-  },
-  // Developer Settings
-  devSection: {
-    marginHorizontal: 20,
-    marginTop: 24,
-    borderRadius: 16,
-    backgroundColor: '#F8F8F8',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderStyle: 'dashed',
-    padding: 16,
-  },
-  devSectionHeader: {
-    marginBottom: 12,
-  },
-  devSectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#374151',
-  },
-  devSectionSub: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    marginTop: 2,
-  },
-  devBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#FBCFE8',
-    borderRadius: 12,
-    padding: 14,
-  },
-  devBtnText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#E1306C',
-    flex: 1,
-  },
-  // Demographics
-  verifiedTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#D1FAE5',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  verifiedTagText: {
-    color: '#065F46',
-    fontSize: 10,
-    fontWeight: '700',
-  },
-  demographicsCard: {
-    backgroundColor: '#FFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 16,
-    padding: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#374151',
-    marginBottom: 16,
-  },
-  demoBarContainer: {
-    width: '100%',
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#F3F4F6',
-    flexDirection: 'row',
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  demoBarFemale: {
-    backgroundColor: '#EC4899', // Pink
-    height: '100%',
-  },
-  demoBarMale: {
-    backgroundColor: '#3B82F6', // Blue
-    height: '100%',
-  },
-  demoLabels: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    paddingHorizontal: 8,
-  },
-  demoLabelText: {
-    fontSize: 13,
-    color: '#4B5563',
-    fontWeight: '500',
-  },
-  demoNudgeCard: {
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  demoNudgeTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111',
-    marginTop: 12,
-    marginBottom: 6,
-  },
-  demoNudgeText: {
-    fontSize: 13,
-    color: '#4B5563',
-    textAlign: 'center',
-    lineHeight: 18,
+    fontWeight: '800',
   },
 });
