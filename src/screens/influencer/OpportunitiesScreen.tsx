@@ -335,7 +335,7 @@ const DirectInviteCard = ({ item, navigation }: { item: any, navigation: any }) 
       <View style={[
         styles.header, 
         { 
-          paddingTop: insets.top + 20,
+          paddingTop: isDesktop ? 24 : insets.top + 20,
           maxWidth: isDesktop ? 1200 : undefined,
           width: isDesktop ? '100%' : undefined,
           alignSelf: isDesktop ? 'center' : undefined,

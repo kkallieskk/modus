@@ -263,7 +263,7 @@ export const InfluencerDashboard = () => {
       flex: 1, 
       backgroundColor: 'white', 
       paddingHorizontal: 20, 
-      paddingTop: 60,
+      paddingTop: 24,
       maxWidth: isDesktop ? 1200 : undefined,
       width: isDesktop ? '100%' : undefined,
       alignSelf: isDesktop ? 'center' : undefined,

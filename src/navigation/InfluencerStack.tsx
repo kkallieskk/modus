@@ -41,71 +41,30 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
   if (isDesktop) {
     const sidebarWidth = isExpanded ? 260 : 80;
 
-    return (
-      <View style={[styles.webSidebar, { width: sidebarWidth }]}>
-        <View style={{ zIndex: 10 }}>
-          {/* Top Profile Section */}
-          <TouchableOpacity 
-            style={[styles.webSidebarProfile, !isExpanded && { justifyContent: 'center' }]}
-            onPress={() => isExpanded && setIsDropdownOpen(!isDropdownOpen)}
-          >
-            {profile?.avatar_url ? (
-              <Image source={{ uri: profile.avatar_url }} style={styles.webSidebarAvatar} />
-            ) : (
-              <View style={styles.webSidebarAvatarPlaceholder}>
-                <User size={16} color="#94A3B8" />
-              </View>
-            )}
-            
-            {isExpanded && (
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <Text style={styles.webSidebarName} numberOfLines={1}>
-                  {profile?.display_name || 'Creator Account'}
-                </Text>
-                <Text style={styles.webSidebarIndustry} numberOfLines={1}>
-                  {profile?.niche_industry || 'Creator'}
-                </Text>
-              </View>
-            )}
-            {isExpanded && <ChevronDown size={16} color="#64748B" />}
-          </TouchableOpacity>
+      <View style={[styles.webSidebar, { width: sidebarWidth, overflow: 'hidden' }]}>
+        {/* Blurred Color Accents */}
+        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
+          <View style={{ position: 'absolute', top: -50, left: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: creatorColor, opacity: 0.1, transform: [{ scale: 1.5 }], filter: 'blur(40px)' as any }} />
+          <View style={{ position: 'absolute', bottom: -50, right: -50, width: 200, height: 200, borderRadius: 100, backgroundColor: userColors[1] || '#3B82F6', opacity: 0.1, transform: [{ scale: 1.5 }], filter: 'blur(40px)' as any }} />
+        </View>
 
-          {/* Profile Dropdown */}
-          {isExpanded && isDropdownOpen && (
-            <View style={styles.dropdownMenu}>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setIsDropdownOpen(false); navigation.navigate('Settings'); }}>
-                <Settings size={16} color="#475569" />
-                <Text style={styles.dropdownItemText}>Settings</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setIsDropdownOpen(false); navigation.navigate('Notifications'); }}>
-                <Bell size={16} color="#475569" />
-                <Text style={styles.dropdownItemText}>Notifications</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.dropdownItem} onPress={() => setIsDropdownOpen(false)}>
-                <Info size={16} color="#475569" />
-                <Text style={styles.dropdownItemText}>About Modus</Text>
-              </TouchableOpacity>
+        <View style={{ zIndex: 10, flex: 1, justifyContent: 'space-between' }}>
+          <View>
+            {/* Top Header Section */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: isExpanded ? 'space-between' : 'center', marginBottom: 32, paddingHorizontal: 16 }}>
+              {isExpanded && (
+                <Text style={styles.webSidebarLogo}>MODUS</Text>
+              )}
+              {!isExpanded && (
+                <Text style={[styles.webSidebarLogoSmall, { marginBottom: 16 }]}>M</Text>
+              )}
               <TouchableOpacity 
-                style={[styles.dropdownItem, { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 8, marginTop: 4 }]} 
-                onPress={() => {
-                  setIsDropdownOpen(false);
-                  const confirmed = window.confirm('Are you sure you want to log out?');
-                  if (confirmed) supabase.auth.signOut();
-                }}
+                style={styles.toggleBtn} 
+                onPress={() => { setIsExpanded(!isExpanded); setIsDropdownOpen(false); }}
               >
-                <LogOut size={16} color="#EF4444" />
-                <Text style={[styles.dropdownItemText, { color: '#EF4444' }]}>Log Out</Text>
+                {isExpanded ? <ChevronLeft size={16} color="#64748B" /> : <Menu size={20} color="#64748B" />}
               </TouchableOpacity>
             </View>
-          )}
-
-          {/* Expand / Collapse Toggle */}
-          <TouchableOpacity 
-            style={[styles.toggleBtn, !isExpanded && { alignSelf: 'center', marginLeft: 0 }]} 
-            onPress={() => { setIsExpanded(!isExpanded); setIsDropdownOpen(false); }}
-          >
-            {isExpanded ? <ChevronLeft size={16} color="#64748B" /> : <Menu size={20} color="#64748B" />}
-          </TouchableOpacity>
 
           {/* Navigation Menu */}
           <View style={styles.webSidebarMenu}>
@@ -169,13 +128,64 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
               );
             })}
           </View>
+          </View>
         </View>
 
-        {/* Bottom Branding */}
-        <View style={[styles.webSidebarFooter, !isExpanded && { alignItems: 'center' }]}>
-          <Text style={isExpanded ? styles.webSidebarLogo : styles.webSidebarLogoSmall}>
-            {isExpanded ? 'MODUS' : 'M'}
-          </Text>
+        {/* Bottom Profile / Branding */}
+        <View style={[styles.webSidebarFooter, !isExpanded && { paddingHorizontal: 8, paddingBottom: 16 }]}>
+          {/* Profile Dropdown (opens upwards) */}
+          {isExpanded && isDropdownOpen && (
+            <View style={[styles.dropdownMenu, { position: 'absolute', bottom: 80, left: 16, right: 16, width: 'auto' }]}>
+              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setIsDropdownOpen(false); navigation.navigate('Settings'); }}>
+                <Settings size={16} color="#475569" />
+                <Text style={styles.dropdownItemText}>Settings</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.dropdownItem} onPress={() => { setIsDropdownOpen(false); navigation.navigate('Notifications'); }}>
+                <Bell size={16} color="#475569" />
+                <Text style={styles.dropdownItemText}>Notifications</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.dropdownItem} onPress={() => setIsDropdownOpen(false)}>
+                <Info size={16} color="#475569" />
+                <Text style={styles.dropdownItemText}>About Modus</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={[styles.dropdownItem, { borderTopWidth: 1, borderTopColor: '#F1F5F9', paddingTop: 8, marginTop: 4 }]} 
+                onPress={() => {
+                  setIsDropdownOpen(false);
+                  const confirmed = window.confirm('Are you sure you want to log out?');
+                  if (confirmed) supabase.auth.signOut();
+                }}
+              >
+                <LogOut size={16} color="#EF4444" />
+                <Text style={[styles.dropdownItemText, { color: '#EF4444' }]}>Log Out</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          <TouchableOpacity 
+            style={[styles.webSidebarProfile, !isExpanded && { justifyContent: 'center', marginHorizontal: 0, paddingHorizontal: 0, paddingVertical: 12 }]}
+            onPress={() => isExpanded && setIsDropdownOpen(!isDropdownOpen)}
+          >
+            {profile?.avatar_url ? (
+              <Image source={{ uri: profile.avatar_url }} style={styles.webSidebarAvatar} />
+            ) : (
+              <View style={styles.webSidebarAvatarPlaceholder}>
+                <User size={16} color="#94A3B8" />
+              </View>
+            )}
+            
+            {isExpanded && (
+              <View style={{ flex: 1, marginLeft: 10 }}>
+                <Text style={styles.webSidebarName} numberOfLines={1}>
+                  {profile?.display_name || 'Creator Account'}
+                </Text>
+                <Text style={styles.webSidebarIndustry} numberOfLines={1}>
+                  {profile?.niche_industry || 'Creator'}
+                </Text>
+              </View>
+            )}
+            {isExpanded && <ChevronDown size={16} color="#64748B" />}
+          </TouchableOpacity>
         </View>
 
         {/* Search Modal */}

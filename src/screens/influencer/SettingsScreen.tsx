@@ -246,6 +246,25 @@ export const SettingsScreen = () => {
                 <ChevronRight size={18} color="#9CA3AF" />
               </TouchableOpacity>
               <View style={styles.prefDivider} />
+              <TouchableOpacity 
+                style={styles.prefRow}
+                onPress={async () => {
+                  const newColor = window.prompt('Enter a hex color code (e.g., #3B82F6):', '#10B981');
+                  if (newColor && /^#([0-9A-F]{3}){1,2}$/i.test(newColor)) {
+                    const { data: { user } } = await supabase.auth.getUser();
+                    if (user) {
+                      await supabase.from('profiles').update({ brand_color: newColor }).eq('id', user.id);
+                      Alert.alert('Success', 'Brand color updated! Please refresh the page to see changes.');
+                    }
+                  } else if (newColor) {
+                    Alert.alert('Error', 'Invalid hex color code.');
+                  }
+                }}
+              >
+                <Text style={styles.prefText}>Brand Colors</Text>
+                <ChevronRight size={18} color="#9CA3AF" />
+              </TouchableOpacity>
+              <View style={styles.prefDivider} />
               <TouchableOpacity style={styles.prefRow}>
                 <Text style={styles.prefText}>Push Notifications</Text>
                 <ChevronRight size={18} color="#9CA3AF" />
