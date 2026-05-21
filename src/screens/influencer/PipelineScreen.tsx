@@ -3,266 +3,487 @@ import {
   View,
   Text,
   TouchableOpacity,
-  FlatList,
+  ScrollView,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
   RefreshControl,
-  Image
+  Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { supabase } from '@/lib/supabase';
 import { 
-  ChevronLeft, 
-  Bookmark, 
-  Send, 
-  Eye, 
-  XCircle, 
   Briefcase,
+  PlayCircle,
+  FileSearch,
+  CheckCircle2,
   Clock,
-  ArrowRight
+  ArrowRight,
+  AlertCircle
 } from 'lucide-react-native';
+
+type CampaignStage = 'todo' | 'production' | 'review' | 'approved';
 
 export const PipelineScreen = () => {
   const navigation = useNavigation<any>();
-  const [activeTab, setActiveTab] = useState<'saved' | 'pitched'>('saved');
-  const [loading, setLoading] = useState(true);
+  const { width } = useWindowDimensions();
+  const isDesktop = Platform.OS === 'web' && width > 1024;
+  
+  const [activeTab, setActiveTab] = useState<'active' | 'pitched' | 'saved'>('active');
+  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [saved, setSaved] = useState<any[]>([]);
+  
+  // Mock data for Active Campaigns
+  const [activeCampaigns, setActiveCampaigns] = useState<any[]>([
+    { id: '1', brand: 'Nike', title: 'Summer Running Kit', stage: 'todo', dueDate: 'Oct 12', urgent: true },
+    { id: '2', brand: 'Glossier', title: 'Skin Tint Review', stage: 'todo', dueDate: 'Oct 15', urgent: false },
+    { id: '3', brand: 'TechFlow', title: 'App Onboarding Video', stage: 'production', dueDate: 'Oct 10', urgent: true },
+    { id: '4', brand: 'Nomad', title: 'Leather Case Shoot', stage: 'review', dueDate: 'Oct 05', urgent: false },
+    { id: '5', brand: 'Oura', title: 'Sleep Tracking Promo', stage: 'approved', dueDate: 'Sep 30', urgent: false },
+  ]);
+
   const [pitched, setPitched] = useState<any[]>([]);
+  const [saved, setSaved] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchPipelineData();
+    fetchData();
   }, [activeTab]);
 
-  const fetchPipelineData = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      if (activeTab === 'saved') {
-        const { data, error } = await supabase
-          .from('saved_campaigns')
-          .select(`
-            id,
-            campaigns (*)
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-        
-        if (error && error.code !== 'PGRST116') throw error;
-        setSaved(data || []);
-      } else {
-        const { data, error } = await supabase
-          .from('campaign_pitches')
-          .select(`
-            *,
-            campaigns (*)
-          `)
-          .eq('user_id', user.id)
-          .order('created_at', { ascending: false });
-
-        if (error && error.code !== 'PGRST116') throw error;
-        setPitched(data || []);
-      }
+      // Simulate API call
+      await new Promise(res => setTimeout(res, 600));
     } catch (err) {
-      console.error('Error fetching pipeline:', err);
+      console.error(err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
   };
 
-  const renderStatusBadge = (status: string) => {
-    switch (status) {
-      case 'delivered':
-        return (
-          <View style={[styles.badge, styles.deliveredBadge]}>
-            <Send size={12} color="#3B82F6" />
-            <Text style={[styles.badgeText, styles.deliveredText]}>Delivered</Text>
-          </View>
-        );
-      case 'viewed':
-        return (
-          <View style={[styles.badge, styles.viewedBadge]}>
-            <Eye size={12} color="#8B5CF6" />
-            <Text style={[styles.badgeText, styles.viewedText]}>Viewed by Brand</Text>
-          </View>
-        );
-      case 'declined':
-        return (
-          <View style={[styles.badge, styles.declinedBadge]}>
-            <XCircle size={12} color="#EF4444" />
-            <Text style={[styles.badgeText, styles.declinedText]}>Not Selected</Text>
-          </View>
-        );
-      default:
-        return null;
+  const getStageConfig = (stage: CampaignStage) => {
+    switch (stage) {
+      case 'todo': return { title: 'To Do', icon: <Briefcase size={16} color="#64748B" />, progress: 10, btnText: 'Review Brief' };
+      case 'production': return { title: 'In Production', icon: <PlayCircle size={16} color="#3B82F6" />, progress: 40, btnText: 'Upload Draft' };
+      case 'review': return { title: 'In Review', icon: <FileSearch size={16} color="#F59E0B" />, progress: 75, btnText: 'View Feedback' };
+      case 'approved': return { title: 'Approved / Live', icon: <CheckCircle2 size={16} color="#10B981" />, progress: 100, btnText: 'View Details' };
     }
   };
 
-  const renderItem = ({ item }: { item: any }) => {
-    const campaign = item.campaigns;
-    if (!campaign) return null;
+  const columns: { id: CampaignStage; items: any[] }[] = [
+    { id: 'todo', items: activeCampaigns.filter(c => c.stage === 'todo') },
+    { id: 'production', items: activeCampaigns.filter(c => c.stage === 'production') },
+    { id: 'review', items: activeCampaigns.filter(c => c.stage === 'review') },
+    { id: 'approved', items: activeCampaigns.filter(c => c.stage === 'approved') },
+  ];
 
+  const ActiveCampaignCard = ({ item }: { item: any }) => {
+    const config = getStageConfig(item.stage);
+    
     return (
       <TouchableOpacity 
         style={styles.card}
-        onPress={() => navigation.navigate('JobDetail', { campaignId: campaign.id })}
+        onPress={() => navigation.navigate('CampaignWorkspace', { campaignId: item.id })}
       >
-        <Image 
-          source={{ uri: `https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400` }} 
-          style={styles.thumbnail}
-        />
-        <View style={styles.cardInfo}>
-          <Text style={styles.brandName}>Nike • Athletic Wear</Text>
-          <Text style={styles.campaignTitle} numberOfLines={1}>{campaign.title}</Text>
-          
-          <View style={styles.cardFooter}>
-            <Text style={styles.budget}>${campaign.budget}</Text>
-            {activeTab === 'pitched' && renderStatusBadge(item.status)}
-            {activeTab === 'saved' && (
-              <View style={styles.savedMeta}>
-                <Clock size={12} color="#9CA3AF" />
-                <Text style={styles.metaText}>Saved 2d ago</Text>
-              </View>
-            )}
+        {/* Header */}
+        <View style={styles.cardHeader}>
+          <Text style={styles.cardBrand}>{item.brand}</Text>
+          <View style={[styles.dueDateBadge, item.urgent && styles.dueDateUrgent]}>
+            <Clock size={12} color={item.urgent ? '#EF4444' : '#64748B'} />
+            <Text style={[styles.dueDateText, item.urgent && { color: '#EF4444' }]}>
+              {item.stage === 'todo' ? 'Brief Due: ' : 'Draft Due: '} {item.dueDate}
+            </Text>
           </View>
         </View>
-        <ArrowRight size={20} color="#E5E7EB" />
+
+        {/* Body */}
+        <View style={styles.cardBody}>
+          <Text style={styles.cardTitle}>{item.title}</Text>
+          <View style={styles.progressContainer}>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: `${config.progress}%`, backgroundColor: item.stage === 'approved' ? '#10B981' : '#0F172A' }]} />
+            </View>
+            <Text style={styles.progressText}>{config.progress}%</Text>
+          </View>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.cardFooter}>
+          <View style={styles.footerBtn}>
+            <Text style={styles.footerBtnText}>{config.btnText}</Text>
+            <ArrowRight size={14} color="#0F172A" />
+          </View>
+        </View>
       </TouchableOpacity>
     );
   };
 
-  return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-          <ChevronLeft size={24} color="#000" />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>My Pipeline</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <View style={styles.tabBar}>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'saved' && styles.activeTab]}
-          onPress={() => setActiveTab('saved')}
-        >
-          <Bookmark size={18} color={activeTab === 'saved' ? '#000' : '#9CA3AF'} />
-          <Text style={[styles.tabText, activeTab === 'saved' && styles.activeTabText]}>Saved Jobs</Text>
-        </TouchableOpacity>
-        <TouchableOpacity 
-          style={[styles.tab, activeTab === 'pitched' && styles.activeTab]}
-          onPress={() => setActiveTab('pitched')}
-        >
-          <Send size={18} color={activeTab === 'pitched' ? '#000' : '#9CA3AF'} />
-          <Text style={[styles.tabText, activeTab === 'pitched' && styles.activeTabText]}>Pending Pitches</Text>
-        </TouchableOpacity>
-      </View>
-
-      {loading && !refreshing ? (
-        <View style={styles.center}>
-          <ActivityIndicator size="large" color="#000" />
-        </View>
-      ) : (
-        <FlatList
-          data={activeTab === 'saved' ? saved : pitched}
-          keyExtractor={(item) => item.id}
-          renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={() => {
-              setRefreshing(true);
-              fetchPipelineData();
-            }} />
-          }
-          ListEmptyComponent={
-            <View style={styles.emptyState}>
-              <View style={styles.emptyIconCircle}>
-                <Briefcase size={40} color="#9CA3AF" />
+  const renderActiveCampaigns = () => {
+    if (isDesktop) {
+      // Horizontal Kanban Board
+      return (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.kanbanContainer}>
+          {columns.map(col => {
+            const config = getStageConfig(col.id);
+            return (
+              <View key={col.id} style={styles.kanbanColumn}>
+                <View style={styles.columnHeader}>
+                  <View style={styles.columnTitleRow}>
+                    {config.icon}
+                    <Text style={styles.columnTitle}>{config.title}</Text>
+                  </View>
+                  <View style={styles.columnBadge}>
+                    <Text style={styles.columnBadgeText}>{col.items.length}</Text>
+                  </View>
+                </View>
+                <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.columnList}>
+                  {col.items.map(item => <ActiveCampaignCard key={item.id} item={item} />)}
+                  {col.items.length === 0 && (
+                    <View style={styles.emptyColumn}>
+                      <Text style={styles.emptyColumnText}>No campaigns</Text>
+                    </View>
+                  )}
+                </ScrollView>
               </View>
+            );
+          })}
+        </ScrollView>
+      );
+    } else {
+      // Vertically Stacked Sections for Mobile
+      return (
+        <View style={styles.mobileListContainer}>
+          {columns.map(col => {
+            const config = getStageConfig(col.id);
+            if (col.items.length === 0) return null; // Hide empty sections on mobile to save space
+            
+            return (
+              <View key={col.id} style={styles.mobileSection}>
+                <View style={styles.mobileSectionHeader}>
+                  {config.icon}
+                  <Text style={styles.mobileSectionTitle}>{config.title}</Text>
+                  <View style={styles.columnBadge}>
+                    <Text style={styles.columnBadgeText}>{col.items.length}</Text>
+                  </View>
+                </View>
+                <View style={styles.mobileSectionContent}>
+                  {col.items.map(item => <ActiveCampaignCard key={item.id} item={item} />)}
+                </View>
+              </View>
+            );
+          })}
+          {activeCampaigns.length === 0 && (
+            <View style={styles.emptyState}>
+              <Briefcase size={40} color="#9CA3AF" />
+              <Text style={styles.emptyTitle}>No active campaigns</Text>
+            </View>
+          )}
+        </View>
+      );
+    }
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+      <View style={[
+        styles.headerContainer, 
+        { 
+          maxWidth: isDesktop ? 1400 : undefined,
+          width: isDesktop ? '100%' : undefined,
+          alignSelf: isDesktop ? 'center' : undefined,
+        }
+      ]}>
+        <Text style={styles.pageTitle}>My Campaigns</Text>
+
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            onPress={() => setActiveTab('active')}
+            style={[styles.tab, activeTab === 'active' && styles.activeTab]}
+          >
+            <Text style={[styles.tabText, activeTab === 'active' && styles.activeTabText]}>Active Campaigns</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => setActiveTab('pitched')}
+            style={[styles.tab, activeTab === 'pitched' && styles.activeTab]}
+          >
+            <Text style={[styles.tabText, activeTab === 'pitched' && styles.activeTabText]}>Pending Pitches</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={() => setActiveTab('saved')}
+            style={[styles.tab, activeTab === 'saved' && styles.activeTab]}
+          >
+            <Text style={[styles.tabText, activeTab === 'saved' && styles.activeTabText]}>Saved</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <ScrollView 
+        style={{ flex: 1 }}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { 
+            maxWidth: isDesktop ? 1400 : undefined,
+            width: isDesktop ? '100%' : undefined,
+            alignSelf: isDesktop ? 'center' : undefined,
+          }
+        ]}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchData(); }} />}
+      >
+        {loading && !refreshing ? (
+          <ActivityIndicator size="large" color="#000" style={{ marginTop: 40 }} />
+        ) : (
+          activeTab === 'active' ? renderActiveCampaigns() : (
+            <View style={styles.emptyState}>
+              <AlertCircle size={40} color="#9CA3AF" />
               <Text style={styles.emptyTitle}>
-                {activeTab === 'saved' ? 'No saved jobs' : 'No pitches yet'}
-              </Text>
-              <Text style={styles.emptySubtitle}>
-                {activeTab === 'saved' 
-                  ? 'Bookmark high-value deals to review and pitch them later.'
-                  : 'Start pitching to high-growth brands to build your pipeline.'}
+                {activeTab === 'pitched' ? 'No pending pitches' : 'No saved jobs'}
               </Text>
             </View>
-          }
-        />
-      )}
-    </SafeAreaView>
+          )
+        )}
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'space-between', 
-    paddingHorizontal: 20, 
-    paddingVertical: 16,
+  headerContainer: {
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === 'web' ? 24 : 60,
+    paddingBottom: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6'
+    borderBottomColor: '#F1F5F9',
   },
-  backBtn: { padding: 8, marginLeft: -8 },
-  headerTitle: { fontSize: 18, fontWeight: '900', color: '#000' },
-  tabBar: { 
-    flexDirection: 'row', 
-    paddingHorizontal: 20, 
-    paddingVertical: 12, 
-    gap: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6'
+  pageTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: '#0F172A',
+    marginBottom: 20,
   },
-  tab: { 
-    flex: 1, 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center', 
-    gap: 8,
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#F1F5F9',
+    borderRadius: 16,
+    padding: 4,
+    gap: 4,
+  },
+  tab: {
+    flex: 1,
     paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: '#F9FAFB'
+    alignItems: 'center',
+    borderRadius: 12,
   },
-  activeTab: { backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#E5E7EB' },
-  tabText: { fontSize: 13, fontWeight: '700', color: '#9CA3AF' },
-  activeTabText: { color: '#000', fontWeight: '800' },
-  listContent: { padding: 20, paddingBottom: 60 },
-  card: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    padding: 12, 
-    backgroundColor: '#F9FAFB', 
-    borderRadius: 20, 
-    marginBottom: 12,
+  activeTab: {
+    backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 },
+      android: { elevation: 2 },
+      web: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4 }
+    })
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  activeTabText: {
+    color: '#0F172A',
+  },
+  scrollContent: {
+    flexGrow: 1,
+  },
+  
+  // Kanban Desktop
+  kanbanContainer: {
+    padding: 24,
+    gap: 24,
+  },
+  kanbanColumn: {
+    width: 320,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+    padding: 16,
+    height: '100%',
+  },
+  columnHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 16,
+    paddingHorizontal: 4,
+  },
+  columnTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  columnTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  columnBadge: {
+    backgroundColor: '#E2E8F0',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  columnBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  columnList: {
+    gap: 12,
+  },
+  emptyColumn: {
+    padding: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: '#F3F4F6'
+    borderColor: '#E2E8F0',
+    borderStyle: 'dashed',
   },
-  thumbnail: { width: 64, height: 64, borderRadius: 12 },
-  cardInfo: { flex: 1, marginLeft: 16 },
-  brandName: { fontSize: 11, fontWeight: '800', color: '#9CA3AF', textTransform: 'uppercase' },
-  campaignTitle: { fontSize: 16, fontWeight: '800', color: '#000', marginTop: 2 },
-  cardFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  budget: { fontSize: 14, fontWeight: '900', color: '#059669' },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-  badgeText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase' },
-  deliveredBadge: { backgroundColor: '#EFF6FF' },
-  deliveredText: { color: '#3B82F6' },
-  viewedBadge: { backgroundColor: '#F5F3FF' },
-  viewedText: { color: '#8B5CF6' },
-  declinedBadge: { backgroundColor: '#FEF2F2' },
-  declinedText: { color: '#EF4444' },
-  savedMeta: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontSize: 11, color: '#9CA3AF', fontWeight: '600' },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: 80 },
-  emptyIconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: '#F3F4F6', alignItems: 'center', justifyContent: 'center', marginBottom: 24 },
-  emptyTitle: { fontSize: 20, fontWeight: '800', color: '#000', marginBottom: 8 },
-  emptySubtitle: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', paddingHorizontal: 40, lineHeight: 20 }
+  emptyColumnText: {
+    fontSize: 13,
+    color: '#9CA3AF',
+    fontWeight: '500',
+  },
+
+  // Kanban Mobile
+  mobileListContainer: {
+    padding: 20,
+  },
+  mobileSection: {
+    marginBottom: 32,
+  },
+  mobileSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  mobileSectionTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  mobileSectionContent: {
+    gap: 16,
+  },
+
+  // Active Campaign Card
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8 },
+      android: { elevation: 1 },
+      web: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.03, shadowRadius: 8 }
+    })
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  cardBrand: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#64748B',
+    textTransform: 'uppercase',
+  },
+  dueDateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  dueDateUrgent: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+    borderWidth: 1,
+  },
+  dueDateText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  cardBody: {
+    marginBottom: 16,
+  },
+  cardTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0F172A',
+    lineHeight: 22,
+    marginBottom: 12,
+  },
+  progressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  progressBarBg: {
+    flex: 1,
+    height: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 3,
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  progressText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#64748B',
+  },
+  cardFooter: {
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+    paddingTop: 12,
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+  },
+  footerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F8FAFC',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  footerBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+
+  emptyState: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 80,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginTop: 16,
+  },
 });

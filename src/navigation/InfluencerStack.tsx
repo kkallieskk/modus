@@ -14,6 +14,7 @@ import { PublicMediaKitScreen } from '@/screens/influencer/PublicMediaKitScreen'
 import { PipelineScreen } from '@/screens/influencer/PipelineScreen';
 import { OpportunitiesScreen } from '@/screens/influencer/OpportunitiesScreen';
 import { MessagesScreen } from '@/screens/influencer/MessagesScreen';
+import { CampaignWorkspaceScreen } from '@/screens/influencer/CampaignWorkspaceScreen';
 import { SupportModal } from '@/components/SupportModal';
 import { 
   Inbox, User, Briefcase, Wallet, Search, 
@@ -330,6 +331,7 @@ export const InfluencerStack = () => {
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Notifications" component={NotificationScreen} />
       <Stack.Screen name="PublicMediaKit" component={PublicMediaKitScreen} />
+      <Stack.Screen name="CampaignWorkspace" component={CampaignWorkspaceScreen} />
     </Stack.Navigator>
   );
 };
