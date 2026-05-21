@@ -17,14 +17,15 @@ import { MessagesScreen } from '@/screens/influencer/MessagesScreen';
 import { SupportModal } from '@/components/SupportModal';
 import { 
   Inbox, User, Briefcase, Wallet, Search, 
-  Settings, Bell, LogOut, X,
+  Settings, Bell, LogOut, X, Star,
   Zap, PanelLeftClose, PanelLeftOpen,
-  Home, Star, MessageCircle, Headphones
+  Home, MessageCircle, Headphones
 } from 'lucide-react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useProfile } from '@/lib/ProfileContext';
 import { supabase } from '@/lib/supabase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -34,25 +35,16 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
   const isDesktop = Platform.OS === 'web' && width > 768;
   const { profile } = useProfile();
   
-  // Custom theme colors processing
   const userColors = profile?.brand_color ? profile.brand_color.split(',') : ['#10B981'];
   const creatorColor = userColors[0] || '#10B981';
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const [isSupportOpen, setIsSupportOpen] = useState(false);
 
   if (isDesktop) {
     const sidebarWidth = isExpanded ? 240 : 64;
 
     return (
       <View style={[styles.webSidebar, { width: sidebarWidth }]}>
-        {/* Blurred Color Accents */}
-        <View style={StyleSheet.absoluteFillObject} pointerEvents="none">
-          <View style={{ position: 'absolute', top: -60, left: -60, width: 220, height: 220, borderRadius: 110, backgroundColor: creatorColor, opacity: 0.07, filter: 'blur(50px)' as any }} />
-          <View style={{ position: 'absolute', bottom: -60, right: -40, width: 180, height: 180, borderRadius: 90, backgroundColor: userColors[1] || '#6366F1', opacity: 0.07, filter: 'blur(50px)' as any }} />
-        </View>
-
         {/* Click-outside overlay to close menu */}
         {isMenuOpen && (
           <Pressable
@@ -92,15 +84,6 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
 
             {/* ─── Navigation Menu ─── */}
             <View style={styles.webSidebarMenu}>
-              {/* Search */}
-              <TouchableOpacity
-                onPress={() => setIsSearchOpen(true)}
-                style={[styles.webSidebarItem, !isExpanded && styles.webSidebarItemCollapsed]}
-              >
-                <Search size={18} color="#64748B" strokeWidth={2} />
-                {isExpanded && <Text style={styles.webSidebarLabel}>Search</Text>}
-              </TouchableOpacity>
-
               {/* Tab Routes */}
               {state.routes.map((route: any, index: number) => {
                 const { options } = descriptors[route.key];
@@ -120,11 +103,10 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
 
                 const renderIcon = () => {
                   const iconColor = isFocused ? creatorColor : '#64748B';
-                  if (label === 'Dashboard') return <Home size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
-                  if (label === 'Media Kit') return <Star size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
-                  if (label === 'Campaigns') return <Briefcase size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
-                  if (label === 'Inbox') return <MessageCircle size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
-                  if (label === 'Wallet') return <Wallet size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Home') return <Home size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Find Work') return <Search size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'My Campaigns') return <Briefcase size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
+                  if (label === 'Earnings') return <Wallet size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
                   return <Zap size={18} color={iconColor} strokeWidth={isFocused ? 2.5 : 2} />;
                 };
 
@@ -154,23 +136,19 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
             </View>
           </View>
 
-          {/* ─── BOTTOM: Minimalist Profile + Quick Actions ─── */}
+          {/* ─── BOTTOM: Profile + Dropdown Actions ─── */}
           <View style={styles.webSidebarFooter}>
 
-            {/* Quick-action menu (slides up from footer, closes on outside click) */}
+            {/* Profile action menu (slides up from footer, closes on outside click) */}
             {isMenuOpen && isExpanded && (
               <View style={styles.quickMenu}>
+                <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); navigation.navigate('Profile'); }}>
+                  <Star size={15} color="#475569" strokeWidth={2} />
+                  <Text style={styles.quickMenuText}>Live Media Kit</Text>
+                </TouchableOpacity>
                 <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); navigation.navigate('Settings'); }}>
                   <Settings size={15} color="#475569" strokeWidth={2} />
                   <Text style={styles.quickMenuText}>Settings</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); setIsSupportOpen(true); }}>
-                  <Headphones size={15} color="#475569" strokeWidth={2} />
-                  <Text style={styles.quickMenuText}>Support</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.quickMenuItem} onPress={() => { setIsMenuOpen(false); navigation.navigate('Notifications'); }}>
-                  <Bell size={15} color="#475569" strokeWidth={2} />
-                  <Text style={styles.quickMenuText}>Notifications</Text>
                 </TouchableOpacity>
                 <View style={styles.quickMenuDivider} />
                 <TouchableOpacity style={styles.quickMenuItem} onPress={() => {
@@ -184,7 +162,7 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
               </View>
             )}
 
-            {/* Minimalist Profile Row */}
+            {/* Profile Row */}
             <TouchableOpacity
               style={[styles.profileRow, !isExpanded && styles.profileRowCollapsed]}
               onPress={() => isExpanded && setIsMenuOpen(!isMenuOpen)}
@@ -212,36 +190,9 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
             </TouchableOpacity>
           </View>
         </View>
-
-        {/* Search Modal */}
-        <Modal visible={isSearchOpen} transparent animationType="fade">
-          <Pressable style={styles.searchOverlay} onPress={() => setIsSearchOpen(false)}>
-            <Pressable style={styles.searchModal} onPress={e => e.stopPropagation?.()}>
-              <View style={styles.searchInputContainer}>
-                <Search size={18} color="#9CA3AF" />
-                <TextInput 
-                  placeholder="Search campaigns, brands, or help..."
-                  style={styles.searchInput}
-                  autoFocus
-                  {...(Platform.OS === 'web' ? { style: [styles.searchInput, { outlineWidth: 0 } as any] } : {})}
-                />
-                <TouchableOpacity onPress={() => setIsSearchOpen(false)}>
-                  <X size={18} color="#9CA3AF" />
-                </TouchableOpacity>
-              </View>
-            </Pressable>
-          </Pressable>
-        </Modal>
-
-        {/* Support Modal */}
-        <SupportModal 
-          visible={isSupportOpen} 
-          onClose={() => setIsSupportOpen(false)} 
-        />
       </View>
     );
   }
-
 
   // Mobile Bottom Tab Bar
   const insets = useSafeAreaInsets();
@@ -267,11 +218,10 @@ const CustomTabBar = ({ state, descriptors, navigation, isExpanded, setIsExpande
 
         const renderIcon = () => {
           const iconColor = isFocused ? creatorColor : '#9CA3AF';
-          if (label === 'Dashboard') return <Home size={22} color={iconColor} />;
-          if (label === 'Media Kit') return <Star size={22} color={iconColor} />;
-          if (label === 'Campaigns') return <Briefcase size={22} color={iconColor} />;
-          if (label === 'Inbox') return <MessageCircle size={22} color={iconColor} />;
-          if (label === 'Wallet') return <Wallet size={22} color={iconColor} />;
+          if (label === 'Home') return <Home size={22} color={iconColor} />;
+          if (label === 'Find Work') return <Search size={22} color={iconColor} />;
+          if (label === 'My Campaigns') return <Briefcase size={22} color={iconColor} />;
+          if (label === 'Earnings') return <Wallet size={22} color={iconColor} />;
           return <Zap size={22} color={iconColor} />;
         };
 
@@ -296,39 +246,74 @@ const InfluencerTabs = () => {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width > 768;
   const [isExpanded, setIsExpanded] = useState(true);
+  const navigation = useNavigation<any>();
+
+  const paddingLeft = isDesktop ? (isExpanded ? 240 : 64) : 0;
 
   return (
-    <Tab.Navigator
-      tabBar={props => <CustomTabBar {...props} isExpanded={isExpanded} setIsExpanded={setIsExpanded} />}
-      sceneContainerStyle={{
-        paddingLeft: isDesktop ? (isExpanded ? 240 : 64) : 0,
-        backgroundColor: '#FFFFFF',
-      }}
-      screenOptions={{
-        headerShown: false,
-      }}
-    >
-      <Tab.Screen 
-        name="Dashboard" 
-        component={InfluencerDashboard} 
-      />
-      <Tab.Screen 
-        name="Media Kit" 
-        component={CreatorProfileScreen} 
-      />
-      <Tab.Screen 
-        name="Campaigns" 
-        component={OpportunitiesScreen} 
-      />
-      <Tab.Screen 
-        name="Inbox" 
-        component={MessagesScreen} 
-      />
-      <Tab.Screen 
-        name="Wallet" 
-        component={EarningsScreen} 
-      />
-    </Tab.Navigator>
+    <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+      {/* Global TopBar */}
+      <View style={{
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        left: paddingLeft,
+        height: 64,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        zIndex: 50,
+        pointerEvents: 'box-none'
+      }}>
+        <View style={{ flexDirection: 'row', gap: 16, pointerEvents: 'auto', paddingTop: 16 }}>
+          <TouchableOpacity 
+            style={styles.topBarBtn}
+            onPress={() => navigation.navigate('Messages')}
+          >
+            <MessageCircle size={20} color="#475569" strokeWidth={2.5} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.topBarBtn}
+            onPress={() => navigation.navigate('Notifications')}
+          >
+            <Bell size={20} color="#475569" strokeWidth={2.5} />
+          </TouchableOpacity>
+        </View>
+      </View>
+
+      <Tab.Navigator
+        tabBar={props => <CustomTabBar {...props} isExpanded={isExpanded} setIsExpanded={setIsExpanded} />}
+        sceneContainerStyle={{
+          paddingLeft,
+          backgroundColor: '#F8FAFC', // light grey background
+        }}
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Tab.Screen 
+          name="Dashboard" 
+          options={{ title: 'Home' }}
+          component={InfluencerDashboard} 
+        />
+        <Tab.Screen 
+          name="Opportunities" 
+          options={{ title: 'Find Work' }}
+          component={OpportunitiesScreen} 
+        />
+        <Tab.Screen 
+          name="Pipeline" 
+          options={{ title: 'My Campaigns' }}
+          component={PipelineScreen} 
+        />
+        <Tab.Screen 
+          name="Earnings" 
+          options={{ title: 'Earnings' }}
+          component={EarningsScreen} 
+        />
+      </Tab.Navigator>
+    </View>
   );
 };
 
@@ -339,12 +324,12 @@ export const InfluencerStack = () => {
       <Stack.Screen name="Profile" component={CreatorProfileScreen} />
       <Stack.Screen name="JobDetail" component={JobDetailScreen} />
       <Stack.Screen name="Chat" component={ChatScreen} />
+      <Stack.Screen name="Messages" component={MessagesScreen} />
       <Stack.Screen name="OfferReview" component={OfferReviewScreen} />
       <Stack.Screen name="EditProfile" component={EditProfileScreen} />
       <Stack.Screen name="Settings" component={SettingsScreen} />
       <Stack.Screen name="Notifications" component={NotificationScreen} />
       <Stack.Screen name="PublicMediaKit" component={PublicMediaKitScreen} />
-      <Stack.Screen name="Pipeline" component={PipelineScreen} />
     </Stack.Navigator>
   );
 };
@@ -357,11 +342,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#FFFFFF',
     borderRightWidth: 1,
-    borderRightColor: '#F1F5F9',
+    borderRightColor: '#E2E8F0',
     paddingVertical: 20,
     justifyContent: 'space-between',
     zIndex: 9999,
-    overflow: 'hidden',
   },
   sidebarHeader: {
     flexDirection: 'row',
@@ -384,7 +368,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     alignSelf: 'center',
   },
-  // Profile row - minimalist
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -426,14 +409,13 @@ const styles = StyleSheet.create({
     borderRadius: 2,
     backgroundColor: '#CBD5E1',
   },
-  // Quick action menu
   quickMenu: {
     marginHorizontal: 12,
     marginBottom: 8,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: '#E2E8F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.06,
@@ -502,44 +484,6 @@ const styles = StyleSheet.create({
     color: '#0F172A',
     letterSpacing: -0.5,
   },
-  webSidebarLogoSmall: {
-    fontSize: 16,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-  searchOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-start',
-    alignItems: 'center',
-    paddingTop: 80,
-  },
-  searchModal: {
-    width: '100%',
-    maxWidth: 600,
-    backgroundColor: '#FFF',
-    borderRadius: 16,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.1,
-    shadowRadius: 40,
-    elevation: 10,
-  },
-  searchInputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    height: 56,
-  },
-  searchInput: {
-    flex: 1,
-    marginLeft: 12,
-    fontSize: 16,
-    color: '#0F172A',
-  },
   mobileTabBar: {
     flexDirection: 'row',
     backgroundColor: '#FFFFFF',
@@ -557,4 +501,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 4,
   },
+  topBarBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  }
 });
