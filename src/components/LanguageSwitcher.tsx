@@ -23,32 +23,42 @@ export const LanguageSwitcher = () => {
   const [isOpen, setIsOpen] = useState(false);
 
 
+
   const changeLanguage = (langCode: string) => {
     setCurrentLang(langCode);
     setIsOpen(false);
     
     if (Platform.OS === 'web') {
       try {
-        const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
-        if (combo) {
-          combo.value = langCode;
-          // Modern event dispatch
-          let event;
-          if (typeof window.Event === 'function') {
-            event = new window.Event('change', { bubbles: true, cancelable: true });
-          } else {
-            event = document.createEvent('HTMLEvents');
-            event.initEvent('change', true, true);
-          }
-          combo.dispatchEvent(event);
+        const domain = window.location.hostname;
+        
+        if (langCode === 'en') {
+          // Clear cookies to revert to English
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
+          document.cookie = `googtrans=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; domain=${domain}`;
         } else {
-          console.warn('Google Translate combo box not found yet.');
+          // Set translation cookie
+          document.cookie = `googtrans=/en/${langCode}; path=/;`;
+          document.cookie = `googtrans=/en/${langCode}; path=/; domain=${domain}`;
         }
+        
+        // Force reload to apply Google Translate instantly
+        window.location.reload();
       } catch (err) {
         console.error('Translation failed', err);
       }
     }
   };
+  
+  // Read current language from cookie on mount
+  React.useEffect(() => {
+    if (Platform.OS === 'web') {
+      const match = document.cookie.match(/googtrans=\/en\/([a-z]{2})/);
+      if (match && match[1]) {
+        setCurrentLang(match[1]);
+      }
+    }
+  }, []);
 
   const activeLang = LANGUAGES.find(l => l.code === currentLang) || LANGUAGES[0];
 
