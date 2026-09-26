@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Animated, Easing, StyleSheet } from 'react-native';
 import { supabase } from '@/lib/supabase';
@@ -64,6 +65,9 @@ export const LoginScreen = ({ route, navigation }: any) => {
       <TouchableOpacity style={st.navBar} onPress={() => navigation.navigate('Landing')}>
         <Text style={st.logo}>Modus.</Text>
       </TouchableOpacity>
+      <View style={{ position: 'absolute', top: 32, right: 32, zIndex: 10 }}>
+        <LanguageSwitcher />
+      </View>
 
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={st.container}>
         <ScrollView contentContainerStyle={st.scrollContent} showsVerticalScrollIndicator={false}>

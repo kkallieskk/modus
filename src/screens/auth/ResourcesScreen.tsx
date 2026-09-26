@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import React from 'react';
 import { View, Text, Pressable, StyleSheet, Platform, ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -10,6 +11,7 @@ export const ResourcesScreen = () => {
       <View style={s.nav}>
         <Text style={s.logo}>Modus.</Text>
         <View style={s.navRight}>
+          <LanguageSwitcher />
           <Pressable onPress={() => nav.navigate('Landing')} style={s.navCta}>
             <Text style={s.navCtaText}>Go Back</Text>
           </Pressable>

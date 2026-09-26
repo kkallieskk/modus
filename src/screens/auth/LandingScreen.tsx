@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, Animated, Easing, Dimensions, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -107,6 +108,7 @@ export const LandingScreen = () => {
           <Pressable onPress={() => nav.navigate('Resources')} style={s.navLink}><Text style={s.navLinkText}>Resources</Text></Pressable>
         </View>}
         <View style={s.navRight}>
+          <LanguageSwitcher />
           <Pressable onPress={() => nav.navigate('Login')} style={s.navLogin}><Text style={s.navLoginText}>Log in</Text></Pressable>
           <Pressable onPress={() => nav.navigate('Welcome')} style={s.navCta}><Text style={s.navCtaText}>Get Started</Text></Pressable>
         </View>
