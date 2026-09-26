@@ -292,8 +292,6 @@ export const BrandStack = () => {
     </BottomTab.Navigator>
     </View>
   );
-    </View>
-  );
 };
 
 const styles = StyleSheet.create({
