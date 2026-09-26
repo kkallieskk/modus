@@ -51,7 +51,7 @@ type Influencer = {
 const DEMO_CREATORS: Influencer[] = [
   {
     id: 'demo1',
-    display_name: 'Aisha K.',
+    display_name: 'Anjali K.',
     niche_industry: 'Fashion & Apparel',
     avatar_url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=400&fit=crop',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1493558103805-03cf4e3d2a79?w=600&h=400&fit=crop',
@@ -69,7 +69,7 @@ const DEMO_CREATORS: Influencer[] = [
   },
   {
     id: 'demo3',
-    display_name: 'Lena M.',
+    display_name: 'Priya M.',
     niche_industry: 'Skincare & Beauty',
     avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=600&h=400&fit=crop',
@@ -78,7 +78,7 @@ const DEMO_CREATORS: Influencer[] = [
   },
   {
     id: 'demo4',
-    display_name: 'Carlos D.',
+    display_name: 'Vikram D.',
     niche_industry: 'Food & Beverage',
     avatar_url: 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=400&fit=crop',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&h=400&fit=crop',
@@ -87,7 +87,7 @@ const DEMO_CREATORS: Influencer[] = [
   },
   {
     id: 'demo5',
-    display_name: 'Mira S.',
+    display_name: 'Kavya S.',
     niche_industry: 'Premium Retail',
     avatar_url: 'https://images.unsplash.com/photo-1602524202741-5d8b0d28fa6b?w=400&h=400&fit=crop',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=600&h=400&fit=crop',

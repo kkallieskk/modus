@@ -28,8 +28,8 @@ const BrandMockup = () => (
     </View>
     
     {[
-      { name: 'Sarah Jenkins', niche: 'Lifestyle & Wellness', followers: '148.2K', verified: true },
-      { name: 'David Chen', niche: 'Productivity & Tech', followers: '82.5K', verified: true },
+      { name: 'Radhika Iyer', niche: 'Lifestyle & Wellness', followers: '148.2K', verified: true },
+      { name: 'Arjun Desai', niche: 'Productivity & Tech', followers: '82.5K', verified: true },
     ].map((c, i) => (
       <View key={i} style={s.mockRow}>
         <View style={s.mockAvatar}>

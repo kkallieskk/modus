@@ -625,7 +625,7 @@ export const CampaignBuilderScreen = () => {
         <View style={{ flexDirection: 'row', gap: 12 }}>
           {[
             { name: 'Instagram', icon: <Instagram size={18} color="#E1306C" /> },
-            { name: 'TikTok', icon: <Link2 size={18} color="#000" /> },
+            { name: 'Moj', icon: <Link2 size={18} color="#000" /> },
             { name: 'YouTube', icon: <Youtube size={18} color="#FF0000" /> }
           ].map((p) => {
             const active = platforms.includes(p.name);

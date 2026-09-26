@@ -45,7 +45,7 @@ type Applicant = {
 const MOCK_PITCHES: Applicant[] = [
   {
     id: 'mock_app_1',
-    display_name: 'Sarah Jenkins',
+    display_name: 'Radhika Iyer',
     niche_industry: 'Lifestyle & Wellness',
     avatar_url: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=200&auto=format&fit=crop',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1545233310-cf96d4825906?w=600',
@@ -58,7 +58,7 @@ const MOCK_PITCHES: Applicant[] = [
   },
   {
     id: 'mock_app_2',
-    display_name: 'David Chen',
+    display_name: 'Arjun Desai',
     niche_industry: 'Productivity & Tech',
     avatar_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600',

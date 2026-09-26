@@ -29,7 +29,7 @@ type Influencer = {
 const DEMO_CREATORS: Influencer[] = [
   {
     id: '00000000-0000-0000-0000-000000000001',
-    display_name: 'Aisha K.',
+    display_name: 'Anjali K.',
     niche_industry: 'Fashion & Apparel',
     avatar_url: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=400&h=400&fit=crop',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1493558103805-03cf4e3d2a79?w=600&h=400&fit=crop',
@@ -51,7 +51,7 @@ const DEMO_CREATORS: Influencer[] = [
   },
   {
     id: '00000000-0000-0000-0000-000000000003',
-    display_name: 'Lena M.',
+    display_name: 'Priya M.',
     niche_industry: 'Skincare & Beauty',
     avatar_url: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&fit=crop',
     portfolio_thumbnail_url: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da?w=600&h=400&fit=crop',
