@@ -22,6 +22,7 @@ export const DemoContext = createContext<{demoRole: string|null, setDemoRole: (r
 const Stack = createNativeStackNavigator();
 
 export const RootNavigator = () => {
+  const [demoRole, setDemoRole] = useState<string|null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const { profile: userProfile, loading: profileLoading, refreshProfile } = useProfile();
   const [authLoading, setAuthLoading] = useState(true);
