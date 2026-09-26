@@ -60,7 +60,7 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return;
 
-      const { data: campaigns, error } = await supabase
+      let { data: campaigns, error } = await supabase
         .from('campaigns')
         .select(`
           id,
@@ -83,6 +83,16 @@ export const OpportunitiesScreen = ({ navigation }: any) => {
         .eq('creator_id', user.id);
 
       const appliedIds = new Set(applications?.map(a => a.campaign_id) || []);
+
+            if (!campaigns || campaigns.length === 0) {
+        // PROXY DATA FOR PROTOTYPE
+        campaigns = [
+          { id: '1', title: 'Rural Life Documentary Shorts', deliverable_type: '2x YT Shorts', vibe: 'Authentic', budget: 45000, profiles: { display_name: 'Bharat Travels' } },
+          { id: '2', title: 'Traditional Wear Haul', deliverable_type: '1x IG Reel', vibe: 'Fashion', budget: 15000, profiles: { display_name: 'Jaipur Kurti' } },
+          { id: '3', title: 'Organic Farming Review', deliverable_type: '1x Detailed Video', vibe: 'AgriTech', budget: 60000, profiles: { display_name: 'Kisan Connect' } },
+          { id: '4', title: 'Desi Snacks Taste Test', deliverable_type: '3x IG Reels', vibe: 'Food', budget: 25000, profiles: { display_name: 'Millet Magic' } },
+        ];
+      }
 
       const formatted: CampaignData[] = (campaigns || []).map((c: any) => ({
         id: c.id,

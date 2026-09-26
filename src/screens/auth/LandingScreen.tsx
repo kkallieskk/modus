@@ -100,7 +100,12 @@ export const LandingScreen = () => {
 
       <View style={s.nav}>
         <Text style={s.logo}>Modus.</Text>
-        {IS_WEB && <View style={s.navCenter}>{['For Brands','For Creators','Pricing','Resources'].map(l => <Pressable key={l} style={s.navLink}><Text style={s.navLinkText}>{l}</Text></Pressable>)}</View>}
+        {IS_WEB && <View style={s.navCenter}>
+          <Pressable onPress={() => nav.navigate('ForBrands')} style={s.navLink}><Text style={s.navLinkText}>For Brands</Text></Pressable>
+          <Pressable onPress={() => nav.navigate('ForCreators')} style={s.navLink}><Text style={s.navLinkText}>For Creators</Text></Pressable>
+          <Pressable onPress={() => nav.navigate('Pricing')} style={s.navLink}><Text style={s.navLinkText}>Pricing</Text></Pressable>
+          <Pressable onPress={() => nav.navigate('Resources')} style={s.navLink}><Text style={s.navLinkText}>Resources</Text></Pressable>
+        </View>}
         <View style={s.navRight}>
           <Pressable onPress={() => nav.navigate('Login')} style={s.navLogin}><Text style={s.navLoginText}>Log in</Text></Pressable>
           <Pressable onPress={() => nav.navigate('Welcome')} style={s.navCta}><Text style={s.navCtaText}>Get Started</Text></Pressable>

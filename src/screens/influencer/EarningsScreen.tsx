@@ -87,21 +87,21 @@ export const EarningsScreen = () => {
         }
       });
 
-      // Mock Data to make UI look populated even if database is empty
+      // Proxy Data reflecting Tier 2/3 Brands and D2C
       if (completedCollabs.length === 0) {
         completedCollabs.push(
-          { id: 'm1', status: 'completed', created_at: new Date(Date.now() - 86400000 * 5).toISOString(), campaigns: { title: 'Summer Collection Promo', budget: 50000, profiles: { display_name: 'Glossier' } } },
-          { id: 'm2', status: 'completed', created_at: new Date(Date.now() - 86400000 * 15).toISOString(), campaigns: { title: 'App Unboxing', budget: 25000, profiles: { display_name: 'TechFlow' } } }
+          { id: 'm1', status: 'completed', created_at: new Date(Date.now() - 86400000 * 5).toISOString(), campaigns: { title: 'Millet Magic Breakfast Reel', budget: 35000, profiles: { display_name: 'Millet Magic' } } },
+          { id: 'm2', status: 'completed', created_at: new Date(Date.now() - 86400000 * 15).toISOString(), campaigns: { title: 'Local Store Launch', budget: 15000, profiles: { display_name: 'Jaipur Kurti' } } }
         );
-        available += 75000;
+        available += 50000;
       }
       
       if (pendingCollabs.length === 0) {
         pendingCollabs.push(
-          { id: 'p1', status: 'accepted', created_at: new Date().toISOString(), campaigns: { title: 'Sneaker Launch', budget: 80000, profiles: { display_name: 'Nike' } } },
-          { id: 'p2', status: 'pending_review', created_at: new Date().toISOString(), campaigns: { title: 'Skincare Routine', budget: 30000, profiles: { display_name: 'Olay' } } }
+          { id: 'p1', status: 'accepted', created_at: new Date().toISOString(), campaigns: { title: 'Organic Spices Review', budget: 25000, profiles: { display_name: 'FarmFresh' } } },
+          { id: 'p2', status: 'pending_review', created_at: new Date().toISOString(), campaigns: { title: 'Artisan Bag Showcase', budget: 18000, profiles: { display_name: 'Zouk' } } }
         );
-        pending += 110000;
+        pending += 43000;
       }
 
       setAvailableBalance(available);
@@ -178,8 +178,8 @@ export const EarningsScreen = () => {
     const isWithdrawal = item.status === 'withdrawal';
     const grossAmount = item.campaigns?.budget || 0;
     
-    // Dynamic TDS Calculation (10%)
-    const tdsDeduction = isWithdrawal ? 0 : Math.round(grossAmount * 0.10);
+    // Section 194R Compliance: 10% TDS only if over 20,000 threshold
+    const tdsDeduction = (!isWithdrawal && grossAmount > 20000) ? Math.round(grossAmount * 0.10) : 0;
     const netPaid = isWithdrawal ? grossAmount : grossAmount - tdsDeduction;
 
     return (
@@ -215,7 +215,7 @@ export const EarningsScreen = () => {
               <>
                 <Text style={styles.mathOperator}>-</Text>
                 <View style={styles.mathColumn}>
-                  <Text style={styles.mathLabel}>TDS (10%)</Text>
+                  <Text style={styles.mathLabel}>{grossAmount > 20000 ? '194R TDS (10%)' : 'TDS (Exempt <₹20k)'}</Text>
                   <Text style={styles.mathValueTDS}>-₹{tdsDeduction.toLocaleString()}</Text>
                 </View>
               </>

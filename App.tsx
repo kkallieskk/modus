@@ -72,7 +72,11 @@ const linking = {
     screens: {
       Auth: {
         screens: {
-          Landing: '',
+                    Landing: '',
+          Pricing: 'pricing',
+          Resources: 'resources',
+          ForBrands: 'brands',
+          ForCreators: 'creators',
           Welcome: 'welcome',
           Login: 'login',
           SignUp: 'signup',

@@ -45,7 +45,7 @@ export const CheckoutScreen = () => {
       } else {
         Alert.alert(
           'Escrow Secured', 
-          '₹' + budget + ' has been locked in the Pixkkel Vault. Your selected creators have been notified to begin production.',
+          '₹' + budget + ' has been locked in the Modus Escrow. Your selected creators have been notified to begin production.',
           [{ text: 'Go to Workspace', onPress: () => navigation.navigate('WorkspaceTab') }]
         );
       }
@@ -64,7 +64,7 @@ export const CheckoutScreen = () => {
           <ArrowLeft size={24} color="#000" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Vault Escrow</Text>
-        <Text style={styles.headerSubtitle}>Secure your campaign funds in the Pixkkel Vault.</Text>
+        <Text style={styles.headerSubtitle}>Secure your campaign funds in the Modus Escrow.</Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 24 }} showsVerticalScrollIndicator={false}>
@@ -78,7 +78,7 @@ export const CheckoutScreen = () => {
             <Text style={styles.guaranteeTitle}>100% Satisfaction Guarantee</Text>
           </View>
           <Text style={styles.guaranteeBody}>
-            Your funds are locked securely in the <Text style={{ color: '#38BDF8', fontWeight: 'bold' }}>Pixkkel Vault</Text>. 
+            Your funds are locked securely in the <Text style={{ color: '#38BDF8', fontWeight: 'bold' }}>Modus Escrow</Text>. 
             Funds are only released once you approve the final content.
           </Text>
           <View style={styles.bulletRow}>
@@ -142,7 +142,7 @@ export const CheckoutScreen = () => {
         </View>
         
         <Text style={styles.disclaimerText}>
-          By clicking Fund Escrow, you authorize Pixkkel to hold your campaign funds. 
+          By clicking Fund Escrow, you authorize Modus to hold your campaign funds. 
           Release happens automatically after your approval or 72 hours post-delivery if no revision is requested.
         </Text>
       </ScrollView>
