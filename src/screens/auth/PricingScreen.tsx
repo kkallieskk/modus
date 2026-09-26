@@ -39,7 +39,7 @@ export const PricingScreen = () => {
                 <View key={f} style={s.featureRow}><Check size={16} color="#10B981" /><Text style={s.featureText}>{f}</Text></View>
               ))}
             </View>
-            <Pressable style={s.outlineBtn}><Text style={s.outlineBtnText}>Start Free</Text></Pressable>
+            <Pressable onPress={() => nav.navigate('SignUp')} style={s.outlineBtn}><Text style={s.outlineBtnText}>Start Free</Text></Pressable>
           </View>
           
           {/* Card 2 */}
@@ -59,7 +59,7 @@ export const PricingScreen = () => {
                 <View key={f} style={s.featureRow}><Check size={16} color="#38BDF8" /><Text style={[s.featureText, { color: '#FFF' }]}>{f}</Text></View>
               ))}
             </View>
-            <Pressable style={[s.primaryBtn, { width: '100%', marginTop: 'auto', backgroundColor: '#FFF' }]}><Text style={[s.primaryBtnText, {color: '#0F172A'}]}>Upgrade to Growth</Text></Pressable>
+            <Pressable onPress={() => nav.navigate('SignUp')} style={[s.primaryBtn, { width: '100%', marginTop: 'auto', backgroundColor: '#FFF' }]}><Text style={[s.primaryBtnText, {color: '#0F172A'}]}>Upgrade to Growth</Text></Pressable>
           </View>
 
           {/* Card 3 */}
@@ -78,7 +78,7 @@ export const PricingScreen = () => {
                 <View key={f} style={s.featureRow}><Check size={16} color="#10B981" /><Text style={s.featureText}>{f}</Text></View>
               ))}
             </View>
-            <Pressable style={s.outlineBtn}><Text style={s.outlineBtnText}>Contact Sales</Text></Pressable>
+            <Pressable onPress={() => nav.navigate('SignUp')} style={s.outlineBtn}><Text style={s.outlineBtnText}>Contact Sales</Text></Pressable>
           </View>
         </View>
 

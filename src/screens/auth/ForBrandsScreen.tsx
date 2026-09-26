@@ -20,7 +20,7 @@ export const ForBrandsScreen = () => {
           <View style={s.badge}><Text style={s.badgeText}>BRAND OS</Text></View>
           <Text style={s.heroTitle}>Connect with Bharat's Authentic Voices</Text>
           <Text style={s.heroSub}>Discover, manage, and pay rural and Tier 2/3 creators with 100% ASCI and Section 194R TDS compliance built-in.</Text>
-          <Pressable style={s.primaryBtn}><Text style={s.primaryBtnText}>Start Your First Campaign</Text></Pressable>
+          <Pressable onPress={() => nav.navigate('SignUp')} style={s.primaryBtn}><Text style={s.primaryBtnText}>Start Your First Campaign</Text></Pressable>
         </View>
         <View style={s.grid}>
           <View style={s.card}>

@@ -97,7 +97,7 @@ export const AccountSettingsScreen = () => {
               { icon: <HelpCircle size={18} color="#6B7280" />, label: 'Help & Support' },
             ].map((item, i, arr) => (
               <View key={item.label}>
-                <TouchableOpacity style={styles.row} onPress={() => Alert.alert('Coming Soon', `${item.label} settings will be available soon.`)}>
+                <TouchableOpacity style={styles.row} onPress={() => alert('Coming Soon', `${item.label} settings will be available soon.`)}>
                   <View style={styles.iconWrapper}>{item.icon}</View>
                   <Text style={styles.label}>{item.label}</Text>
                   <ChevronRight size={16} color="#D1D5DB" />

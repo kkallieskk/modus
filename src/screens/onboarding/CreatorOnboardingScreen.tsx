@@ -255,7 +255,7 @@ export const CreatorOnboardingScreen = () => {
 
   const executeOAuthFlow = async (platform: 'instagram' | 'tiktok' | 'youtube' | 'twitter' | 'linkedin') => {
     if (platform !== 'instagram') {
-      Alert.alert('Coming Soon', `${platform.charAt(0).toUpperCase() + platform.slice(1)} integration will be available shortly.`);
+      alert('Coming Soon', `${platform.charAt(0).toUpperCase() + platform.slice(1)} integration will be available shortly.`);
       return;
     }
 

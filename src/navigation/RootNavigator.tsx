@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, createContext } from 'react';
+
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { supabase } from '@/lib/supabase';
 import { Session } from '@supabase/supabase-js';
@@ -14,6 +15,9 @@ import { CreatorOnboardingScreen } from '@/screens/onboarding/CreatorOnboardingS
 import { RoleSelectionScreen } from '@/screens/onboarding/RoleSelectionScreen';
 
 import { useProfile } from '@/lib/ProfileContext';
+
+
+export const DemoContext = createContext<{demoRole: string|null, setDemoRole: (r: string|null)=>void}>({demoRole: null, setDemoRole: ()=>{}});
 
 const Stack = createNativeStackNavigator();
 
@@ -44,39 +48,42 @@ export const RootNavigator = () => {
     );
   }
 
-  // Check if onboarding is completed
-  const needsOnboarding = !userProfile || userProfile.onboarding_completed === false;
+  const isAuthed = !!session || !!demoRole;
+  const activeRole = demoRole || userProfile?.role;
+  const needsOnboarding = !demoRole && (!userProfile || userProfile.onboarding_completed === false);
 
   return (
-    <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!session ? (
-        <Stack.Screen name="Auth" component={AuthStack} />
-      ) : needsOnboarding ? (
+    <DemoContext.Provider value={{demoRole, setDemoRole}}>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {!isAuthed ? (
+          <Stack.Screen name="Auth" component={AuthStack} />
+        ) : needsOnboarding ? (
         <>
           {!userProfile?.role && (
             <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
           )}
-          {userProfile?.role === 'brand' && (
+          {activeRole === 'brand' && (
             <Stack.Screen name="BrandSetup" component={BrandOnboardingScreen} />
           )}
-          {userProfile?.role === 'influencer' && (
+          {activeRole === 'influencer' && (
             <Stack.Screen name="CreatorOnboarding" component={CreatorOnboardingScreen} />
           )}
         </>
-      ) : userProfile?.role === 'admin' ? (
+      ) : activeRole === 'admin' ? (
         <Stack.Screen name="AdminRoot" component={AdminStack} />
-      ) : userProfile?.role === 'brand' ? (
+      ) : activeRole === 'brand' ? (
         <Stack.Screen name="BrandRoot" component={BrandStack} />
-      ) : userProfile?.role === 'influencer' ? (
+      ) : activeRole === 'influencer' ? (
         <Stack.Screen name="InfluencerRoot" component={InfluencerStack} />
       ) : (
         <Stack.Screen name="AppPlaceholder" component={() => (
           <View style={styles.loadingContainer}>
-            <Text style={styles.placeholderText}>Welcome {userProfile?.role}</Text>
+            <Text style={styles.placeholderText}>Welcome {activeRole}</Text>
           </View>
         )} />
       )}
     </Stack.Navigator>
+    </DemoContext.Provider>
   );
 };
 

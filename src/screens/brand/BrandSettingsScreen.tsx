@@ -476,7 +476,7 @@ export const BrandSettingsScreen = () => {
               <View key={item.label}>
                 <TouchableOpacity
                   style={styles.quickRow}
-                  onPress={() => Alert.alert('Coming Soon', `${item.label} settings will be available soon.`)}
+                  onPress={() => alert('Coming Soon', `${item.label} settings will be available soon.`)}
                 >
                   <View style={styles.fieldIcon}>{item.icon}</View>
                   <Text style={styles.quickLabel}>{item.label}</Text>

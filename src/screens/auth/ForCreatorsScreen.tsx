@@ -20,7 +20,7 @@ export const ForCreatorsScreen = () => {
           <View style={[s.badge, { backgroundColor: '#ECFCCB' }]}><Text style={[s.badgeText, { color: '#4D7C0F' }]}>FOR CREATORS</Text></View>
           <Text style={s.heroTitle}>Your Talent. Your Rules. Guaranteed Pay.</Text>
           <Text style={s.heroSub}>Stop waiting months for agencies to pay you. Get direct access to top D2C brands with Escrow-backed security.</Text>
-          <Pressable style={s.primaryBtn}><Text style={s.primaryBtnText}>Claim Your Profile</Text></Pressable>
+          <Pressable onPress={() => nav.navigate('SignUp')} style={s.primaryBtn}><Text style={s.primaryBtnText}>Claim Your Profile</Text></Pressable>
         </View>
         <View style={s.grid}>
           <View style={s.card}>

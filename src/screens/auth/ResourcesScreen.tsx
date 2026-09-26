@@ -26,7 +26,7 @@ export const ResourcesScreen = () => {
             <Text style={s.badgeText}>COMPLIANCE GUIDE</Text>
             <Text style={[s.cardTitle, {marginTop: 8}]}>The Ultimate 194R Tax Guide for D2C Brands</Text>
             <Text style={s.cardText}>Understand when to deduct 10% TDS on creator payments and free product seeding under the new Income Tax guidelines.</Text>
-            <Pressable style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20}}>
+            <Pressable onPress={() => alert('Feature coming soon!')} style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20}}>
               <Download size={16} color="#4F46E5" /><Text style={{color: '#4F46E5', fontWeight: 'bold'}}>Download PDF</Text>
             </Pressable>
           </View>
@@ -35,7 +35,7 @@ export const ResourcesScreen = () => {
             <Text style={s.badgeText}>CASE STUDY</Text>
             <Text style={[s.cardTitle, {marginTop: 8}]}>How Millet Magic Scaled with 50 Nano-Creators</Text>
             <Text style={s.cardText}>Learn how this organic food startup achieved a 4.5x ROAS by tapping into Tier 2 health influencers instead of expensive metro creators.</Text>
-            <Pressable style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20}}>
+            <Pressable onPress={() => alert('Feature coming soon!')} style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20}}>
               <Text style={{color: '#4F46E5', fontWeight: 'bold'}}>Read Story</Text>
             </Pressable>
           </View>
@@ -44,7 +44,7 @@ export const ResourcesScreen = () => {
             <Text style={s.badgeText}>CREATOR ACADEMY</Text>
             <Text style={[s.cardTitle, {marginTop: 8}]}>How to Price Your First Brand Collaboration</Text>
             <Text style={s.cardText}>A video masterclass for rural and regional creators on structuring rate cards, negotiating rights, and spotting bad contracts.</Text>
-            <Pressable style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20}}>
+            <Pressable onPress={() => alert('Feature coming soon!')} style={{flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 20}}>
               <Text style={{color: '#4F46E5', fontWeight: 'bold'}}>Watch Video</Text>
             </Pressable>
           </View>

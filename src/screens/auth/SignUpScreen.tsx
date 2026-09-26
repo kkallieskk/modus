@@ -18,6 +18,7 @@ const Orb = ({ style: os, color, size, delay = 0 }: any) => {
   return <Animated.View style={[{ position: 'absolute', width: size, height: size, borderRadius: size / 2, backgroundColor: color, transform: [{ translateY: y }], ...(IS_WEB ? { filter: 'blur(90px)' } : {}) }, os]} />;
 };
 
+import { DemoContext } from '@/navigation/RootNavigator';
 export const SignUpScreen = ({ route, navigation }: any) => {
   const initialRole = route.params?.role || 'influencer';
 
@@ -29,6 +30,7 @@ export const SignUpScreen = ({ route, navigation }: any) => {
   const [error, setError]         = useState<string | null>(null);
   const [focused, setFocused]     = useState<'email' | 'password' | null>(null);
 
+  const { setDemoRole } = React.useContext(DemoContext);
   const accentColor  = role === 'brand' ? '#7C3AED' : '#059669';
   const orb1Color    = role === 'brand' ? 'rgba(124,58,237,0.18)' : 'rgba(5,150,105,0.18)';
   const orb2Color    = role === 'brand' ? 'rgba(167,139,250,0.14)' : 'rgba(52,211,153,0.14)';
@@ -87,6 +89,14 @@ export const SignUpScreen = ({ route, navigation }: any) => {
                 );
               })}
             </View>
+
+                        <TouchableOpacity onPress={() => setDemoRole('brand')} style={[st.googleBtn, {backgroundColor: '#ECFCCB', borderColor: '#84CC16'}]}>
+              <Text style={[st.googleText, {color: '#3F6212'}]}>View Brand Dashboard (Demo)</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity onPress={() => setDemoRole('influencer')} style={[st.googleBtn, {backgroundColor: '#EEF2FF', borderColor: '#6366F1'}]}>
+              <Text style={[st.googleText, {color: '#3730A3'}]}>View Creator Dashboard (Demo)</Text>
+            </TouchableOpacity>
 
             {/* Google */}
             <TouchableOpacity onPress={handleGoogle} disabled={gLoading} style={st.googleBtn}>
