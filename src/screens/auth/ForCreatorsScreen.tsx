@@ -8,10 +8,13 @@ export const ForCreatorsScreen = () => {
   const nav = useNavigation<any>();
   return (
     <View style={s.container}>
+      <View style={{ position: 'absolute', top: 32, right: 32, zIndex: 99999, pointerEvents: 'box-none', alignItems: 'flex-end', justifyContent: 'flex-start' }}><LanguageSwitcher /></View>
+      
+      
       <View style={s.nav}>
         <Text style={s.logo}>Modus.</Text>
         <View style={s.navRight}>
-          <LanguageSwitcher />
+          
           <Pressable onPress={() => nav.navigate('Landing')} style={s.navCta}>
             <Text style={s.navCtaText}>Go Back</Text>
           </Pressable>

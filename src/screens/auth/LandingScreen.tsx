@@ -48,6 +48,7 @@ const Marquee = () => {
   useEffect(() => { Animated.loop(Animated.timing(x, { toValue: -W, duration: 28000, easing: Easing.linear, useNativeDriver: true })).start(); }, []);
   return (
     <View style={s.marqueeWrap}>
+      
       <Animated.View style={[s.marqueeRow, { transform: [{ translateX: x }] }]}>
         {[...MARQUEE_ITEMS,...MARQUEE_ITEMS,...MARQUEE_ITEMS].map((t, i) => (
           <View key={i} style={s.marqueeItem}><View style={s.marqueeDot} /><Text style={s.marqueeText}>{t}</Text></View>
@@ -93,6 +94,8 @@ export const LandingScreen = () => {
 
   return (
     <View style={s.root}>
+      <View style={{ position: 'absolute', top: 32, right: 32, zIndex: 99999, pointerEvents: 'box-none', alignItems: 'flex-end', justifyContent: 'flex-start' }}><LanguageSwitcher /></View>
+      
       <FloatingOrb orbStyle={{ top:-120, left:-150 }} color="rgba(99,102,241,0.18)" size={500} delay={0} />
       <FloatingOrb orbStyle={{ top:80, right:-160 }} color="rgba(16,185,129,0.14)" size={420} delay={700} />
       <FloatingOrb orbStyle={{ top:520, left:'30%' }} color="rgba(245,158,11,0.10)" size={360} delay={400} />
@@ -108,7 +111,7 @@ export const LandingScreen = () => {
           <Pressable onPress={() => nav.navigate('Resources')} style={s.navLink}><Text style={s.navLinkText}>Resources</Text></Pressable>
         </View>}
         <View style={s.navRight}>
-          <LanguageSwitcher />
+          
           <Pressable onPress={() => nav.navigate('Login')} style={s.navLogin}><Text style={s.navLoginText}>Log in</Text></Pressable>
           <Pressable onPress={() => nav.navigate('Welcome')} style={s.navCta}><Text style={s.navCtaText}>Get Started</Text></Pressable>
         </View>

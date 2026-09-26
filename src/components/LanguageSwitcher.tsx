@@ -22,6 +22,7 @@ export const LanguageSwitcher = () => {
   const [currentLang, setCurrentLang] = useState('en');
   const [isOpen, setIsOpen] = useState(false);
 
+
   const changeLanguage = (langCode: string) => {
     setCurrentLang(langCode);
     setIsOpen(false);
@@ -31,7 +32,17 @@ export const LanguageSwitcher = () => {
         const combo = document.querySelector('.goog-te-combo') as HTMLSelectElement;
         if (combo) {
           combo.value = langCode;
-          combo.dispatchEvent(new window.Event('change'));
+          // Modern event dispatch
+          let event;
+          if (typeof window.Event === 'function') {
+            event = new window.Event('change', { bubbles: true, cancelable: true });
+          } else {
+            event = document.createEvent('HTMLEvents');
+            event.initEvent('change', true, true);
+          }
+          combo.dispatchEvent(event);
+        } else {
+          console.warn('Google Translate combo box not found yet.');
         }
       } catch (err) {
         console.error('Translation failed', err);
