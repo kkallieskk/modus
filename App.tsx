@@ -67,12 +67,14 @@ import { Sparkles, Shield, Compass, Cpu } from 'lucide-react-native';
 import { ProfileProvider } from './src/lib/ProfileContext';
 
 const linking = {
-  prefixes: ['modus://', 'https://modus-kk-modus.vercel.app'],
+  prefixes: ['https://modus-kk-modus-three.vercel.app', 'modus://'],
   config: {
+    initialRouteName: 'Auth',
     screens: {
       Auth: {
+        path: '',
         screens: {
-                    Landing: '',
+          Landing: '',
           Pricing: 'pricing',
           Resources: 'resources',
           ForBrands: 'brands',
@@ -85,8 +87,28 @@ const linking = {
       RoleSelection: 'role-selection',
       BrandSetup: 'brand/setup',
       CreatorOnboarding: 'creator/onboarding',
-      BrandRoot: 'brand',
-      InfluencerRoot: 'creator',
+      BrandRoot: {
+        path: 'brand',
+        screens: {
+          BrandDashboard: '',
+          CreatorSelection: 'search',
+          CampaignBuilder: 'campaigns/new',
+          ApplicantReview: 'campaigns/review',
+          BrandSettings: 'settings',
+          EditProfile: 'profile/edit',
+          AccountSettings: 'account',
+        }
+      },
+      InfluencerRoot: {
+        path: 'creator',
+        screens: {
+          CreatorDashboard: '',
+          CreatorProfile: 'profile',
+          EditProfile: 'profile/edit',
+          Opportunities: 'opportunities',
+          Earnings: 'earnings',
+        }
+      },
       AdminRoot: 'admin',
     },
   },
