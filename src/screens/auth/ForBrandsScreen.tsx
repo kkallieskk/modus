@@ -8,7 +8,6 @@ export const ForBrandsScreen = () => {
   const nav = useNavigation<any>();
   return (
     <View style={s.container}>
-      <View style={{ position: 'absolute', top: 32, right: 32, zIndex: 99999, pointerEvents: 'box-none', alignItems: 'flex-end', justifyContent: 'flex-start' }}><LanguageSwitcher /></View>
       
       
       <View style={s.nav}>

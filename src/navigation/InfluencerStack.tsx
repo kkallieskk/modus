@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from '@/components/LanguageSwitcher';
 import React, { useState } from 'react';
 import { View, useWindowDimensions, Platform, StyleSheet, TouchableOpacity, Image, Text, Modal, TextInput, Pressable } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -268,6 +269,7 @@ const InfluencerTabs = () => {
         pointerEvents: 'box-none'
       }}>
         <View style={{ flexDirection: 'row', gap: 16, pointerEvents: 'auto', paddingTop: 16 }}>
+          <View style={{ marginRight: 8 }}><LanguageSwitcher /></View>
           <TouchableOpacity 
             style={styles.topBarBtn}
             onPress={() => navigation.navigate('Messages')}

@@ -252,8 +252,13 @@ export const BrandStack = () => {
   const { width } = useWindowDimensions();
   const isDesktop = Platform.OS === 'web' && width > 768;
 
+
   return (
-    <BottomTab.Navigator
+    <View style={{ flex: 1 }}>
+      <View style={{ position: 'absolute', top: 24, right: 24, zIndex: 9999, pointerEvents: 'box-none' }}>
+        <LanguageSwitcher />
+      </View>
+      <BottomTab.Navigator
       tabBar={props => <CustomTabBar {...props} />}
       sceneContainerStyle={{
         paddingLeft: isDesktop ? 260 : 0,
@@ -285,6 +290,9 @@ export const BrandStack = () => {
         }}
       />
     </BottomTab.Navigator>
+    </View>
+  );
+    </View>
   );
 };
 
