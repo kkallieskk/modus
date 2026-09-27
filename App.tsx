@@ -87,29 +87,9 @@ const linking = {
       RoleSelection: 'role-selection',
       BrandSetup: 'brand/setup',
       CreatorOnboarding: 'creator/onboarding',
-      BrandRoot: {
-        path: 'brand',
-        screens: {
-          BrandDashboard: '',
-          CreatorSelection: 'search',
-          CampaignBuilder: 'campaigns/new',
-          ApplicantReview: 'campaigns/review',
-          BrandSettings: 'settings',
-          EditProfile: 'profile/edit',
-          AccountSettings: 'account',
-        }
-      },
-      InfluencerRoot: {
-        path: 'creator',
-        screens: {
-          CreatorDashboard: '',
-          CreatorProfile: 'profile',
-          EditProfile: 'profile/edit',
-          Opportunities: 'opportunities',
-          Earnings: 'earnings',
-        }
-      },
-      AdminRoot: 'admin',
+      BrandRoot: 'brand/*',
+      InfluencerRoot: 'creator/*',
+      AdminRoot: 'admin/*',
     },
   },
 };
