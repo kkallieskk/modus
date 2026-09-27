@@ -254,7 +254,7 @@ export const BrandStack = () => {
 
 
   return (
-    <View style={{ flex: 1 }}>
+    <>
       <View style={{ position: 'absolute', top: 24, right: 24, zIndex: 9999, pointerEvents: 'box-none' }}>
         <LanguageSwitcher />
       </View>
@@ -270,7 +270,7 @@ export const BrandStack = () => {
     >
       <BottomTab.Screen 
         name="RosterTab" 
-        component={DashboardPager} 
+        component={RosterStack} 
         options={{
           title: 'Roster',
         }}
@@ -290,7 +290,7 @@ export const BrandStack = () => {
         }}
       />
     </BottomTab.Navigator>
-    </View>
+    </>
   );
 };
 

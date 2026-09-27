@@ -87,9 +87,9 @@ const linking = {
       RoleSelection: 'role-selection',
       BrandSetup: 'brand/setup',
       CreatorOnboarding: 'creator/onboarding',
-      BrandRoot: 'brand/*',
-      InfluencerRoot: 'creator/*',
-      AdminRoot: 'admin/*',
+      BrandRoot: 'brand',
+      InfluencerRoot: 'creator',
+      AdminRoot: 'admin',
     },
   },
 };
